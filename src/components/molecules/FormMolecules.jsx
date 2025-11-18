@@ -67,7 +67,7 @@ const FormMolecules = () => {
     <div className="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4">
       {/* Header */}
       <header className="w-full text-center mb-6">
-        <h1 className="text-4xl font-bold text-gray-900">Welcome to NexusAI</h1>
+        <h1 className="text-4xl font-bold text-gray-900">Welcome to CodeAstra</h1>
         <p className="text-gray-600 mt-1 text-sm">
           Create, connect, and launch with AI
         </p>
