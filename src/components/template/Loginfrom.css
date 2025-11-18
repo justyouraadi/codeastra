@@ -1,0 +1,16 @@
+.backimage{
+    background-image: url(../../assets/aadba6f558201e8d67536b2d83934f57c9ec6b5d.jpg);
+    width: 100%;
+    height: 100vh;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+.backimagespage{
+    background-image: url(../../assets/OBJECTS.png);
+    width: 100%;
+    height: 100vh;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}

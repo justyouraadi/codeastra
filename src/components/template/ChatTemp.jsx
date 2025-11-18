@@ -1,0 +1,392 @@
+import React, { useState, useRef, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import {
+  Monitor,
+  Smartphone,
+  Share2,
+  Send,
+  RefreshCw,
+  Code,
+  Eye,
+  ChevronRight,
+  ChevronDown,
+  Folder,
+  File,
+  User,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useProjectProvider } from "../../hooks/useProjectProvider";
+import { io } from "socket.io-client";
+
+const SOCKET_URL = "http://localhost:5000";
+const socket = io(SOCKET_URL, { autoConnect: false });
+
+const FolderTree = () => {
+  const [open, setOpen] = useState({
+    src: true,
+    components: true,
+    pages: true,
+    ui: true,
+  });
+  return (
+    <div className="text-gray-200 font-mono text-sm px-5 py-8 bg-[#0f0f0f] select-none mt-14">
+      <div>
+        <div
+          className="flex items-center gap-2 cursor-pointer hover:text-white"
+          onClick={() => setOpen({ ...open, src: !open.src })}
+        >
+          {open.src ? (
+            <ChevronDown className="w-4 h-4" />
+          ) : (
+            <ChevronRight className="w-4 h-4" />
+          )}{" "}
+          <Folder className="w-4 h-4 text-yellow-400" /> <span>src</span>
+        </div>
+        {open.src && (
+          <div className="ml-6 mt-1 border-l border-gray-700 pl-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <File className="w-4 h-4 text-blue-400" />
+              <span>app.tsx</span>
+            </div>
+            <div>
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:text-white"
+                onClick={() =>
+                  setOpen({ ...open, components: !open.components })
+                }
+              >
+                {open.components ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}{" "}
+                <Folder className="w-4 h-4 text-yellow-400" />
+                <span>components</span>
+              </div>
+              {open.components && (
+                <div className="ml-6 mt-1 border-l border-gray-700 pl-3">
+                  <div>
+                    <div
+                      className="flex items-center gap-2 cursor-pointer hover:text-white"
+                      onClick={() => setOpen({ ...open, pages: !open.pages })}
+                    >
+                      {open.pages ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}{" "}
+                      <Folder className="w-4 h-4 text-yellow-400" />
+                      <span>pages</span>
+                    </div>
+                    {open.pages && (
+                      <div className="ml-6 mt-1 border-l border-gray-700 pl-3">
+                        <div className="flex items-center gap-2 bg-[#1a1a1a] px-2 py-1 rounded-md">
+                          <File className="w-4 h-4 text-blue-400" />{" "}
+                          <span>interface.ts</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:text-white"
+                onClick={() => setOpen({ ...open, ui: !open.ui })}
+              >
+                {open.ui ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}{" "}
+                <Folder className="w-4 h-4 text-yellow-400" />
+                <span>ui</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ChatTemp = () => {
+  const { id } = useParams();
+  const { fetchProjectById, selectedProject } = useProjectProvider();
+
+  const [dividerX, setDividerX] = useState(() => {
+    if (window.innerWidth < 768) return 100; // full width chat on mobile
+    return parseFloat(localStorage.getItem("dividerX")) || 35;
+  });
+
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [viewMode, setViewMode] = useState("output");
+  const [waitingForBot, setWaitingForBot] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [fullName, setFullName] = useState("John Doe"); // Assume we get full name from the backend
+
+  const isDragging = useRef(false);
+  const chatContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (window.innerWidth > 768) localStorage.setItem("dividerX", dividerX);
+  }, [dividerX]);
+
+  // FETCH PROJECT
+  useEffect(() => {
+    if (id) {
+      (async () => {
+        const data = await fetchProjectById(id);
+        const projectMessages = [
+          {
+            sender: "bot",
+            text: data?.success
+              ? data.data.description
+              : "Error loading project",
+          },
+          ...data?.data?.chats?.map((chat) => ({
+            sender: chat.sender,
+            text: chat.message,
+          })),
+        ];
+        setMessages(projectMessages);
+      })();
+    }
+  }, [id]);
+
+  // SOCKET
+  useEffect(() => {
+    socket.connect();
+    socket.on("receive_message", (data) => {
+      setMessages((prev) => [...prev, { sender: "bot", text: data.text }]);
+      setWaitingForBot(false);
+      setRefreshTrigger((p) => p + 1); // auto-refresh preview
+    });
+    return () => socket.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!chatContainerRef.current) return;
+    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+  }, [messages]);
+
+  const handleSend = () => {
+    if (!input.trim() || waitingForBot) return;
+    const newMsg = { sender: "user", text: input };
+    setMessages((p) => [...p, newMsg]);
+    setInput("");
+    setWaitingForBot(true);
+    socket.emit("send_message", newMsg);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // 🟩 Mobile-friendly drag support
+  const handleMove = (clientX) => {
+    const percent = (clientX / window.innerWidth) * 100;
+    if (percent > 20 && percent < 80) setDividerX(percent);
+  };
+
+  const handleMouseMove = (e) => isDragging.current && handleMove(e.clientX);
+  const handleTouchMove = (e) =>
+    isDragging.current && handleMove(e.touches[0].clientX);
+
+  const stopDrag = () => {
+    isDragging.current = false;
+    document.body.style.cursor = "default";
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", stopDrag);
+    window.addEventListener("touchmove", handleTouchMove);
+    window.addEventListener("touchend", stopDrag);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", stopDrag);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", stopDrag);
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen flex bg-white text-gray-900 overflow-hidden">
+      {/* LEFT (CHAT) */}
+      <div
+        className="flex flex-col border-r border-gray-200 bg-white transition-all duration-150"
+        style={{ width: `${dividerX}%`, height: "100vh" }}
+      >
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h1 className="font-semibold text-lg text-gray-800">
+            {selectedProject?.data?.name || "Project Chat"}
+          </h1>
+        </div>
+
+        <div
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto p-6 space-y-5"
+        >
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`flex items-start gap-2 ${
+                msg.sender === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              {msg.sender !== "user" && (
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                    CA
+                  </div>
+                  <span className="text-[10px] text-gray-500 mt-1">CodeAstra</span>
+                </div>
+              )}
+
+              <div
+                className={`p-3 rounded-lg text-sm shadow max-w-[80%] ${
+                  msg.sender === "user"
+                    ? "bg-black text-white"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {msg.text}
+              </div>
+
+              {msg.sender === "user" && (
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] text-gray-500 mt-1">
+                    {/* {fullName}
+                     */}
+                     {
+                      selectedProject?.data?.user?.full_name
+                     }
+                  </span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="p-3 border-t border-gray-200 bg-white flex items-center gap-2">
+          <textarea
+            placeholder={
+              waitingForBot ? "Please wait..." : "Type your message..."
+            }
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={waitingForBot}
+            rows={2}
+            className="flex-1 resize-none bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-sm"
+          />
+          <Button
+            onClick={handleSend}
+            disabled={waitingForBot}
+            className={`${
+              waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
+            } text-white`}
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* DIVIDER */}
+      <div
+        className="w-1.5 bg-gray-300 hover:bg-gray-500 cursor-col-resize"
+        onMouseDown={() => {
+          isDragging.current = true;
+          document.body.style.cursor = "col-resize";
+        }}
+        onTouchStart={() => {
+          isDragging.current = true;
+        }}
+      ></div>
+
+      {/* RIGHT (PREVIEW) */}
+      <div className="relative flex-1 overflow-hidden bg-white">
+        <div className="absolute inset-0 pt-14">
+          {viewMode === "output" ? (
+            <iframe
+              key={refreshTrigger}
+              src={
+                selectedProject?.data?.assigned_domain
+                  ? `https://${selectedProject.data.assigned_domain}`
+                  : ""
+              }
+              className="w-full h-full border-0"
+              title="Live Preview"
+            />
+          ) : (
+            <FolderTree />
+          )}
+        </div>
+
+        <div className="absolute top-0 left-0 w-full flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur border-b border-gray-200 z-20">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => setViewMode("output")}
+              className={`${
+                viewMode === "output"
+                  ? "font-semibold border-b-2 border-black"
+                  : ""
+              }`}
+            >
+              {" "}
+              <Eye className="w-4 h-4 mr-2" /> Preview{" "}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setViewMode("code")}
+              className={`${
+                viewMode === "code"
+                  ? "font-semibold border-b-2 border-black"
+                  : ""
+              }`}
+            >
+              {" "}
+              <Code className="w-4 h-4 mr-2" /> Code{" "}
+            </Button>
+            <RefreshCw
+              className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer"
+              onClick={() => setRefreshTrigger((p) => p + 1)}
+            />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Monitor className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+            <Smartphone className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+            <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+            {
+               selectedProject?.data?.assigned_domain && (
+
+            <a
+              href={`https://${selectedProject.data.assigned_domain}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button className="bg-black hover:bg-gray-900 text-white text-sm">
+                View
+              </Button>
+            </a>
+               )
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatTemp;

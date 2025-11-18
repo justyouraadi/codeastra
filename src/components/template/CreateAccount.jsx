@@ -1,0 +1,208 @@
+import React, { useState } from "react";
+import InputAtom from "../atoms/InputAtom";
+import ButtonAtom from "../atoms/ButtonAtom";
+import SideimagsForm from "../molecules/SideimagsForm";
+import { FcGoogle } from "react-icons/fc";
+import { Label } from "../ui/label";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/ContextProvider";
+import toast from "react-hot-toast";
+
+const formData = {
+  title: "Create your account",
+  subtitle: "Join the future of AI-powered development.",
+  emailPlaceholder: "Enter your email",
+  passwordPlaceholder: "Create password",
+  buttonText: "Sign Up",
+}; 
+
+const CreateAccount = () => {
+  const { signup, signin, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({ email: "", password: "" });
+
+  // Handle input changes
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  // Validate form inputs
+  const validateForm = () => {
+    const { email, password } = form;
+
+    if (!email || !password) {
+      toast.error("Please fill out all fields.");
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address.");
+      return false;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle Signup
+  const handleSignup = async () => {
+    if (loading) return;
+    if (!validateForm()) return;
+
+    const toastId = toast.loading("Creating your account...");
+
+    try {
+      localStorage.setItem("auth_mode", "signup");
+      const success = await signup(form.email, form.password);
+
+      toast.dismiss(toastId);
+
+      if (success) {
+        toast.success("🎉 Account created successfully! Please verify OTP.");
+        navigate("/otppages");
+      } else {
+        toast.error("Signup failed. Please check your details.");
+      }
+    } catch (error) {
+      toast.dismiss(toastId);
+      console.error("Signup error:", error);
+      toast.error("Something went wrong during signup. Try again later.");
+    }
+  };
+
+  // Handle Signin (optional)
+  const handleSignin = async () => {
+    if (loading) return;
+    if (!validateForm()) return;
+
+    const toastId = toast.loading("Logging in...");
+
+    try {
+      const success = await signin(form.email, form.password);
+      toast.dismiss(toastId);
+
+      if (success) {
+        toast.success("Logged in successfully!");
+        navigate("/dashboard");
+      } else {
+        toast.error("Invalid credentials. Please try again.");
+      }
+    } catch (error) {
+      toast.dismiss(toastId);
+      console.error("Signin error:", error);
+      toast.error("Something went wrong. Try again later.");
+    }
+  };
+
+  // Google Sign-In Placeholder
+  const handleGoogle = async () => {
+    if (loading) return;
+    toast("🚀 Google Sign-in coming soon!", { icon: "⚙️" });
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row h-screen w-full bg-white">
+      {/* ---------- Left Side (Form) ---------- */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-[#f7fbff]">
+        <div className="w-full max-w-md space-y-6">
+          {/* Header */}
+          <header>
+            <h2 className="text-4xl font-bold text-gray-900 leading-tight">
+              {formData.title}
+            </h2>
+            <p className="mt-2 text-gray-700 text-sm sm:text-base">
+              {formData.subtitle}
+            </p>
+          </header>
+
+          {/* Google Auth Button */}
+          <ButtonAtom
+            onClick={handleGoogle}
+            disabled={loading}
+            className="w-full bg-black text-white hover:bg-gray-900 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition disabled:opacity-50"
+          >
+            <FcGoogle className="w-5 h-5" />
+            Continue with Google
+          </ButtonAtom>
+
+          {/* Divider */}
+          <div className="flex items-center my-4">
+            <hr className="flex-grow border-gray-300" />
+            <span className="mx-2 text-sm text-gray-500">or</span>
+            <hr className="flex-grow border-gray-300" />
+          </div>
+
+          {/* Form Inputs */}
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm text-gray-700">Email Address</Label>
+              <InputAtom
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder={formData.emailPlaceholder}
+                type="email"
+                className="w-full py-3 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-black"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-700">Password</Label>
+              <InputAtom
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder={formData.passwordPlaceholder}
+                type="password"
+                className="w-full py-3 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-black"
+              />
+            </div>
+          </div>
+
+          {/* Signup Button */}
+          <ButtonAtom
+            onClick={handleSignup}
+            disabled={loading}
+            className="w-full bg-black text-white hover:bg-gray-900 py-3 rounded-lg font-medium transition disabled:opacity-50"
+          >
+            {loading ? "Processing..." : formData.buttonText}
+          </ButtonAtom>
+
+          {/* Footer */}
+          <footer className="text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <button
+              onClick={() => navigate("/")}
+              className="text-blue-600 font-medium hover:underline"
+            >
+              Log in
+            </button>
+            <p className="mt-2 text-gray-400 text-xs">
+              By signing up, you agree to our{" "}
+              <a href="#" className="text-blue-600 hover:underline">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="#" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </a>
+              .
+            </p>
+          </footer>
+        </div>
+      </div>
+
+      {/* ---------- Right Side (Image Section) ---------- */}
+      <div className="flex-1 hidden lg:flex">
+        <SideimagsForm />
+      </div>
+    </div>
+  );
+};
+
+export default CreateAccount;
