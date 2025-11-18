@@ -4,7 +4,7 @@ import LoginFormPages from "./pages/LoginFormPages";
 import ProjectPages from "./pages/ProjectPages";
 import Chatpage from "./pages/Chatpage";
 import MainPageScreen from "./pages/MainPageScreen";
-import Profilepage from "./pages/profilepage";
+import Profilepage from "./pages/Profilepage";
 import SecurityPage from "./pages/SecurityPage";
 import BillingPages from "./pages/BillingPages";
 import NotificationsPage from "./pages/NotificationsPage";
