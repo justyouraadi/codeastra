@@ -39,6 +39,7 @@ import { useNavigate } from "react-router-dom";
 
 // ✅ Custom Hook
 import { useProjectProvider } from "../../hooks/useProjectProvider";
+import toast from "react-hot-toast";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ const MainChatScreen = () => {
   // ✅ Updated handleSend function (sends only project ID)
   const handleSend = async () => {
     if (!prompt.trim()) {
-      alert("⚠️ Please enter something first!");
+      toast.error("Please enter something first!");
       return;
     }
 
