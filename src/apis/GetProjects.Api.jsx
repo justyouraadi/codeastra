@@ -17,7 +17,7 @@ export const getProjectsAPI = async () => {
 
   try {
     const response = await fetch(
-      "http://98.70.13.173:3055/projects/api/v1/projects?page=1&limit=10&order_by=desc&name=",
+      "https://gateway.codeastra.ai/projects/api/v1/projects?page=1&limit=10&order_by=desc&name=",
       requestOptions
     );
 

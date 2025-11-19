@@ -1,7 +1,7 @@
 export const verifySigninAPI = async ({ email, otp, orderId }) => {
   console.log("🟢 Verify Signin API Sending =>", { email, otp, orderId });
 
-  const res = await fetch("http://98.70.13.173:3055/api/v1/auth/verify/signin", {
+  const res = await fetch("https://gateway.codeastra.ai/api/v1/auth/verify/signin", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

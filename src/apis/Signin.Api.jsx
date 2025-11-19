@@ -2,7 +2,7 @@
 export const signinAPI = async (email, password) => {
   console.log("🟢 Signin API Sending =>", { email, password });
 
-  const response = await fetch("http://98.70.13.173:3055/api/v1/auth/initiate/signin", {
+  const response = await fetch("https://gateway.codeastra.ai/api/v1/auth/initiate/signin", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),

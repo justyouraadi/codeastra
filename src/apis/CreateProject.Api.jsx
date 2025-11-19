@@ -20,7 +20,7 @@ redirect: "follow",
 
 try {
 // ✅ Corrected endpoint (matches your previous working pattern)
-const res = await fetch("http://98.70.13.173:3055/projects/api/v1/projects", requestOptions);
+const res = await fetch("https://gateway.codeastra.ai/projects/api/v1/projects", requestOptions);
 
  
 // Check for gateway timeout or bad response

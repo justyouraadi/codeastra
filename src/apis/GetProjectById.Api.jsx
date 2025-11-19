@@ -11,7 +11,7 @@ export const getProjectByIdAPI = async (id) => {
 
   try {
     const response = await fetch(
-      `http://98.70.13.173:3055/projects/api/v1/projects/${id}`,
+      `https://gateway.codeastra.ai/projects/api/v1/projects/${id}`,
       requestOptions
     );
     const data = await response.json();

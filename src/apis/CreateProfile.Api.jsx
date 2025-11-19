@@ -2,7 +2,7 @@
 export const createProfileAPI = async (formDataToSend) => {
   console.log("🟢 Sending Profile Creation Request...");
 
-  const response = await fetch("http://98.70.13.173:3055/api/v1/auth/signup", {
+  const response = await fetch("https://gateway.codeastra.ai/api/v1/auth/signup", {
     method: "POST",
     body: formDataToSend,
   });
