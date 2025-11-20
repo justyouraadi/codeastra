@@ -21,9 +21,13 @@ const FormMolecules = () => {
 
     try {
       localStorage.setItem("auth_mode", "signin");
-      await signin(email, password);
-      toast.dismiss(toastId);
-      navigate("/otppages");
+      const response = await signin(email, password);
+      
+      if(response){
+        navigate("/otppages");
+      }else{
+        toast.dismiss(toastId);
+      }
     } catch (err) {
       toast.dismiss(toastId);
       console.error("Signin error:", err);
