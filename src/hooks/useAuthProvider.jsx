@@ -324,7 +324,6 @@ export const useAuthProvider = () => {
 
       if (data?.success) {
         localStorage.setItem("signin_token", data?.data || "");
-        toast.success("🎉 Login verified successfully!");
         return true;
       } else {
         toast.error(`⚠️ ${data?.message || "Signin verification failed"}`);

@@ -1,5 +1,5 @@
-export const createProjectAPI = async (prompt) => {
-  console.log("🟢 Create Project API Sending =>", prompt);
+export const pingAPI = async () => {
+  console.log("🟢 Ping API Sending...");
 
   // ✅ Get token from localStorage
   const authToken = localStorage.getItem("signin_token");
@@ -9,23 +9,18 @@ export const createProjectAPI = async (prompt) => {
   myHeaders.append("Content-Type", "application/json");
   myHeaders.append("Authorization", `Bearer ${authToken}`);
 
-  const raw = JSON.stringify({ prompt });
-
   const requestOptions = {
-    method: "POST",
+    method: "GET",
     headers: myHeaders,
-    body: raw,
     redirect: "follow",
   };
 
   try {
-    // ✅ Corrected endpoint (matches your previous working pattern)
     const res = await fetch(
-      "https://gateway.codeastra.ai/projects/api/v1/projects",
+      "https://gateway.codeastra.ai/ping",
       requestOptions
     );
 
-    // Check for gateway timeout or bad response
     if (!res.ok) {
       const text = await res.text();
       console.error("❌ API Raw Response =>", text);
@@ -33,10 +28,10 @@ export const createProjectAPI = async (prompt) => {
     }
 
     const data = await res.json();
-    console.log("✅ Project Created =>", data);
+    console.log("✅ Ping Success =>", data);
     return data;
   } catch (error) {
-    console.error("❌ API Error =>", error.message);
+    console.error("❌ Ping API Error =>", error.message);
     throw error;
   }
 };

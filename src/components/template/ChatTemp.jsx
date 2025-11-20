@@ -35,11 +35,7 @@ const FolderTree = () => {
           className="flex items-center gap-2 cursor-pointer hover:text-white"
           onClick={() => setOpen({ ...open, src: !open.src })}
         >
-          {open.src ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}{" "}
+          {open.src ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           <Folder className="w-4 h-4 text-yellow-400" /> <span>src</span>
         </div>
         {open.src && (
@@ -51,15 +47,9 @@ const FolderTree = () => {
             <div>
               <div
                 className="flex items-center gap-2 cursor-pointer hover:text-white"
-                onClick={() =>
-                  setOpen({ ...open, components: !open.components })
-                }
+                onClick={() => setOpen({ ...open, components: !open.components })}
               >
-                {open.components ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}{" "}
+                {open.components ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 <Folder className="w-4 h-4 text-yellow-400" />
                 <span>components</span>
               </div>
@@ -70,19 +60,14 @@ const FolderTree = () => {
                       className="flex items-center gap-2 cursor-pointer hover:text-white"
                       onClick={() => setOpen({ ...open, pages: !open.pages })}
                     >
-                      {open.pages ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}{" "}
+                      {open.pages ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       <Folder className="w-4 h-4 text-yellow-400" />
                       <span>pages</span>
                     </div>
                     {open.pages && (
                       <div className="ml-6 mt-1 border-l border-gray-700 pl-3">
                         <div className="flex items-center gap-2 bg-[#1a1a1a] px-2 py-1 rounded-md">
-                          <File className="w-4 h-4 text-blue-400" />{" "}
-                          <span>interface.ts</span>
+                          <File className="w-4 h-4 text-blue-400" /> <span>interface.ts</span>
                         </div>
                       </div>
                     )}
@@ -95,11 +80,7 @@ const FolderTree = () => {
                 className="flex items-center gap-2 cursor-pointer hover:text-white"
                 onClick={() => setOpen({ ...open, ui: !open.ui })}
               >
-                {open.ui ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}{" "}
+                {open.ui ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 <Folder className="w-4 h-4 text-yellow-400" />
                 <span>ui</span>
               </div>
@@ -116,7 +97,7 @@ const ChatTemp = () => {
   const { fetchProjectById, selectedProject } = useProjectProvider();
 
   const [dividerX, setDividerX] = useState(() => {
-    if (window.innerWidth < 768) return 100; // full width chat on mobile
+    if (window.innerWidth < 768) return 100;
     return parseFloat(localStorage.getItem("dividerX")) || 35;
   });
 
@@ -125,7 +106,7 @@ const ChatTemp = () => {
   const [viewMode, setViewMode] = useState("output");
   const [waitingForBot, setWaitingForBot] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [fullName, setFullName] = useState("John Doe"); // Assume we get full name from the backend
+  const [deviceView, setDeviceView] = useState("desktop"); // desktop or mobile
 
   const isDragging = useRef(false);
   const chatContainerRef = useRef(null);
@@ -135,26 +116,44 @@ const ChatTemp = () => {
   }, [dividerX]);
 
   // FETCH PROJECT
-  useEffect(() => {
-    if (id) {
-      (async () => {
-        const data = await fetchProjectById(id);
-        const projectMessages = [
-          {
-            sender: "bot",
-            text: data?.success
-              ? data.data.description
-              : "Error loading project",
-          },
-          ...data?.data?.chats?.map((chat) => ({
-            sender: chat.sender,
-            text: chat.message,
-          })),
-        ];
-        setMessages(projectMessages);
-      })();
+
+  const [botTexts, setBotTexts] = useState([]);
+const [userTexts, setUserTexts] = useState([]);
+
+useEffect(() => {
+  if (!id) return;
+
+  (async () => {
+    const data = await fetchProjectById(id);
+    if (!data?.success) return;
+
+    const botArray = [];
+    const userArray = [];
+
+    // BOT MESSAGE from description
+    if (data.data.description) {
+      botArray.push(data.data.description);
     }
-  }, [id]);
+
+    // USER CHAT ARRAY
+    const list = Array.isArray(data.data.chats)
+      ? data.data.chats
+      : [];
+
+    list.forEach(item => {
+      if (item.sender === "user") {
+        userArray.push(item.message);
+      } else if (item.sender === "bot") {
+        botArray.push(item.message);
+      }
+    });
+
+    setBotTexts(botArray);
+    setUserTexts(userArray);
+
+  })();
+}, [id]);
+
 
   // SOCKET
   useEffect(() => {
@@ -162,7 +161,7 @@ const ChatTemp = () => {
     socket.on("receive_message", (data) => {
       setMessages((prev) => [...prev, { sender: "bot", text: data.text }]);
       setWaitingForBot(false);
-      setRefreshTrigger((p) => p + 1); // auto-refresh preview
+      setRefreshTrigger((p) => p + 1);
     });
     return () => socket.disconnect();
   }, []);
@@ -188,15 +187,13 @@ const ChatTemp = () => {
     }
   };
 
-  // 🟩 Mobile-friendly drag support
   const handleMove = (clientX) => {
     const percent = (clientX / window.innerWidth) * 100;
     if (percent > 20 && percent < 80) setDividerX(percent);
   };
 
   const handleMouseMove = (e) => isDragging.current && handleMove(e.clientX);
-  const handleTouchMove = (e) =>
-    isDragging.current && handleMove(e.touches[0].clientX);
+  const handleTouchMove = (e) => isDragging.current && handleMove(e.touches[0].clientX);
 
   const stopDrag = () => {
     isDragging.current = false;
@@ -229,59 +226,60 @@ const ChatTemp = () => {
           </h1>
         </div>
 
-        <div
-          ref={chatContainerRef}
-          className="flex-1 overflow-y-auto p-6 space-y-5"
-        >
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex items-start gap-2 ${
-                msg.sender === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              {msg.sender !== "user" && (
-                <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                    CA
-                  </div>
-                  <span className="text-[10px] text-gray-500 mt-1">CodeAstra</span>
-                </div>
-              )}
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-5">
 
-              <div
-                className={`p-3 rounded-lg text-sm shadow max-w-[80%] ${
-                  msg.sender === "user"
-                    ? "bg-black text-white"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {msg.text}
-              </div>
+  {/* BOT Messages */}
 
-              {msg.sender === "user" && (
-                <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <span className="text-[10px] text-gray-500 mt-1">
-                    {/* {fullName}
-                     */}
-                     {
-                      selectedProject?.data?.user?.full_name
-                     }
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+
+
+  {userTexts.map((text, i) => (
+    <div key={"user-" + i} className="flex items-start gap-2 justify-end">
+      <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+        {text}
+      </div>
+
+      <div className="flex flex-col items-center">
+        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+          <User className="w-4 h-4" />
         </div>
+        <span className="text-[10px] text-gray-500 mt-1">
+          {selectedProject?.data?.user?.full_name}
+        </span>
+      </div>
+    </div>
+  ))}
+
+
+
+
+
+  {botTexts.map((text, i) => (
+  <div key={"bot-" + i} className="flex items-start gap-2 justify-start">
+
+    <div className="flex flex-col items-center">
+      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+        CA
+      </div>
+      <span className="text-[10px] text-gray-500 mt-1">CodeAstra</span>
+    </div>
+
+    <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
+      {text}  {/* <-- string, so perfect */}
+    </div>
+
+  </div>
+))}
+
+
+  {/* USER Messages */}
+  
+
+</div>
+
 
         <div className="p-3 border-t border-gray-200 bg-white flex items-center gap-2">
           <textarea
-            placeholder={
-              waitingForBot ? "Please wait..." : "Type your message..."
-            }
+            placeholder={waitingForBot ? "Please wait..." : "Type your message..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -292,9 +290,7 @@ const ChatTemp = () => {
           <Button
             onClick={handleSend}
             disabled={waitingForBot}
-            className={`${
-              waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
-            } text-white`}
+            className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"} text-white`}
           >
             <Send className="w-4 h-4" />
           </Button>
@@ -315,7 +311,7 @@ const ChatTemp = () => {
 
       {/* RIGHT (PREVIEW) */}
       <div className="relative flex-1 overflow-hidden bg-white">
-        <div className="absolute inset-0 pt-14">
+        <div className="absolute inset-0 pt-14 flex justify-center items-start bg-white">
           {viewMode === "output" ? (
             <iframe
               key={refreshTrigger}
@@ -324,7 +320,14 @@ const ChatTemp = () => {
                   ? `https://${selectedProject.data.assigned_domain}`
                   : ""
               }
-              className="w-full h-full border-0"
+              className="border-0"
+              style={{
+                width: deviceView === "mobile" ? "375px" : "100%",
+                height: deviceView === "mobile" ? "667px" : "100%",
+                borderRadius: deviceView === "mobile" ? "16px" : "0",
+                boxShadow:
+                  deviceView === "mobile" ? "0 0 10px rgba(0,0,0,0.2)" : "none",
+              }}
               title="Live Preview"
             />
           ) : (
@@ -337,26 +340,16 @@ const ChatTemp = () => {
             <Button
               variant="ghost"
               onClick={() => setViewMode("output")}
-              className={`${
-                viewMode === "output"
-                  ? "font-semibold border-b-2 border-black"
-                  : ""
-              }`}
+              className={`${viewMode === "output" ? "font-semibold border-b-2 border-black" : ""}`}
             >
-              {" "}
-              <Eye className="w-4 h-4 mr-2" /> Preview{" "}
+              <Eye className="w-4 h-4 mr-2" /> Preview
             </Button>
             <Button
               variant="ghost"
               onClick={() => setViewMode("code")}
-              className={`${
-                viewMode === "code"
-                  ? "font-semibold border-b-2 border-black"
-                  : ""
-              }`}
+              className={`${viewMode === "code" ? "font-semibold border-b-2 border-black" : ""}`}
             >
-              {" "}
-              <Code className="w-4 h-4 mr-2" /> Code{" "}
+              <Code className="w-4 h-4 mr-2" /> Code
             </Button>
             <RefreshCw
               className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer"
@@ -365,23 +358,28 @@ const ChatTemp = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <Monitor className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
-            <Smartphone className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+            <Monitor
+              className={`w-5 h-5 cursor-pointer ${
+                deviceView === "desktop" ? "text-black" : "text-gray-600 hover:text-black"
+              }`}
+              onClick={() => setDeviceView("desktop")}
+            />
+            <Smartphone
+              className={`w-5 h-5 cursor-pointer ${
+                deviceView === "mobile" ? "text-black" : "text-gray-600 hover:text-black"
+              }`}
+              onClick={() => setDeviceView("mobile")}
+            />
             <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
-            {
-               selectedProject?.data?.assigned_domain && (
-
-            <a
-              href={`https://${selectedProject.data.assigned_domain}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button className="bg-black hover:bg-gray-900 text-white text-sm">
-                View
-              </Button>
-            </a>
-               )
-            }
+            {selectedProject?.data?.assigned_domain && (
+              <a
+                href={`https://${selectedProject.data.assigned_domain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button className="bg-black hover:bg-gray-900 text-white text-sm">View</Button>
+              </a>
+            )}
           </div>
         </div>
       </div>

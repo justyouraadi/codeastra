@@ -9,7 +9,7 @@ import {toast} from "react-hot-toast"
 const OtpTemp = () => {
   const [otp, setOtp] = useState(Array(6).fill(""));
   const inputRefs = useRef([]);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(120);
   const { verifySignup, verifySignin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,7 +66,6 @@ const OtpTemp = () => {
       }
 
       if (result) {
-        toast.success("✅ Login Verified Successfully!");
         navigate("/mainpagescreen");
       } else {
         toast.error("❌ Invalid OTP for Signin!");
@@ -84,7 +83,6 @@ const OtpTemp = () => {
       }
 
       if (result) {
-        toast.success("✅ OTP Verified Successfully!");
         navigate("/createprofile");
       } else {
         toast.error("❌ Invalid OTP or verification failed!");

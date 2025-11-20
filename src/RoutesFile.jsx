@@ -18,6 +18,7 @@ import Layout from "./Layout";
 import CreateAccountPages from "./pages/CreateAccountPages";
 import OtpPages from "./pages/OtpPages";
 import CreateProfilePages from "./pages/CreateProfilePages";
+import ProtectedRoute from "./ProtectedRoute";
 
 const RoutesFile = () => {
   return (
@@ -25,25 +26,30 @@ const RoutesFile = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LoginFormPages />} />
-          <Route path="/projectpages" element={<ProjectPages />} />
-          <Route path="/chatpage/:id" element={<Chatpage />} />
-          <Route path="/mainpagescreen" element={<MainPageScreen />} />
-          <Route path="/NoAppsPage" element={<NoAppsPage />} />
-          <Route path="/createaccount" element={<CreateAccountPages />} />
           <Route path="/otppages" element={<OtpPages />} />
+          <Route path="/createaccount" element={<CreateAccountPages />} />
           <Route path="/createprofile" element={<CreateProfilePages />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/projectpages" element={<ProjectPages />} />
+            <Route path="/chatpage/:id" element={<Chatpage />} />
+            <Route path="/mainpagescreen" element={<MainPageScreen />} />
+            <Route path="/NoAppsPage" element={<NoAppsPage />} />
 
-          <Route element={<Layout />}>
-            <Route path="/profilepage" element={<Profilepage />} />
-            <Route path="/securitypage" element={<SecurityPage />} />
-            <Route path="/billingpages" element={<BillingPages />} />
-            <Route path="/notificationspage" element={<NotificationsPage />} />
-            <Route path="/apispage" element={<ApisPage />} />
-            <Route
-              path="/teammanagementpages"
-              element={<TeamManagementPages />}
-            />
-            <Route path="/preferencespages" element={<PreferencesPages />} />
+            <Route element={<Layout />}>
+              <Route path="/profilepage" element={<Profilepage />} />
+              <Route path="/securitypage" element={<SecurityPage />} />
+              <Route path="/billingpages" element={<BillingPages />} />
+              <Route
+                path="/notificationspage"
+                element={<NotificationsPage />}
+              />
+              <Route path="/apispage" element={<ApisPage />} />
+              <Route
+                path="/teammanagementpages"
+                element={<TeamManagementPages />}
+              />
+              <Route path="/preferencespages" element={<PreferencesPages />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import logo from "../../assets/logo.png";
 import {
   Plus,
   MessageSquare,
@@ -40,6 +41,8 @@ import { useNavigate } from "react-router-dom";
 // ✅ Custom Hook
 import { useProjectProvider } from "../../hooks/useProjectProvider";
 import toast from "react-hot-toast";
+import { useProjectContext } from "@/context/ProjectProvider";
+import { useEffect } from "react";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
@@ -48,6 +51,37 @@ const MainChatScreen = () => {
   const [message, setMessage] = useState(null);
 
   const { createProject, loading, error } = useProjectProvider();
+
+  const { fetchProjects, projects } = useProjectContext();
+
+  // Function to calculate "time ago" in simple format
+  const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = now - date; // difference in ms
+
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return "just now";
+  };
+
+  // Sort projects by updatedAt or createdAt descending
+  const sortedProjects = projects?.slice().sort((a, b) => {
+    return (
+      new Date(b.updatedAt || b.createdAt) -
+      new Date(a.updatedAt || a.createdAt)
+    );
+  });
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
   // ✅ Updated handleSend function (sends only project ID)
   const handleSend = async () => {
@@ -82,7 +116,9 @@ const MainChatScreen = () => {
     <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] min-h-screen">
       {/* ---------- Header ---------- */}
       <div className="flex justify-between items-center px-8">
-        <div className="text-2xl font-semibold tracking-tight">Logo</div>
+        <div className="text-2xl font-semibold tracking-tight">
+          <img src={logo} alt="App Logo" className="w-40 p-2 cursor-pointer" />
+        </div>
         <div className="flex items-center gap-4">
           <Button
             onClick={() => navigate("/billingpages")}
@@ -104,15 +140,18 @@ const MainChatScreen = () => {
         {/* ---------- Sidebar ---------- */}
         <aside className="w-64 h-[calc(100vh-40px)] bg-white/90 border-r border-gray-200 shadow-lg flex flex-col justify-between backdrop-blur-sm">
           <div className="p-5 h-full">
+            {/* New Chat Button */}
             <Button className="w-full cursor-pointer bg-black hover:bg-gray-900 text-white font-medium py-2 mb-5 rounded-lg shadow-md flex items-center justify-center">
               <Plus className="w-4 h-4 mr-2" /> New Chat
             </Button>
 
+            {/* Search Input */}
             <Input
               placeholder="Search chats..."
               className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500 rounded-lg"
             />
 
+            {/* Navigation */}
             <nav className="space-y-1 text-[15px] font-medium">
               <div className="flex items-center text-gray-700 py-2 px-2 rounded-md hover:bg-gray-100 cursor-pointer">
                 <MessageSquare className="w-4 h-4 mr-2" /> Recent Chats
@@ -131,29 +170,29 @@ const MainChatScreen = () => {
               </div>
             </nav>
 
+            {/* Recent Projects */}
             <div className="mt-7">
               <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
                 Recent
               </h3>
               <ul className="space-y-3 text-[14px]">
-                {[
-                  { name: "Marketing Strategy Ideas", time: "2h ago" },
-                  { name: "Code Review Assistant", time: "Yesterday" },
-                  { name: "Travel Planning Help", time: "3d ago" },
-                ].map((item, i) => (
+                {sortedProjects?.map((project) => (
                   <li
-                    key={i}
+                    key={project.id}
                     className="text-gray-700 hover:text-black cursor-pointer"
+                    onClick={() => navigate(`/chatpage/${project.id}`)}
                   >
-                    {item.name}{" "}
-                    <span className="text-gray-400 text-xs">• {item.time}</span>
+                    {project.name}{" "}
+                    <span className="text-gray-400 text-xs">
+                      • {getTimeAgo(project.updatedAt || project.createdAt)}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
 
-          {/* ---------- Settings Dropdown ---------- */}
+          {/* Settings Dropdown */}
           <div className="p-4 border-t border-gray-200">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

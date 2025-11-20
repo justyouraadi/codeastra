@@ -14,10 +14,10 @@ const formData = {
   emailPlaceholder: "Enter your email",
   passwordPlaceholder: "Create password",
   buttonText: "Sign Up",
-}; 
+};
 
 const CreateAccount = () => {
-  const { signup, signin, loading } = useAuth();
+  const { signup, loading } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ email: "", password: "" });
@@ -26,76 +26,21 @@ const CreateAccount = () => {
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // Validate form inputs
-  const validateForm = () => {
-    const { email, password } = form;
-
-    if (!email || !password) {
-      toast.error("Please fill out all fields.");
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address.");
-      return false;
-    }
-
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
-      return false;
-    }
-
-    return true;
-  };
-
   // Handle Signup
   const handleSignup = async () => {
     if (loading) return;
-    if (!validateForm()) return;
 
     const toastId = toast.loading("Creating your account...");
 
     try {
       localStorage.setItem("auth_mode", "signup");
-      const success = await signup(form.email, form.password);
-
+      await signup(form.email, form.password);
       toast.dismiss(toastId);
-
-      if (success) {
-        toast.success("🎉 Account created successfully! Please verify OTP.");
-        navigate("/otppages");
-      } else {
-        toast.error("Signup failed. Please check your details.");
-      }
+      navigate("/otppages");
     } catch (error) {
       toast.dismiss(toastId);
       console.error("Signup error:", error);
       toast.error("Something went wrong during signup. Try again later.");
-    }
-  };
-
-  // Handle Signin (optional)
-  const handleSignin = async () => {
-    if (loading) return;
-    if (!validateForm()) return;
-
-    const toastId = toast.loading("Logging in...");
-
-    try {
-      const success = await signin(form.email, form.password);
-      toast.dismiss(toastId);
-
-      if (success) {
-        toast.success("Logged in successfully!");
-        navigate("/dashboard");
-      } else {
-        toast.error("Invalid credentials. Please try again.");
-      }
-    } catch (error) {
-      toast.dismiss(toastId);
-      console.error("Signin error:", error);
-      toast.error("Something went wrong. Try again later.");
     }
   };
 

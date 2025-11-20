@@ -1,12 +1,12 @@
-import CreateAccount from '@/components/template/CreateAccount'
-import React from 'react'
+import CreateAccount from "@/components/template/CreateAccount";
+import React from "react";
 
 const CreateAccountPages = () => {
   return (
     <div>
-        <CreateAccount/>
+      <CreateAccount />
     </div>
-  )
-}
+  );
+};
 
-export default CreateAccountPages
+export default CreateAccountPages;

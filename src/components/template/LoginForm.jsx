@@ -8,7 +8,7 @@ const LoginForm = () => {
       <div className="flex-1 flex items-center justify-center p-4">
         <FormMolecules />
       </div>
- 
+
       <div className="flex-1 hidden lg:flex">
         <SideimagsForm />
       </div>
@@ -16,4 +16,4 @@ const LoginForm = () => {
   );
 };
 
-export default LoginForm; 
+export default LoginForm;

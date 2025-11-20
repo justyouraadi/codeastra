@@ -11,45 +11,19 @@ const FormMolecules = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Validate form inputs
-  const validateForm = () => {
-    if (!email || !password) {
-      toast.error("Please fill in both fields!");
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address!");
-      return false;
-    }
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long!");
-      return false;
-    }
-    return true;
-  };
-
   // Sign-in logic
   const handleSignIn = async (e) => {
     e.preventDefault();
 
-    if (loading) return; // Prevent duplicate submits
-    if (!validateForm()) return;
+    if (loading) return;
 
     const toastId = toast.loading("Signing in...");
 
     try {
       localStorage.setItem("auth_mode", "signin");
-      const success = await signin(email, password);
-
+      await signin(email, password);
       toast.dismiss(toastId);
-
-      if (success) {
-        toast.success("✅ Sign in successful!");
-        navigate("/otppages");
-      } else {
-        toast.error("⚠️ Invalid credentials. Please try again.");
-      }
+      navigate("/otppages");
     } catch (err) {
       toast.dismiss(toastId);
       console.error("Signin error:", err);
@@ -67,7 +41,9 @@ const FormMolecules = () => {
     <div className="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4">
       {/* Header */}
       <header className="w-full text-center mb-6">
-        <h1 className="text-4xl font-bold text-gray-900">Welcome to CodeAstra</h1>
+        <h1 className="text-4xl font-bold text-gray-900">
+          Welcome to CodeAstra
+        </h1>
         <p className="text-gray-600 mt-1 text-sm">
           Create, connect, and launch with AI
         </p>
