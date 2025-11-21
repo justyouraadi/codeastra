@@ -61,10 +61,10 @@ const CreateAccount = () => {
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <header>
-            <h2 className="text-4xl font-bold text-gray-900 leading-tight">
+            <h2 className="text-4xl text-center font-bold text-gray-900 leading-tight">
               {formData.title}
             </h2>
-            <p className="mt-2 text-gray-700 text-sm sm:text-base">
+            <p className="mt-2 text-gray-700 text-center text-sm sm:text-base">
               {formData.subtitle}
             </p>
           </header>
