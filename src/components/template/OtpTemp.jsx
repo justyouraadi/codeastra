@@ -108,7 +108,7 @@ const OtpTemp = () => {
           </div>
 
           {/* Verify Button */}
-          <ButtonAtom className="w-full bg-black text-white hover:bg-gray-800 py-4 rounded-md">
+          <ButtonAtom onClick={() => handleVerify()} className="w-full bg-black text-white hover:bg-gray-800 py-4 rounded-md">
             Verify OTP
           </ButtonAtom>
         </div>

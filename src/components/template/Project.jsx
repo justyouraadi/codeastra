@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 
 const Project = () => {
   const { fetchProjects, projects, loading, error } = useProjectContext();
@@ -207,7 +208,17 @@ const Project = () => {
 
         {/* ---------- PROJECT LIST ---------- */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-5 sm:px-10 pb-10 w-full">
-          {error && <p className="text-red-500">Error: {error}</p>}
+          {loading && (
+            <div className="col-span-full flex justify-center items-center py-10">
+              <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
+            </div>
+          )}
+
+          {error && (
+            <p className="text-red-500 col-span-full text-center">
+              Error: {error}
+            </p>
+          )}
 
           {!loading && !error && projects?.length > 0
             ? projects.map((proj, i) => (
@@ -232,7 +243,9 @@ const Project = () => {
                   />
                 </div>
               ))
-            : !loading && <p>No projects found.</p>}
+            : !loading && (
+                <p className="col-span-full text-center">No projects found.</p>
+              )}
         </section>
       </div>
     </div>

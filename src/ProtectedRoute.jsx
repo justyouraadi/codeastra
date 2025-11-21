@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { pingAPI } from "../src/apis/ProtectedRoute.Api";
+import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = () => {
   const navigate = useNavigate();
@@ -36,12 +37,8 @@ const ProtectedRoute = () => {
 
   if (isChecking) {
     return (
-      <div class="w-full flex items-center justify-center py-10 h-screen">
-        <div class="flex flex-col gap-4 items-center justify-center">
-          <div class="w-16 h-16 sm:w-20 sm:h-20 border-4 border-transparent text-blue-400 text-4xl animate-spin flex items-center justify-center border-t-blue-400 rounded-full">
-            <div class="w-12 h-12 sm:w-16 sm:h-16 border-4 border-transparent text-red-400 text-2xl animate-spin flex items-center justify-center border-t-red-400 rounded-full"></div>
-          </div>
-        </div>
+      <div className="col-span-full h-screen flex justify-center items-center py-10">
+        <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
       </div>
     );
   }
