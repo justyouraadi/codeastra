@@ -34,13 +34,17 @@ const CreateAccount = () => {
 
     try {
       localStorage.setItem("auth_mode", "signup");
-      await signup(form.email, form.password);
-      toast.dismiss(toastId);
-      navigate("/otppages");
+      const response = await signup(form.email, form.password);
+
+      if (response) {
+        toast.dismiss(toastId);
+        navigate("/otppages");
+      }
+
+      throw new Error(response?.error || "Signup failed");
     } catch (error) {
       toast.dismiss(toastId);
       console.error("Signup error:", error);
-      toast.error("Something went wrong during signup. Try again later.");
     }
   };
 
