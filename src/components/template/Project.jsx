@@ -73,7 +73,7 @@ const Project = () => {
       {/* ---------- SIDEBAR ---------- */}
       <aside className="hidden lg:flex w-64 h-screen bg-white/90 border-r border-gray-200 shadow-lg flex-col justify-between backdrop-blur-sm fixed left-0 top-0">
         <div className="p-5 h-full overflow-y-auto">
-          <Button className="w-full cursor-pointer bg-black hover:bg-gray-900 text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center">
+          <Button className="w-full cursor-pointer bg-black hover:bg-gray-900 text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center" onClick={()=>{navigate("/mainpagescreen")}}>
             <Plus className="w-4 h-4 mr-2" /> New Chat
           </Button>
 
@@ -230,7 +230,7 @@ const Project = () => {
                   <FormCard
                     title={proj.name}
                     description={proj.description || "No description provided"}
-                    author={`User ID: ${proj.user_id}`}
+                    author={`User`}
                     createdAt={new Date(proj.createdAt).toLocaleDateString()}
                     icon={<FaCode />}
                     style={{

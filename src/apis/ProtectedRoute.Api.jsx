@@ -1,18 +1,15 @@
 export const pingAPI = async () => {
   console.log("🟢 Ping API Sending...");
 
-  // ✅ Get token from localStorage
   const authToken = localStorage.getItem("signin_token");
   if (!authToken) throw new Error("No auth token found");
 
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.append("Authorization", `Bearer ${authToken}`);
-
   const requestOptions = {
     method: "GET",
-    headers: myHeaders,
-    redirect: "follow",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
   };
 
   try {
@@ -23,12 +20,14 @@ export const pingAPI = async () => {
 
     if (!res.ok) {
       const text = await res.text();
-      console.error("❌ API Raw Response =>", text);
-      throw new Error(`Server Error: ${res.status} - ${text}`);
+
+      // 🛑 CREATE a custom error object with status
+      const error = new Error(text || "Server Error");
+      error.status = res.status; // <--- IMPORTANT
+      throw error;
     }
 
     const data = await res.json();
-    console.log("✅ Ping Success =>", data);
     return data;
   } catch (error) {
     console.error("❌ Ping API Error =>", error.message);

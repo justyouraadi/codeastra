@@ -18,13 +18,15 @@ const ProtectedRoute = () => {
 
     const checkToken = async () => {
       try {
-        await pingAPI(); // API uses token internally
+       const temp =  await pingAPI(); // API uses token internally
+       console.log("token check --> ", temp);
         setIsValid(true);
       } catch (err) {
-        // ✅ Check for 403 explicitly
-        if (err.response && err.response.status === 403) {
+        // Detect expiry with err.status instead of err.response.status
+        if (err.status === 403) {
           localStorage.removeItem("signin_token");
         }
+
         setIsValid(false);
         navigate("/", { replace: true });
       } finally {

@@ -2,6 +2,8 @@
 export const getProjectsAPI = async () => {
   const token = localStorage.getItem("signin_token"); // ✅ get token
 
+  console.log("Using token in GetProjects.Api:", token); // ✅ log token for debugging
+
   if (!token) {
     throw new Error("No token found. Please sign in again.");
   }
