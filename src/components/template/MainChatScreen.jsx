@@ -18,6 +18,8 @@ import {
   Image,
   FileText,
   Video,
+  Menu,
+  X,
 } from "lucide-react";
 import { CiLogout } from "react-icons/ci";
 
@@ -45,7 +47,8 @@ import toast from "react-hot-toast";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // dropdown menu state (plus button)
+  const [sidebarOpen, setSidebarOpen] = useState(false); // mobile sidebar state
   const [prompt, setPrompt] = useState("");
   const [message, setMessage] = useState(null);
 
@@ -55,6 +58,14 @@ const MainChatScreen = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  useEffect(() => {
+    if (sidebarOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
 
   const getTimeAgo = (dateString) => {
     const now = new Date();
@@ -98,28 +109,64 @@ const MainChatScreen = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] min-h-screen flex flex-col md:flex-row">
+    <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] min-h-screen flex">
+      {/* Mobile Menu Button */}
+      <div className="md:hidden fixed top-4 left-4 z-40">
+        <button
+          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+          onClick={() => setSidebarOpen((s) => !s)}
+          className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+        >
+          {sidebarOpen ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <Menu className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-full md:w-64 fixed md:relative left-0 top-0 h-screen md:h-auto bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col justify-between z-20 overflow-y-auto">
-        <div className="p-5 h-full flex flex-col">
-          {/* Logo */}
+      <aside
+        className={`
+          fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
+          transform transition-transform duration-300 ease-in-out
+          ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0
+        `}
+      >
+        {/* Sidebar Top */}
+        <div className="p-5 flex flex-col">
           <div className="flex items-center justify-center mb-5">
             <img src={logo} className="w-36 md:w-40 cursor-pointer" />
           </div>
 
-          {/* New Chat Button */}
-          <Button className="w-full bg-black text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center hover:bg-gray-900" onClick={()=>{navigate("/mainpagescreen")}}>
+          <Button
+            className="w-full bg-black text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center hover:bg-gray-900"
+            onClick={() => {
+              navigate("/mainpagescreen");
+              setSidebarOpen(false);
+            }}
+          >
             <Plus className="w-4 h-4 mr-2" /> New Chat
           </Button>
 
-          {/* Search */}
           <Input
             placeholder="Search chats..."
             className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
           />
 
           {/* Navigation */}
-          <nav className="space-y-1 text-[14px] font-medium">
+          <nav className="space-y-1 text-[14px] font-medium mb-5">
             <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
               <MessageSquare className="w-4 h-4 mr-2" /> Recent Chats
             </div>
@@ -127,7 +174,10 @@ const MainChatScreen = () => {
               <BookOpen className="w-4 h-4 mr-2" /> Library
             </div>
             <div
-              onClick={() => navigate("/projectpages")}
+              onClick={() => {
+                navigate("/projectpages");
+                setSidebarOpen(false);
+              }}
               className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700"
             >
               <Folder className="w-4 h-4 mr-2" /> Projects
@@ -136,30 +186,33 @@ const MainChatScreen = () => {
               <Star className="w-4 h-4 mr-2" /> Favorites
             </div>
           </nav>
-
-          {/* Recent Projects */}
-          <div className="mt-7">
-            <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
-              Recent
-            </h3>
-            <ul className="space-y-3 text-[13px]">
-              {sortedProjects?.map((project) => (
-                <li
-                  key={project.id}
-                  onClick={() => navigate(`/chatpage/${project.id}`)}
-                  className="text-gray-700 hover:text-black cursor-pointer"
-                >
-                  {project.name}
-                  <span className="text-gray-400 text-xs ml-1">
-                    • {getTimeAgo(project.updatedAt || project.createdAt)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
-        {/* Settings */}
+        {/* Recent Section: Scrollable only */}
+        <div className="flex-1 px-5 overflow-y-auto">
+          <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
+            Recent
+          </h3>
+          <ul className="space-y-3 text-[13px]">
+            {sortedProjects?.map((project) => (
+              <li
+                key={project.id}
+                onClick={() => {
+                  navigate(`/chatpage/${project.id}`);
+                  setSidebarOpen(false);
+                }}
+                className="text-gray-700 hover:text-black cursor-pointer"
+              >
+                {project.name}
+                <span className="text-gray-400 text-xs ml-1">
+                  • {getTimeAgo(project.updatedAt || project.createdAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Sidebar Bottom */}
         <div className="p-4 border-t border-gray-200">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -178,21 +231,30 @@ const MainChatScreen = () => {
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
-                onClick={() => navigate("/profilepage")}
+                onClick={() => {
+                  navigate("/profilepage");
+                  setSidebarOpen(false);
+                }}
                 className="cursor-pointer hover:bg-gray-100 text-gray-800"
               >
                 <User className="w-4 h-4 mr-2 text-gray-500" /> Profile
               </DropdownMenuItem>
 
               <DropdownMenuItem
-                onClick={() => navigate("/")}
+                onClick={() => {
+                  navigate("/");
+                  setSidebarOpen(false);
+                }}
                 className="cursor-pointer hover:bg-gray-100 text-red-900"
               >
                 <CiLogout className="w-4 h-4 mr-2" /> Log Out
               </DropdownMenuItem>
 
               <DropdownMenuItem
-                onClick={() => navigate("/billingpages")}
+                onClick={() => {
+                  navigate("/billingpages");
+                  setSidebarOpen(false);
+                }}
                 className="cursor-pointer hover:bg-gray-100 text-gray-800"
               >
                 <Crown className="w-4 h-4 mr-2 text-yellow-500" /> Upgrade Plan
@@ -203,8 +265,8 @@ const MainChatScreen = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 px-4 md:px-6 min-h-screen flex flex-col">
-        <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-4 mt-4">
+      <div className="flex-1 px-4 md:px-6 min-h-screen flex flex-col md:ml-64">
+        <div className="w-full flex items-center justify-end gap-4 mt-4">
           <a href="#" className="bg-black text-white rounded px-3 py-2">
             Upgrade
           </a>
@@ -285,9 +347,7 @@ const MainChatScreen = () => {
               </p>
             )}
             {error && (
-              <p className="text-center text-sm mt-3 text-red-600">
-                Error: {error}
-              </p>
+              <p className="text-center text-sm mt-3 text-red-600">{error}</p>
             )}
           </div>
 
