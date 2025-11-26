@@ -1,7 +1,4 @@
-// Final cleaned, responsive, humanized Project page with integrated Sidebar
-// NOTE: Replace missing components (Button, Input, FormCard, etc.) imports as per your project structure.
-
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import FormCard from "../organisms/FormCard";
@@ -10,8 +7,6 @@ import ButtonAtom from "../atoms/ButtonAtom";
 import { useProjectContext } from "../../context/ProjectProvider";
 import { FaCode, FaFilter, FaSearch } from "react-icons/fa";
 import { IoIosArrowBack } from "react-icons/io";
-
-// Sidebar Icons
 import {
   Plus,
   MessageSquare,
@@ -21,6 +16,7 @@ import {
   Settings,
   User,
   Crown,
+  Menu,
 } from "lucide-react";
 import { CiLogout } from "react-icons/ci";
 import {
@@ -38,31 +34,29 @@ import { Loader2 } from "lucide-react";
 const Project = () => {
   const { fetchProjects, projects, loading, error } = useProjectContext();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Function to calculate "time ago" in simple format
   const getTimeAgo = (dateString) => {
     const now = new Date();
     const date = new Date(dateString);
-    const diff = now - date; // difference in ms
-
+    const diff = now - date;
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-
     if (days > 0) return `${days}d ago`;
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
     return "just now";
   };
 
-  // Sort projects by updatedAt or createdAt descending
-  const sortedProjects = projects?.slice().sort((a, b) => {
-    return (
-      new Date(b.updatedAt || b.createdAt) -
-      new Date(a.updatedAt || a.createdAt)
+  const sortedProjects = projects
+    ?.slice()
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt || b.createdAt) -
+        new Date(a.updatedAt || a.createdAt)
     );
-  });
 
   useEffect(() => {
     fetchProjects();
@@ -70,10 +64,28 @@ const Project = () => {
 
   return (
     <div className="min-h-screen flex bg-gray-100">
+      {/* ---------- MOBILE SIDEBAR BUTTON ---------- */}
+      <div className="lg:hidden fixed top-4 left-4 z-1">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
+
       {/* ---------- SIDEBAR ---------- */}
-      <aside className="hidden lg:flex w-64 h-screen bg-white/90 border-r border-gray-200 shadow-lg flex-col justify-between backdrop-blur-sm fixed left-0 top-0">
-        <div className="p-5 h-full overflow-y-auto">
-          <Button className="w-full cursor-pointer bg-black hover:bg-gray-900 text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center" onClick={()=>{navigate("/mainpagescreen")}}>
+      <aside
+        className={`fixed top-0 left-0 h-full bg-white/90 border-r border-gray-200 shadow-lg flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } w-64 z-40 backdrop-blur-sm`}
+      >
+        <div className="flex flex-col h-full p-5">
+          {/* Top buttons */}
+          <Button
+            className="w-full cursor-pointer bg-black hover:bg-gray-900 text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center"
+            onClick={() => navigate("/mainpagescreen")}
+          >
             <Plus className="w-4 h-4 mr-2" /> New Chat
           </Button>
 
@@ -82,6 +94,7 @@ const Project = () => {
             className="mb-5 bg-gray-100 border-gray-200 rounded-lg"
           />
 
+          {/* Navigation */}
           <nav className="space-y-1 text-[15px] font-medium">
             <div className="flex items-center text-gray-700 py-2 px-2 rounded-md hover:bg-gray-100 cursor-pointer">
               <MessageSquare className="w-4 h-4 mr-2" /> Recent Chats
@@ -100,8 +113,8 @@ const Project = () => {
             </div>
           </nav>
 
-          {/* Recent Projects */}
-          <div className="mt-7">
+          {/* ---------- SCROLLABLE RECENT ONLY ---------- */}
+          <div className="mt-7 flex-1 overflow-y-auto">
             <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
               Recent
             </h3>
@@ -120,53 +133,59 @@ const Project = () => {
               ))}
             </ul>
           </div>
-        </div>
 
-        {/* ----- SETTINGS ----- */}
-        <div className="p-4 border-t border-gray-200">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start bg-black text-white hover:bg-gray-100 hover:text-black transition"
-              >
-                <Settings className="w-4 h-4 mr-2" /> Settings
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent className="w-56 bg-white shadow-lg border border-gray-100 rounded-lg">
-              <DropdownMenuLabel className="text-gray-700 font-semibold text-sm">
-                Account
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                onClick={() => navigate("/profilepage")}
-                className="cursor-pointer hover:bg-gray-100"
-              >
-                <User className="w-4 h-4 mr-2 text-gray-600" /> Profile
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onClick={() => navigate("/")}
-                className="cursor-pointer hover:bg-gray-100 text-red-700"
-              >
-                <CiLogout className="w-4 h-4 mr-2" /> Log Out
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onClick={() => navigate("/billingpages")}
-                className="cursor-pointer hover:bg-gray-100"
-              >
-                <Crown className="w-4 h-4 mr-2 text-yellow-500" /> Upgrade Plan
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Bottom Settings */}
+          <div className="mt-4 border-t border-gray-200 pt-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start bg-black text-white hover:bg-gray-100 hover:text-black transition"
+                >
+                  <Settings className="w-4 h-4 mr-2" /> Settings
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-white shadow-lg border border-gray-100 rounded-lg">
+                <DropdownMenuLabel className="text-gray-700 font-semibold text-sm">
+                  Account
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => navigate("/profilepage")}
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  <User className="w-4 h-4 mr-2 text-gray-600" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/")}
+                  className="cursor-pointer hover:bg-gray-100 text-red-700"
+                >
+                  <CiLogout className="w-4 h-4 mr-2" /> Log Out
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/billingpages")}
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  <Crown className="w-4 h-4 mr-2 text-yellow-500" /> Upgrade
+                  Plan
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </aside>
 
-      {/* ---------- MAIN CONTENT ---------- */}
+      {/* Transparent overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-transparent z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
       <div className="flex-1 lg:ml-64">
+        {/* Top Navigation */}
         <nav className="flex items-center px-5 sm:px-10 py-4 border-b bg-white/80 backdrop-blur-md">
           <span
             onClick={() => navigate(-1)}
@@ -178,48 +197,37 @@ const Project = () => {
             src={logo}
             onClick={() => navigate("/mainpagescreen")}
             alt="App Logo"
-            className="w-40 p-2 cursor-pointer"
+            className="w-32 sm:w-40 p-2 cursor-pointer"
           />
         </nav>
 
-        <section className="px-5 sm:px-10 py-8">
-          <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">
-            Apps
-          </h2>
-          <p className="text-gray-500 mb-6">
-            Discover and manage your application ecosystem
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full">
-              <FaSearch className="absolute left-3 top-3 text-gray-400" />
-              <InputAtom
-                type="text"
-                placeholder="Search apps..."
-                className="pl-10 pr-4 py-2 w-full"
-              />
-            </div>
-
-            <ButtonAtom className="flex items-center gap-2 bg-black text-white border px-4 py-2 rounded-lg hover:bg-white hover:text-black transition w-full sm:w-auto">
-              <FaFilter /> All Apps
-            </ButtonAtom>
+        {/* Search + Filter */}
+        <section className="px-5 sm:px-10 py-8 flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+            <InputAtom
+              type="text"
+              placeholder="Search apps..."
+              className="pl-10 pr-4 py-2 w-full"
+            />
           </div>
+          <ButtonAtom className="flex items-center gap-2 bg-black text-white border px-4 py-2 rounded-lg hover:bg-white hover:text-black transition w-full sm:w-auto">
+            <FaFilter /> All Apps
+          </ButtonAtom>
         </section>
 
-        {/* ---------- PROJECT LIST ---------- */}
+        {/* Project Cards */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-5 sm:px-10 pb-10 w-full">
           {loading && (
             <div className="col-span-full flex justify-center items-center py-10">
               <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
             </div>
           )}
-
           {error && (
             <p className="text-red-500 col-span-full text-center">
               Error: {error}
             </p>
           )}
-
           {!loading && !error && projects?.length > 0
             ? projects.map((proj, i) => (
                 <div
