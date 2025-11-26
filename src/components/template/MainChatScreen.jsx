@@ -108,6 +108,11 @@ const MainChatScreen = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("signin_token");
+    navigate("/");
+  };
+
   return (
     <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] min-h-screen flex">
       {/* Mobile Menu Button */}
@@ -242,7 +247,7 @@ const MainChatScreen = () => {
 
               <DropdownMenuItem
                 onClick={() => {
-                  navigate("/");
+                  handleLogout();
                   setSidebarOpen(false);
                 }}
                 className="cursor-pointer hover:bg-gray-100 text-red-900"
