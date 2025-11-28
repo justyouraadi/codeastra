@@ -24,9 +24,8 @@ const FormMolecules = () => {
       const response = await signin(email, password);
       
       if(response){
-        navigate("/otppages");
-      }else{
         toast.dismiss(toastId);
+        navigate("/otppages");
       }
     } catch (err) {
       toast.dismiss(toastId);
