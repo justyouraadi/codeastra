@@ -30,7 +30,7 @@ const FormMolecules = () => {
     } catch (err) {
       toast.dismiss(toastId);
       console.error("Signin error:", err);
-      toast.error("❌ Something went wrong. Please try again later.");
+      toast.error("Something went wrong. Please try again later.");
     }
   };
 
