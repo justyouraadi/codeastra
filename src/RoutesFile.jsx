@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import React from "react";
 import LoginFormPages from "./pages/LoginFormPages";
 import ProjectPages from "./pages/ProjectPages";
@@ -12,8 +12,6 @@ import ApisPage from "./pages/ApisPage";
 import TeamManagementPages from "./pages/TeamManagementPages";
 import PreferencesPages from "./pages/PreferencesPages";
 import NoAppsPage from "./components/organisms/NoAppsPage";
-
-// 🧭 Import layout
 import Layout from "./Layout";
 import CreateAccountPages from "./pages/CreateAccountPages";
 import OtpPages from "./pages/OtpPages";
@@ -22,38 +20,44 @@ import ProtectedRoute from "./ProtectedRoute";
 
 const RoutesFile = () => {
   return (
-    <div>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LoginFormPages />} />
-          <Route path="/otppages" element={<OtpPages />} />
-          <Route path="/createaccount" element={<CreateAccountPages />} />
-          <Route path="/createprofile" element={<CreateProfilePages />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/projectpages" element={<ProjectPages />} />
-            <Route path="/chatpage/:id" element={<Chatpage />} />
-            <Route path="/mainpagescreen" element={<MainPageScreen />} />
-            <Route path="/NoAppsPage" element={<NoAppsPage />} />
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            localStorage.getItem("signin_token") ? (
+              <Navigate to="/mainpagescreen" replace />
+            ) : (
+              <LoginFormPages />
+            )
+          }
+        />
 
-            <Route element={<Layout />}>
-              <Route path="/profilepage" element={<Profilepage />} />
-              <Route path="/securitypage" element={<SecurityPage />} />
-              <Route path="/billingpages" element={<BillingPages />} />
-              <Route
-                path="/notificationspage"
-                element={<NotificationsPage />}
-              />
-              <Route path="/apispage" element={<ApisPage />} />
-              <Route
-                path="/teammanagementpages"
-                element={<TeamManagementPages />}
-              />
-              <Route path="/preferencespages" element={<PreferencesPages />} />
-            </Route>
+        <Route path="/otppages" element={<OtpPages />} />
+        <Route path="/createaccount" element={<CreateAccountPages />} />
+        <Route path="/createprofile" element={<CreateProfilePages />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/projectpages" element={<ProjectPages />} />
+          <Route path="/chatpage/:id" element={<Chatpage />} />
+          <Route path="/mainpagescreen" element={<MainPageScreen />} />
+          <Route path="/NoAppsPage" element={<NoAppsPage />} />
+
+          <Route element={<Layout />}>
+            <Route path="/profilepage" element={<Profilepage />} />
+            <Route path="/securitypage" element={<SecurityPage />} />
+            <Route path="/billingpages" element={<BillingPages />} />
+            <Route path="/notificationspage" element={<NotificationsPage />} />
+            <Route path="/apispage" element={<ApisPage />} />
+            <Route
+              path="/teammanagementpages"
+              element={<TeamManagementPages />}
+            />
+            <Route path="/preferencespages" element={<PreferencesPages />} />
           </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 };
 

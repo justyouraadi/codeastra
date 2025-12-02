@@ -96,21 +96,21 @@ const Project = () => {
 
           {/* Navigation */}
           <nav className="space-y-1 text-[15px] font-medium">
-            <div className="flex items-center text-gray-700 py-2 px-2 rounded-md hover:bg-gray-100 cursor-pointer">
+            {/* <div className="flex items-center text-gray-700 py-2 px-2 rounded-md hover:bg-gray-100 cursor-pointer">
               <MessageSquare className="w-4 h-4 mr-2" /> Recent Chats
             </div>
             <div className="flex items-center text-gray-700 py-2 px-2 rounded-md hover:bg-gray-100 cursor-pointer">
               <BookOpen className="w-4 h-4 mr-2" /> Library
-            </div>
+            </div> */}
             <div
               onClick={() => navigate("/projectpages")}
               className="flex items-center text-gray-700 py-2 px-2 rounded-md hover:bg-gray-100 cursor-pointer"
             >
               <Folder className="w-4 h-4 mr-2" /> Projects
             </div>
-            <div className="flex items-center text-gray-700 py-2 px-2 rounded-md hover:bg-gray-100 cursor-pointer">
+            {/* <div className="flex items-center text-gray-700 py-2 px-2 rounded-md hover:bg-gray-100 cursor-pointer">
               <Star className="w-4 h-4 mr-2" /> Favorites
-            </div>
+            </div> */}
           </nav>
 
           {/* ---------- SCROLLABLE RECENT ONLY ---------- */}

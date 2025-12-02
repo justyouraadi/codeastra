@@ -345,15 +345,14 @@ const MainChatScreen = () => {
                 {loading ? "..." : <Send className="w-4 h-4" />}
               </Button>
             </div>
-
-            {message && (
+            {/* {message && (
               <p className="text-center text-sm mt-3 text-gray-600">
                 {message}
               </p>
-            )}
-            {error && (
+            )} */}
+            {/* {error && (
               <p className="text-center text-sm mt-3 text-red-600">{error}</p>
-            )}
+            )} */}
           </div>
 
           {/* Cards Section */}

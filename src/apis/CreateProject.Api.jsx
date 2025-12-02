@@ -1,42 +1,37 @@
+import toast from "react-hot-toast";
+
 export const createProjectAPI = async (prompt) => {
-  console.log("🟢 Create Project API Sending =>", prompt);
-
-  // ✅ Get token from localStorage
-  const authToken = localStorage.getItem("signin_token");
-  if (!authToken) throw new Error("No auth token found");
-
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.append("Authorization", `Bearer ${authToken}`);
-
-  const raw = JSON.stringify({ prompt });
-
-  const requestOptions = {
-    method: "POST",
-    headers: myHeaders,
-    body: raw,
-    redirect: "follow",
-  };
+  const token = localStorage.getItem("signin_token");
+  if (!token) throw new Error("No auth token found");
 
   try {
-    // ✅ Corrected endpoint (matches your previous working pattern)
     const res = await fetch(
       "https://gateway.codeastra.ai/projects/api/v1/projects",
-      requestOptions
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ prompt }),
+      }
     );
 
-    // Check for gateway timeout or bad response
+    // Read response body
+    const data = await res.json();
+
+    // If server returned error
     if (!res.ok) {
-      const text = await res.text();
-      console.error("❌ API Raw Response =>", text);
-      throw new Error(`Server Error: ${res.status} - ${text}`);
+      const msg = data?.error?.explanation?.[0] || "Something went wrong";
+
+      toast.error(msg);
+
+      throw new Error(msg);
     }
 
-    const data = await res.json();
-    console.log("✅ Project Created =>", data);
-    return data;
-  } catch (error) {
-    console.error("❌ API Error =>", error.message);
-    throw error;
+    return data; // success
+  } catch (err) {
+    console.error("API Error:", err.message);
+    throw err;
   }
 };
