@@ -36,6 +36,7 @@ const CreateAccount = () => {
       localStorage.setItem("auth_mode", "signup");
       const response = await signup(form.email, form.password);
 
+      toast.dismiss(toastId);
       if (response) {
         toast.dismiss(toastId);
         navigate("/otppages");

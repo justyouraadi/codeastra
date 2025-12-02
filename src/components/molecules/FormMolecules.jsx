@@ -22,8 +22,9 @@ const FormMolecules = () => {
     try {
       localStorage.setItem("auth_mode", "signin");
       const response = await signin(email, password);
-      
-      if(response){
+
+      toast.dismiss(toastId);
+      if (response) {
         toast.dismiss(toastId);
         navigate("/otppages");
       }
