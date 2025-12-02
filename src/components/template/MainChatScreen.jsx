@@ -172,12 +172,12 @@ const MainChatScreen = () => {
 
           {/* Navigation */}
           <nav className="space-y-1 text-[14px] font-medium mb-5">
-            <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
+            {/* <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
               <MessageSquare className="w-4 h-4 mr-2" /> Recent Chats
             </div>
             <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
               <BookOpen className="w-4 h-4 mr-2" /> Library
-            </div>
+            </div> */}
             <div
               onClick={() => {
                 navigate("/projectpages");
@@ -187,9 +187,9 @@ const MainChatScreen = () => {
             >
               <Folder className="w-4 h-4 mr-2" /> Projects
             </div>
-            <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
+            {/* <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
               <Star className="w-4 h-4 mr-2" /> Favorites
-            </div>
+            </div> */}
           </nav>
         </div>
 
