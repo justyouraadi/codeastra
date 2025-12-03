@@ -26,7 +26,7 @@ const RoutesFile = () => {
           path="/"
           element={
             localStorage.getItem("signin_token") ? (
-              <Navigate to="/mainpagescreen" replace />
+              <Navigate to="/mainpagescreen" />
             ) : (
               <LoginFormPages />
             )

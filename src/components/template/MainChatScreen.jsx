@@ -3,10 +3,7 @@ import logo from "../../assets/logo.png";
 import avatar from "../../assets/User-Avatar.png";
 import {
   Plus,
-  MessageSquare,
-  BookOpen,
   Folder,
-  Star,
   Settings,
   Send,
   Mic,
@@ -47,12 +44,13 @@ import toast from "react-hot-toast";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false); // dropdown menu state (plus button)
-  const [sidebarOpen, setSidebarOpen] = useState(false); // mobile sidebar state
+  const [open, setOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [message, setMessage] = useState(null);
+  const [isLoadingFullScreen, setIsLoadingFullScreen] = useState(false);
 
-  const { createProject, loading, error } = useProjectProvider();
+  const { createProject, loading } = useProjectProvider();
   const { fetchProjects, projects } = useProjectContext();
 
   useEffect(() => {
@@ -98,6 +96,7 @@ const MainChatScreen = () => {
 
     try {
       setMessage(null);
+      setIsLoadingFullScreen(true); // Full-screen loader on
       const result = await createProject(prompt);
       setMessage("Project created successfully!");
       setTimeout(() => navigate(`/chatpage/${result?.data?.id}`), 400);
@@ -105,6 +104,7 @@ const MainChatScreen = () => {
       setMessage(`Error: ${err.message}`);
     } finally {
       setPrompt("");
+      setIsLoadingFullScreen(false); // Full-screen loader off
     }
   };
 
@@ -114,7 +114,17 @@ const MainChatScreen = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] min-h-screen flex">
+    <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] min-h-screen flex relative">
+      {/* Full-screen Loader */}
+      {isLoadingFullScreen && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/50 backdrop-blur-xl">
+          <div className="w-24 h-24 border-8 border-t-black border-gray-200 rounded-full animate-spin"></div>
+          <p className="text-white mt-4 text-lg font-medium">
+            Creating Project...
+          </p>
+        </div>
+      )}
+
       {/* Mobile Menu Button */}
       <div className="md:hidden fixed top-4 left-4 z-40">
         <button
@@ -149,7 +159,6 @@ const MainChatScreen = () => {
           } md:translate-x-0
         `}
       >
-        {/* Sidebar Top */}
         <div className="p-5 flex flex-col">
           <div className="flex items-center justify-center mb-5">
             <img src={logo} className="w-36 md:w-40 cursor-pointer" />
@@ -172,12 +181,6 @@ const MainChatScreen = () => {
 
           {/* Navigation */}
           <nav className="space-y-1 text-[14px] font-medium mb-5">
-            {/* <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
-              <MessageSquare className="w-4 h-4 mr-2" /> Recent Chats
-            </div>
-            <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
-              <BookOpen className="w-4 h-4 mr-2" /> Library
-            </div> */}
             <div
               onClick={() => {
                 navigate("/projectpages");
@@ -187,13 +190,10 @@ const MainChatScreen = () => {
             >
               <Folder className="w-4 h-4 mr-2" /> Projects
             </div>
-            {/* <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700">
-              <Star className="w-4 h-4 mr-2" /> Favorites
-            </div> */}
           </nav>
         </div>
 
-        {/* Recent Section: Scrollable only */}
+        {/* Recent Section */}
         <div className="flex-1 px-5 overflow-y-auto">
           <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
             Recent
@@ -345,14 +345,6 @@ const MainChatScreen = () => {
                 {loading ? "..." : <Send className="w-4 h-4" />}
               </Button>
             </div>
-            {/* {message && (
-              <p className="text-center text-sm mt-3 text-gray-600">
-                {message}
-              </p>
-            )} */}
-            {/* {error && (
-              <p className="text-center text-sm mt-3 text-red-600">{error}</p>
-            )} */}
           </div>
 
           {/* Cards Section */}

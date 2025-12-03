@@ -17,6 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { useProjectProvider } from "../../hooks/useProjectProvider";
 import { io } from "socket.io-client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 const SOCKET_URL = "http://localhost:5000";
 const socket = io(SOCKET_URL, { autoConnect: false });
@@ -28,14 +35,19 @@ const FolderTree = () => {
     pages: true,
     ui: true,
   });
+
   return (
-    <div className="text-gray-200 font-mono text-sm px-5 py-8 bg-[#0f0f0f] select-none mt-14">
+    <div className="text-gray-200 font-mono text-sm px-5 py-8 bg-[#0f0f0f] select-none mt-14 overflow-y-auto h-full">
       <div>
         <div
           className="flex items-center gap-2 cursor-pointer hover:text-white"
           onClick={() => setOpen({ ...open, src: !open.src })}
         >
-          {open.src ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {open.src ? (
+            <ChevronDown className="w-4 h-4" />
+          ) : (
+            <ChevronRight className="w-4 h-4" />
+          )}
           <Folder className="w-4 h-4 text-yellow-400" /> <span>src</span>
         </div>
         {open.src && (
@@ -44,12 +56,20 @@ const FolderTree = () => {
               <File className="w-4 h-4 text-blue-400" />
               <span>app.tsx</span>
             </div>
+
+            {/* Components folder */}
             <div>
               <div
                 className="flex items-center gap-2 cursor-pointer hover:text-white"
-                onClick={() => setOpen({ ...open, components: !open.components })}
+                onClick={() =>
+                  setOpen({ ...open, components: !open.components })
+                }
               >
-                {open.components ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                {open.components ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
                 <Folder className="w-4 h-4 text-yellow-400" />
                 <span>components</span>
               </div>
@@ -60,14 +80,19 @@ const FolderTree = () => {
                       className="flex items-center gap-2 cursor-pointer hover:text-white"
                       onClick={() => setOpen({ ...open, pages: !open.pages })}
                     >
-                      {open.pages ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      {open.pages ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
                       <Folder className="w-4 h-4 text-yellow-400" />
                       <span>pages</span>
                     </div>
                     {open.pages && (
                       <div className="ml-6 mt-1 border-l border-gray-700 pl-3">
                         <div className="flex items-center gap-2 bg-[#1a1a1a] px-2 py-1 rounded-md">
-                          <File className="w-4 h-4 text-blue-400" /> <span>interface.ts</span>
+                          <File className="w-4 h-4 text-blue-400" />
+                          <span>interface.ts</span>
                         </div>
                       </div>
                     )}
@@ -75,12 +100,18 @@ const FolderTree = () => {
                 </div>
               )}
             </div>
+
+            {/* UI folder */}
             <div>
               <div
                 className="flex items-center gap-2 cursor-pointer hover:text-white"
                 onClick={() => setOpen({ ...open, ui: !open.ui })}
               >
-                {open.ui ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                {open.ui ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
                 <Folder className="w-4 h-4 text-yellow-400" />
                 <span>ui</span>
               </div>
@@ -97,7 +128,9 @@ const ChatTemp = () => {
   const { fetchProjectById, selectedProject } = useProjectProvider();
 
   const [dividerX, setDividerX] = useState(() => {
-    if (window.innerWidth < 768) return 100;
+    const width = window.innerWidth;
+    if (width < 768) return 100;
+    if (width < 1024) return 50; // Adjust for tablets
     return parseFloat(localStorage.getItem("dividerX")) || 35;
   });
 
@@ -106,56 +139,50 @@ const ChatTemp = () => {
   const [viewMode, setViewMode] = useState("output");
   const [waitingForBot, setWaitingForBot] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [deviceView, setDeviceView] = useState("desktop"); // desktop or mobile
+  const [deviceView, setDeviceView] = useState("desktop");
+  const [selectedVersion, setSelectedVersion] = useState(""); // Selected version for preview
+
+  const [botTexts, setBotTexts] = useState([]);
+  const [userTexts, setUserTexts] = useState([]);
 
   const isDragging = useRef(false);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
-    if (window.innerWidth > 768) localStorage.setItem("dividerX", dividerX);
+    const width = window.innerWidth;
+    if (width >= 768) localStorage.setItem("dividerX", dividerX);
   }, [dividerX]);
 
-  // FETCH PROJECT
+  // Fetch Project Data
+  useEffect(() => {
+    if (!id) return;
 
-  const [botTexts, setBotTexts] = useState([]);
-const [userTexts, setUserTexts] = useState([]);
+    (async () => {
+      const data = await fetchProjectById(id);
+      if (!data?.success) return;
 
-useEffect(() => {
-  if (!id) return;
+      const botArray = [];
+      const userArray = [];
 
-  (async () => {
-    const data = await fetchProjectById(id);
-    if (!data?.success) return;
+      if (data.data.description) botArray.push(data.data.description);
 
-    const botArray = [];
-    const userArray = [];
+      const list = Array.isArray(data.data.chats) ? data.data.chats : [];
+      list.forEach((item) => {
+        if (item.sender === "user") userArray.push(item.message);
+        else if (item.sender === "bot") botArray.push(item.message);
+      });
 
-    // BOT MESSAGE from description
-    if (data.data.description) {
-      botArray.push(data.data.description);
-    }
+      setBotTexts(botArray);
+      setUserTexts(userArray);
 
-    // USER CHAT ARRAY
-    const list = Array.isArray(data.data.chats)
-      ? data.data.chats
-      : [];
-
-    list.forEach(item => {
-      if (item.sender === "user") {
-        userArray.push(item.message);
-      } else if (item.sender === "bot") {
-        botArray.push(item.message);
+      // Set default selected version to latest version
+      if (data.data.versions?.length > 0) {
+        setSelectedVersion(data.data.versions[data.data.versions.length - 1]);
       }
-    });
+    })();
+  }, [id]);
 
-    setBotTexts(botArray);
-    setUserTexts(userArray);
-
-  })();
-}, [id]);
-
-
-  // SOCKET
+  // Socket
   useEffect(() => {
     socket.connect();
     socket.on("receive_message", (data) => {
@@ -189,11 +216,18 @@ useEffect(() => {
 
   const handleMove = (clientX) => {
     const percent = (clientX / window.innerWidth) * 100;
-    if (percent > 20 && percent < 80) setDividerX(percent);
+    const width = window.innerWidth;
+    if (width < 768) return;
+    if (width < 1024) {
+      if (percent > 30 && percent < 70) setDividerX(percent);
+    } else {
+      if (percent > 20 && percent < 80) setDividerX(percent);
+    }
   };
 
   const handleMouseMove = (e) => isDragging.current && handleMove(e.clientX);
-  const handleTouchMove = (e) => isDragging.current && handleMove(e.touches[0].clientX);
+  const handleTouchMove = (e) =>
+    isDragging.current && handleMove(e.touches[0].clientX);
 
   const stopDrag = () => {
     isDragging.current = false;
@@ -213,176 +247,255 @@ useEffect(() => {
     };
   }, []);
 
+  // Detect mobile/tablet view
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      if (width < 768) setDividerX(100);
+      else if (width < 1024) setDividerX(50);
+      else setDividerX(parseFloat(localStorage.getItem("dividerX")) || 35);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const [mobileView, setMobileView] = useState("chat"); // For mobile: "chat" or "preview"
+
   return (
-    <div className="min-h-screen flex bg-white text-gray-900 overflow-hidden">
-      {/* LEFT (CHAT) */}
-      <div
-        className="flex flex-col border-r border-gray-200 bg-white transition-all duration-150"
-        style={{ width: `${dividerX}%`, height: "100vh" }}
-      >
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h1 className="font-semibold text-lg text-gray-800">
-            {selectedProject?.data?.name || "Project Chat"}
-          </h1>
-        </div>
-
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-5">
-
-  {/* BOT Messages */}
-
-
-
-  {userTexts.map((text, i) => (
-    <div key={"user-" + i} className="flex items-start gap-2 justify-end">
-      <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-        {text}
-      </div>
-
-      <div className="flex flex-col items-center">
-        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-          <User className="w-4 h-4" />
-        </div>
-        <span className="text-[10px] text-gray-500 mt-1">
-          {selectedProject?.data?.user?.full_name}
-        </span>
-      </div>
-    </div>
-  ))}
-
-
-
-
-
-  {botTexts.map((text, i) => (
-  <div key={"bot-" + i} className="flex items-start gap-2 justify-start">
-
-    <div className="flex flex-col items-center">
-      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-        CA
-      </div>
-      <span className="text-[10px] text-gray-500 mt-1">CodeAstra</span>
-    </div>
-
-    <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
-      {text}  {/* <-- string, so perfect */}
-    </div>
-
-  </div>
-))}
-
-
-  {/* USER Messages */}
-  
-
-</div>
-
-
-        <div className="p-3 border-t border-gray-200 bg-white flex items-center gap-2">
-          <textarea
-            placeholder={waitingForBot ? "Please wait..." : "Type your message..."}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={waitingForBot}
-            rows={2}
-            className="flex-1 resize-none bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-sm"
-          />
+    <div className="min-h-screen flex bg-white text-gray-900 overflow-hidden flex-col md:flex-row">
+      {/* MOBILE TOP NAV for switching views */}
+      {isMobile && (
+        <div className="flex justify-around items-center border-b border-gray-200 p-2 bg-white">
           <Button
-            onClick={handleSend}
-            disabled={waitingForBot}
-            className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"} text-white`}
+            variant={mobileView === "chat" ? "default" : "ghost"}
+            onClick={() => setMobileView("chat")}
           >
-            <Send className="w-4 h-4" />
+            Chat
+          </Button>
+          <Button
+            variant={mobileView === "preview" ? "default" : "ghost"}
+            onClick={() => setMobileView("preview")}
+          >
+            Preview
           </Button>
         </div>
-      </div>
+      )}
 
-      {/* DIVIDER */}
-      <div
-        className="w-1.5 bg-gray-300 hover:bg-gray-500 cursor-col-resize"
-        onMouseDown={() => {
-          isDragging.current = true;
-          document.body.style.cursor = "col-resize";
-        }}
-        onTouchStart={() => {
-          isDragging.current = true;
-        }}
-      ></div>
-
-      {/* RIGHT (PREVIEW) */}
-      <div className="relative flex-1 overflow-hidden bg-white">
-        <div className="absolute inset-0 pt-14 flex justify-center items-start bg-white">
-          {viewMode === "output" ? (
-            <iframe
-              key={refreshTrigger}
-              src={
-                selectedProject?.data?.assigned_domain
-                  ? `https://${selectedProject.data.assigned_domain}`
-                  : ""
-              }
-              className="border-0"
-              style={{
-                width: deviceView === "mobile" ? "375px" : "100%",
-                height: deviceView === "mobile" ? "667px" : "100%",
-                borderRadius: deviceView === "mobile" ? "16px" : "0",
-                boxShadow:
-                  deviceView === "mobile" ? "0 0 10px rgba(0,0,0,0.2)" : "none",
-              }}
-              title="Live Preview"
-            />
-          ) : (
-            <FolderTree />
-          )}
-        </div>
-
-        <div className="absolute top-0 left-0 w-full flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur border-b border-gray-200 z-20">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => setViewMode("output")}
-              className={`${viewMode === "output" ? "font-semibold border-b-2 border-black" : ""}`}
-            >
-              <Eye className="w-4 h-4 mr-2" /> Preview
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setViewMode("code")}
-              className={`${viewMode === "code" ? "font-semibold border-b-2 border-black" : ""}`}
-            >
-              <Code className="w-4 h-4 mr-2" /> Code
-            </Button>
-            <RefreshCw
-              className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer"
-              onClick={() => setRefreshTrigger((p) => p + 1)}
-            />
+      {/* LEFT (CHAT) */}
+      {(!isMobile || mobileView === "chat") && (
+        <div
+          className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-150 ${
+            isMobile ? "w-full h-[calc(100vh-48px)]" : ""
+          }`}
+          style={
+            !isMobile
+              ? { width: `${dividerX}%`, height: "100vh" }
+              : { height: "100vh" }
+          }
+        >
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h1 className="font-semibold text-lg text-gray-800">
+              {selectedProject?.data?.name || "Project Chat"}
+            </h1>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Monitor
-              className={`w-5 h-5 cursor-pointer ${
-                deviceView === "desktop" ? "text-black" : "text-gray-600 hover:text-black"
-              }`}
-              onClick={() => setDeviceView("desktop")}
-            />
-            <Smartphone
-              className={`w-5 h-5 cursor-pointer ${
-                deviceView === "mobile" ? "text-black" : "text-gray-600 hover:text-black"
-              }`}
-              onClick={() => setDeviceView("mobile")}
-            />
-            <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
-            {selectedProject?.data?.assigned_domain && (
-              <a
-                href={`https://${selectedProject.data.assigned_domain}`}
-                target="_blank"
-                rel="noopener noreferrer"
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto p-6 space-y-5"
+          >
+            {userTexts.map((text, i) => (
+              <div
+                key={"user-" + i}
+                className="flex items-start gap-2 justify-end"
               >
-                <Button className="bg-black hover:bg-gray-900 text-white text-sm">View</Button>
-              </a>
+                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+                  {text}
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] text-gray-500 mt-1">
+                    {selectedProject?.data?.user?.full_name}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {botTexts.map((text, i) => (
+              <div
+                key={"bot-" + i}
+                className="flex items-start gap-2 justify-start"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                    CA
+                  </div>
+                  <span className="text-[10px] text-gray-500 mt-1">
+                    CodeAstra
+                  </span>
+                </div>
+                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
+                  {text}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-3 border-t border-gray-200 bg-white flex items-center gap-2">
+            <textarea
+              placeholder={
+                waitingForBot ? "Please wait..." : "Type your message..."
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={waitingForBot}
+              rows={2}
+              className="flex-1 resize-none bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-sm"
+            />
+            <Button
+              onClick={handleSend}
+              disabled={waitingForBot}
+              className={`${
+                waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
+              } text-white`}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* DIVIDER for desktop/tablet */}
+      {!isMobile && (
+        <div
+          className="w-1.5 bg-gray-300 hover:bg-gray-500 cursor-col-resize"
+          onMouseDown={() => {
+            isDragging.current = true;
+            document.body.style.cursor = "col-resize";
+          }}
+          onTouchStart={() => {
+            isDragging.current = true;
+          }}
+        ></div>
+      )}
+
+      {/* RIGHT (PREVIEW / CODE) */}
+      {(!isMobile || mobileView === "preview") && (
+        <div
+          className={`relative flex-1 overflow-hidden bg-white ${
+            isMobile ? "h-[calc(100vh-48px)]" : ""
+          }`}
+        >
+          <div className="absolute inset-0 pt-14 flex justify-center items-start bg-white">
+            {viewMode === "output" ? (
+              <iframe
+                key={`${refreshTrigger}-${selectedVersion}`}
+                src={
+                  selectedProject?.data?.assigned_domain
+                    ? `https://${selectedProject.data.assigned_domain}`
+                    : ""
+                }
+                className="border-0"
+                style={{
+                  width: deviceView === "mobile" ? "375px" : "100%",
+                  height: deviceView === "mobile" ? "667px" : "100%",
+                  borderRadius: deviceView === "mobile" ? "16px" : "0",
+                  boxShadow:
+                    deviceView === "mobile"
+                      ? "0 0 10px rgba(0,0,0,0.2)"
+                      : "none",
+                }}
+                title="Live Preview"
+              />
+            ) : (
+              <FolderTree />
             )}
           </div>
+
+          {/* TOP CONTROLS */}
+          <div className="absolute top-0 left-0 w-full flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur border-b border-gray-200 z-20">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => setViewMode("output")}
+                className={`${
+                  viewMode === "output"
+                    ? "font-semibold border-b-2 border-black"
+                    : ""
+                }`}
+              >
+                <Eye className="w-4 h-4 mr-2" /> Preview
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setViewMode("code")}
+                className={`${
+                  viewMode === "code"
+                    ? "font-semibold border-b-2 border-black"
+                    : ""
+                }`}
+              >
+                <Code className="w-4 h-4 mr-2" /> Code
+              </Button>
+              <RefreshCw
+                className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer"
+                onClick={() => setRefreshTrigger((p) => p + 1)}
+              />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Select
+                value={selectedVersion}
+                onValueChange={setSelectedVersion}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select Version" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedProject?.data?.versions?.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Monitor
+                className={`w-5 h-5 cursor-pointer ${
+                  deviceView === "desktop"
+                    ? "text-black"
+                    : "text-gray-600 hover:text-black"
+                }`}
+                onClick={() => setDeviceView("desktop")}
+              />
+              <Smartphone
+                className={`w-5 h-5 cursor-pointer ${
+                  deviceView === "mobile"
+                    ? "text-black"
+                    : "text-gray-600 hover:text-black"
+                }`}
+                onClick={() => setDeviceView("mobile")}
+              />
+              <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+              {selectedProject?.data?.assigned_domain && (
+                <a
+                  href={`https://${selectedProject.data.assigned_domain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button className="bg-black hover:bg-gray-900 text-white text-sm">
+                    View
+                  </Button>
+                </a>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
