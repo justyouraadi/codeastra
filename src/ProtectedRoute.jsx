@@ -40,7 +40,7 @@ const ProtectedRoute = () => {
   if (isChecking) {
     return (
       <div className="col-span-full h-screen flex justify-center items-center py-10">
-        <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
+        <Loader2 className="h-10 w-10 animate-spin text-black" />
       </div>
     );
   }

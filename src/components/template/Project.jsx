@@ -14,6 +14,7 @@ import {
   Crown,
   Menu,
   Loader2,
+  X,
 } from "lucide-react";
 
 import { CiLogout } from "react-icons/ci";
@@ -35,23 +36,21 @@ import { Input } from "@/components/ui/input";
 import { useInView } from "react-intersection-observer";
 
 const Project = () => {
-  const { fetchProjects, loadMoreProjects, hasMore, projects, loading, error } =
+  const { fetchProjects, loadMoreProjects, hasMore, projects, loading } =
     useProjectContext();
 
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // 🔹 Infinite scroll observer
-  const { ref, inView } = useInView({
-    threshold: 0,
-  });
+  // Infinite scroll observer
+  const { ref, inView } = useInView({ threshold: 0 });
 
-  // 🔹 Load first page
+  // Load first page
   useEffect(() => {
     fetchProjects();
   }, []);
 
-  // 🔹 Load more when inView = true
+  // Load more when inView = true
   useEffect(() => {
     if (inView && hasMore && !loading) {
       loadMoreProjects();
@@ -75,24 +74,37 @@ const Project = () => {
   return (
     <div className="min-h-screen flex bg-gray-100">
       {/* Mobile Sidebar Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      {/* <div className="md:hidden fixed top-4 right-4 z-1">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md"
         >
-          <Menu className="w-6 h-6" />
+          <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
-      </div>
+      </div> */}
+
+      {/* Backdrop for Mobile Sidebar */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm bg-opacity-50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white/90 border-r border-gray-200 shadow-lg flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 h-full bg-white/90 border-r border-gray-200 shadow-lg flex flex-col justify-between transition-transform duration-300 w-64 md:w-64 z-50 backdrop-blur-sm ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } w-64 z-40 backdrop-blur-sm`}
+        } md:translate-x-0`}
       >
-        <div className="flex flex-col h-full p-5">
+        <div className="flex flex-col h-full p-4 sm:p-5">
+          {/* logo at side bar */}
+          <div className="md:hidden flex items-center justify-center h-8 mb-5">
+            <img src={logo} alt="Logo" />
+          </div>
+
           <Button
-            className="w-full bg-black text-white py-2 mb-5"
+            className="w-full bg-black text-white py-2 mb-4 sm:mb-5"
             onClick={() => navigate("/mainpagescreen")}
           >
             <Plus className="w-4 h-4 mr-2" /> New Chat
@@ -100,31 +112,31 @@ const Project = () => {
 
           <Input
             placeholder="Search chats..."
-            className="mb-5 bg-gray-100 border-gray-200 rounded-lg"
+            className="mb-4 sm:mb-5 bg-gray-100 border-gray-200 rounded-lg"
           />
 
-          <nav className="space-y-1 text-[15px] font-medium">
+          <nav className="space-y-1 text-sm sm:text-[15px] font-medium">
             <div
               onClick={() => navigate("/projectpages")}
-              className="flex items-center text-gray-700 py-2 px-2 hover:bg-gray-100 cursor-pointer"
+              className="flex items-center text-gray-700 py-2 px-2 hover:bg-gray-100 cursor-pointer rounded-md"
             >
               <Folder className="w-4 h-4 mr-2" /> Projects
             </div>
           </nav>
 
           {/* Recent Projects List */}
-          <div className="mt-7 flex-1 overflow-y-auto">
+          <div className="mt-6 sm:mt-7 flex-1 overflow-y-auto">
             <h3 className="text-xs uppercase text-gray-500 mb-2">Recent</h3>
-            <ul className="space-y-3 text-[14px]">
+            <ul className="space-y-2 sm:space-y-3 text-sm sm:text-[14px]">
               {projects?.map((project) => (
                 <li
                   key={project.id}
                   onClick={() => navigate(`/chatpage/${project.id}`)}
-                  className="text-gray-700 hover:text-black cursor-pointer"
+                  className="flex justify-between items-center text-gray-700 hover:text-black cursor-pointer p-2 rounded-md hover:bg-gray-100"
                 >
-                  {project.name}
+                  <span>{project.name}</span>
                   <span className="text-gray-400 text-xs">
-                    • {getTimeAgo(project.updatedAt)}
+                    {getTimeAgo(project.updatedAt)}
                   </span>
                 </li>
               ))}
@@ -162,37 +174,48 @@ const Project = () => {
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 lg:ml-64">
-        <nav className="flex items-center px-5 py-4 border-b bg-white/80">
-          <span
-            onClick={() => navigate(-1)}
-            className="p-3 text-2xl cursor-pointer"
-          >
-            <IoIosArrowBack />
-          </span>
+      <div className="flex-1 md:ml-64 flex flex-col">
+        <nav className="flex items-center justify-between border-b shadow-sm">
+          <div className="flex items-center px-4 sm:px-5 py-3 sm:py-4 border-b flex-shrink-0">
+            <span
+              onClick={() => navigate(-1)}
+              className="p-2 sm:p-3 text-xl sm:text-2xl cursor-pointer"
+            >
+              <IoIosArrowBack />
+            </span>
 
-          <img
-            src={logo}
-            onClick={() => navigate("/mainpagescreen")}
-            className="w-32 p-2 cursor-pointer"
-            alt="Logo"
-          />
-        </nav>
-
-        {/* Search */}
-        <section className="px-5 py-8 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <FaSearch className="absolute left-3 top-3 text-gray-400" />
-            <InputAtom placeholder="Search apps..." className="pl-10" />
+            <img
+              src={logo}
+              onClick={() => navigate("/mainpagescreen")}
+              className="w-30 sm:w-32 p-1 sm:p-1 cursor-pointer object-contain"
+              alt="Logo"
+            />
           </div>
 
-          <ButtonAtom className="flex items-center gap-2 bg-black text-white">
+          <div className="md:hidden pe-4">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md"
+            >
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          </div>
+        </nav>
+
+        {/* Search Section */}
+        <section className="px-4 sm:px-5 py-6 sm:py-8 flex flex-col sm:flex-row gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+            <InputAtom placeholder="Search apps..." className="pl-10 w-full" />
+          </div>
+
+          <ButtonAtom className="flex items-center gap-2 bg-black text-white shrink-0">
             <FaFilter /> All Apps
           </ButtonAtom>
         </section>
 
         {/* PROJECTS GRID */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-5 pb-10">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-5 pb-8 sm:pb-10 flex-1">
           {projects?.map((proj, i) => (
             <div
               key={proj.id || i}
@@ -217,15 +240,20 @@ const Project = () => {
           ))}
 
           {/* Infinite Scroll Trigger */}
-          <div ref={ref} className="col-span-full flex justify-center py-5">
+          <div
+            ref={ref}
+            className="col-span-full flex justify-center py-4 sm:py-5"
+          >
             {hasMore && !loading && (
-              <p className="text-gray-500">Loading more...</p>
+              <p className="text-gray-500 text-sm sm:text-base">
+                Loading more...
+              </p>
             )}
           </div>
 
           {loading && (
             <div className="col-span-full flex justify-center">
-              <Loader2 className="animate-spin w-8 h-8 text-purple-500" />
+              <Loader2 className="animate-spin w-6 h-6 sm:w-8 sm:h-8 text-purple-500" />
             </div>
           )}
         </section>

@@ -1,3 +1,4 @@
+// ChatTemp.jsx (updated)
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -13,6 +14,7 @@ import {
   Folder,
   File,
   User,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProjectProvider } from "../../hooks/useProjectProvider";
@@ -130,20 +132,23 @@ const ChatTemp = () => {
   const [dividerX, setDividerX] = useState(() => {
     const width = window.innerWidth;
     if (width < 768) return 100;
-    if (width < 1024) return 50; // Adjust for tablets
+    if (width < 1024) return 50;
     return parseFloat(localStorage.getItem("dividerX")) || 35;
   });
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [viewMode, setViewMode] = useState("output");
+  const [viewMode, setViewMode] = useState("output"); // "output" or "code"
   const [waitingForBot, setWaitingForBot] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [deviceView, setDeviceView] = useState("desktop");
-  const [selectedVersion, setSelectedVersion] = useState(""); // Selected version for preview
+  const [selectedVersion, setSelectedVersion] = useState("");
 
   const [botTexts, setBotTexts] = useState([]);
   const [userTexts, setUserTexts] = useState([]);
+
+  // keep mobileView state so we can toggle preview on mobile via the Preview button next to title
+  const [mobileView, setMobileView] = useState("chat"); // "chat" or "preview"
 
   const isDragging = useRef(false);
   const chatContainerRef = useRef(null);
@@ -153,7 +158,6 @@ const ChatTemp = () => {
     if (width >= 768) localStorage.setItem("dividerX", dividerX);
   }, [dividerX]);
 
-  // Fetch Project Data
   useEffect(() => {
     if (!id) return;
 
@@ -175,14 +179,12 @@ const ChatTemp = () => {
       setBotTexts(botArray);
       setUserTexts(userArray);
 
-      // Set default selected version to latest version
       if (data.data.versions?.length > 0) {
         setSelectedVersion(data.data.versions[data.data.versions.length - 1]);
       }
     })();
   }, [id]);
 
-  // Socket
   useEffect(() => {
     socket.connect();
     socket.on("receive_message", (data) => {
@@ -247,7 +249,6 @@ const ChatTemp = () => {
     };
   }, []);
 
-  // Detect mobile/tablet view
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
     const handleResize = () => {
@@ -261,29 +262,11 @@ const ChatTemp = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const [mobileView, setMobileView] = useState("chat"); // For mobile: "chat" or "preview"
-
   return (
     <div className="min-h-screen flex bg-white text-gray-900 overflow-hidden flex-col md:flex-row">
-      {/* MOBILE TOP NAV for switching views */}
-      {isMobile && (
-        <div className="flex justify-around items-center border-b border-gray-200 p-2 bg-white">
-          <Button
-            variant={mobileView === "chat" ? "default" : "ghost"}
-            onClick={() => setMobileView("chat")}
-          >
-            Chat
-          </Button>
-          <Button
-            variant={mobileView === "preview" ? "default" : "ghost"}
-            onClick={() => setMobileView("preview")}
-          >
-            Preview
-          </Button>
-        </div>
-      )}
+      {/* NOTE: removed the mobile top Chat/Preview row per requirement */}
 
-      {/* LEFT (CHAT) */}
+      {/* LEFT CHAT */}
       {(!isMobile || mobileView === "chat") && (
         <div
           className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-150 ${
@@ -296,9 +279,45 @@ const ChatTemp = () => {
           }
         >
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h1 className="font-semibold text-lg text-gray-800">
-              {selectedProject?.data?.name || "Project Chat"}
-            </h1>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  // If on mobile and currently in preview, go back to chat instead of navigating history
+                  if (isMobile && mobileView === "preview") {
+                    setMobileView("chat");
+                    return;
+                  }
+                  window.history.back();
+                }}
+                className="p-1"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+
+              <h1 className="font-semibold text-lg text-gray-800">
+                {selectedProject?.data?.name || "Project Chat"}
+              </h1>
+            </div>
+
+            {/* Preview Button next to project name */}
+            <div>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  // On mobile, toggle to preview view
+                  if (isMobile) {
+                    setMobileView("preview");
+                  } else {
+                    // On desktop, set main viewMode to output so iframe shows
+                    setViewMode("output");
+                  }
+                }}
+              >
+                <Eye className="w-4 h-4" /> Preview
+              </Button>
+            </div>
           </div>
 
           <div
@@ -369,7 +388,7 @@ const ChatTemp = () => {
         </div>
       )}
 
-      {/* DIVIDER for desktop/tablet */}
+      {/* DIVIDER */}
       {!isMobile && (
         <div
           className="w-1.5 bg-gray-300 hover:bg-gray-500 cursor-col-resize"
@@ -383,7 +402,7 @@ const ChatTemp = () => {
         ></div>
       )}
 
-      {/* RIGHT (PREVIEW / CODE) */}
+      {/* RIGHT PREVIEW/CODE */}
       {(!isMobile || mobileView === "preview") && (
         <div
           className={`relative flex-1 overflow-hidden bg-white ${
@@ -393,7 +412,7 @@ const ChatTemp = () => {
           <div className="absolute inset-0 pt-14 flex justify-center items-start bg-white">
             {viewMode === "output" ? (
               <iframe
-                key={`${refreshTrigger}-${selectedVersion}`}
+                key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                 src={
                   selectedProject?.data?.assigned_domain
                     ? `https://${selectedProject.data.assigned_domain}`
@@ -417,19 +436,42 @@ const ChatTemp = () => {
           </div>
 
           {/* TOP CONTROLS */}
-          <div className="absolute top-0 left-0 w-full flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur border-b border-gray-200 z-20">
-            <div className="flex items-center gap-4">
+          <div className="absolute top-0 left-0 w-full flex flex-wrap items-center justify-between gap-3 px-3 md:px-6 py-3 bg-white/80 backdrop-blur border-b border-gray-200 z-20">
+            {/* LEFT BUTTONS */}
+            <div className="flex items-center gap-2  md:gap-4 sm:gap-6  ">
+              {/* BACK BUTTON */}
               <Button
                 variant="ghost"
-                onClick={() => setViewMode("output")}
+                onClick={() => {
+                  // Mobile: switch back to chat
+                  if (isMobile) {
+                    setMobileView("chat");
+                  }
+
+                  // Desktop/Mobile both: focus chat section
+                  setViewMode("code");
+                }}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setViewMode("output");
+                  if (isMobile) setMobileView("preview");
+                }}
                 className={`${
                   viewMode === "output"
                     ? "font-semibold border-b-2 border-black"
                     : ""
                 }`}
               >
-                <Eye className="w-4 h-4 mr-2" /> Preview
+                <Eye className="w-4 h-4 mr-2 " /> Preview
               </Button>
+
               <Button
                 variant="ghost"
                 onClick={() => setViewMode("code")}
@@ -441,58 +483,67 @@ const ChatTemp = () => {
               >
                 <Code className="w-4 h-4 mr-2" /> Code
               </Button>
+
               <RefreshCw
                 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer"
                 onClick={() => setRefreshTrigger((p) => p + 1)}
               />
             </div>
 
-            <div className="flex items-center gap-4">
-              <Select
-                value={selectedVersion}
-                onValueChange={setSelectedVersion}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Version" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedProject?.data?.versions?.map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* RIGHT SECTION */}
+            <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-2 md:gap-4">
 
-              <Monitor
-                className={`w-5 h-5 cursor-pointer ${
-                  deviceView === "desktop"
-                    ? "text-black"
-                    : "text-gray-600 hover:text-black"
-                }`}
-                onClick={() => setDeviceView("desktop")}
-              />
-              <Smartphone
-                className={`w-5 h-5 cursor-pointer ${
-                  deviceView === "mobile"
-                    ? "text-black"
-                    : "text-gray-600 hover:text-black"
-                }`}
-                onClick={() => setDeviceView("mobile")}
-              />
-              <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
-              {selectedProject?.data?.assigned_domain && (
-                <a
-                  href={`https://${selectedProject.data.assigned_domain}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button className="bg-black hover:bg-gray-900 text-white text-sm">
-                    View
-                  </Button>
-                </a>
-              )}
-            </div>
+  {/* LEFT: Select */}
+  <div className="flex items-center">
+    <Select value={selectedVersion} onValueChange={setSelectedVersion}>
+      <SelectTrigger className="!w-[70px] sm:!w-[70px] md:!w-[150px] lg:!w-[180px] text-sm">
+        <SelectValue placeholder="Version" />
+      </SelectTrigger>
+
+      <SelectContent>
+        {selectedProject?.data?.versions?.map((v) => (
+          <SelectItem key={v} value={v}>
+            {v}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+
+  {/* RIGHT: Icons + Button */}
+  <div className="flex items-center gap-3 md:gap-4">
+
+    <Monitor
+      className={`hidden sm:block w-5 h-5 cursor-pointer ${
+        deviceView === "desktop" ? "text-black" : "text-gray-600 hover:text-black"
+      }`}
+      onClick={() => setDeviceView("desktop")}
+    />
+
+    <Smartphone
+      className={`hidden sm:block w-5 h-5 cursor-pointer ${
+        deviceView === "mobile" ? "text-black" : "text-gray-600 hover:text-black"
+      }`}
+      onClick={() => setDeviceView("mobile")}
+    />
+
+    <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+
+    {selectedProject?.data?.assigned_domain && (
+      <a
+        href={`https://${selectedProject.data.assigned_domain}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Button className="bg-black hover:bg-gray-900 text-white text-xs md:text-sm px-3 py-2">
+          View
+        </Button>
+      </a>
+    )}
+  </div>
+
+</div>
+
           </div>
         </div>
       )}
