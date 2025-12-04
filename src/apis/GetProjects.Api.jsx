@@ -1,8 +1,6 @@
 // ✅ src/apis/GetProjects.Api.js
-export const getProjectsAPI = async () => {
-  const token = localStorage.getItem("signin_token"); // ✅ get token
-
-  console.log("Using token in GetProjects.Api:", token); // ✅ log token for debugging
+export const getProjectsAPI = async (page = 1, limit = 10) => {
+  const token = localStorage.getItem("signin_token");
 
   if (!token) {
     throw new Error("No token found. Please sign in again.");
@@ -17,11 +15,10 @@ export const getProjectsAPI = async () => {
     redirect: "follow",
   };
 
+  const url = `https://gateway.codeastra.ai/projects/api/v1/projects?page=${page}&limit=${limit}&order_by=desc&name=`;
+
   try {
-    const response = await fetch(
-      "https://gateway.codeastra.ai/projects/api/v1/projects?page=1&limit=10&order_by=desc&name=",
-      requestOptions
-    );
+    const response = await fetch(url, requestOptions);
 
     if (!response.ok) {
       const errorData = await response.text();
