@@ -492,58 +492,61 @@ const ChatTemp = () => {
 
             {/* RIGHT SECTION */}
             <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-2 md:gap-4">
+              {/* LEFT: Select */}
+              <div className="flex items-center">
+                <Select
+                  value={selectedVersion}
+                  onValueChange={setSelectedVersion}
+                >
+                  <SelectTrigger className="!w-[70px] sm:!w-[70px] md:!w-[150px] lg:!w-[180px] text-sm">
+                    <SelectValue placeholder="Version" />
+                  </SelectTrigger>
 
-  {/* LEFT: Select */}
-  <div className="flex items-center">
-    <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-      <SelectTrigger className="!w-[70px] sm:!w-[70px] md:!w-[150px] lg:!w-[180px] text-sm">
-        <SelectValue placeholder="Version" />
-      </SelectTrigger>
+                  <SelectContent>
+                    {selectedProject?.data?.versions?.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-      <SelectContent>
-        {selectedProject?.data?.versions?.map((v) => (
-          <SelectItem key={v} value={v}>
-            {v}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
+              {/* RIGHT: Icons + Button */}
+              <div className="flex items-center gap-3 md:gap-4">
+                <Monitor
+                  className={`hidden sm:block w-5 h-5 cursor-pointer ${
+                    deviceView === "desktop"
+                      ? "text-black"
+                      : "text-gray-600 hover:text-black"
+                  }`}
+                  onClick={() => setDeviceView("desktop")}
+                />
 
-  {/* RIGHT: Icons + Button */}
-  <div className="flex items-center gap-3 md:gap-4">
+                <Smartphone
+                  className={`hidden sm:block w-5 h-5 cursor-pointer ${
+                    deviceView === "mobile"
+                      ? "text-black"
+                      : "text-gray-600 hover:text-black"
+                  }`}
+                  onClick={() => setDeviceView("mobile")}
+                />
 
-    <Monitor
-      className={`hidden sm:block w-5 h-5 cursor-pointer ${
-        deviceView === "desktop" ? "text-black" : "text-gray-600 hover:text-black"
-      }`}
-      onClick={() => setDeviceView("desktop")}
-    />
+                <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
 
-    <Smartphone
-      className={`hidden sm:block w-5 h-5 cursor-pointer ${
-        deviceView === "mobile" ? "text-black" : "text-gray-600 hover:text-black"
-      }`}
-      onClick={() => setDeviceView("mobile")}
-    />
-
-    <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
-
-    {selectedProject?.data?.assigned_domain && (
-      <a
-        href={`https://${selectedProject.data.assigned_domain}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Button className="bg-black hover:bg-gray-900 text-white text-xs md:text-sm px-3 py-2">
-          View
-        </Button>
-      </a>
-    )}
-  </div>
-
-</div>
-
+                {selectedProject?.data?.assigned_domain && (
+                  <a
+                    href={`https://${selectedProject.data.assigned_domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button className="bg-black hover:bg-gray-900 text-white text-xs md:text-sm px-3 py-2">
+                      View
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
