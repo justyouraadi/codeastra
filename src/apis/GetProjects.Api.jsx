@@ -1,5 +1,4 @@
-// ✅ src/apis/GetProjects.Api.js
-export const getProjectsAPI = async (page = 1, limit = 10) => {
+export const getProjectsAPI = async (page = 1, limit = 10, searchTerm = "") => {
   const token = localStorage.getItem("signin_token");
 
   if (!token) {
@@ -15,7 +14,8 @@ export const getProjectsAPI = async (page = 1, limit = 10) => {
     redirect: "follow",
   };
 
-  const url = `https://gateway.codeastra.ai/projects/api/v1/projects?page=${page}&limit=${limit}&order_by=desc&name=`;
+  const url =
+    `https://gateway.codeastra.ai/projects/api/v1/projects?page=${page}&limit=${limit}&order_by=desc&name=${searchTerm}`;
 
   try {
     const response = await fetch(url, requestOptions);
@@ -25,8 +25,7 @@ export const getProjectsAPI = async (page = 1, limit = 10) => {
       throw new Error(`API Error: ${response.status} - ${errorData}`);
     }
 
-    const result = await response.json();
-    return result;
+    return await response.json();
   } catch (error) {
     console.error("❌ getProjectsAPI Error:", error);
     throw error;

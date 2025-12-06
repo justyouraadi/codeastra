@@ -37,28 +37,28 @@ export const useProjectProvider = () => {
   // ----------------------------------------------------------
   // 🔹 Fetch Projects — PAGE 1
   // ----------------------------------------------------------
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      setPage(1);
+const fetchProjects = async (searchTerm = "") => {
+  try {
+    setLoading(true);
+    setPage(1);
 
-      const data = await getProjectsAPI(1, limit);
-      console.log("📥 API response page 1:", data);
+    const data = await getProjectsAPI(1, limit, searchTerm);
+    console.log("📥 API response:", data);
 
-      const items = data?.data?.projects || [];
+    const items = data?.data?.projects || [];
 
-      setProjects(items);
-      setHasMore(items.length === limit); // if less than limit → no more pages
+    setProjects(items);
+    setHasMore(items.length === limit);
 
-      return items;
-    } catch (err) {
-      console.error("❌ Fetch Projects Error:", err.message);
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+    return items;
+  } catch (err) {
+    console.error("❌ Fetch Projects Error:", err.message);
+    setError(err.message);
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ----------------------------------------------------------
   // 🔹 Load More — Pagination (page 2, 3, 4...)

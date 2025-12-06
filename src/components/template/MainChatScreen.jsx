@@ -49,7 +49,7 @@ const MainChatScreen = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [isLoadingFullScreen, setIsLoadingFullScreen] = useState(false);
-
+  const [searchText, setSearchText] = useState("");
   const { createProject, loading } = useProjectProvider();
   const { fetchProjects, projects } = useProjectContext();
 
@@ -182,6 +182,11 @@ const MainChatScreen = () => {
           </Button>
 
           <Input
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              fetchProjects(e.target.value);
+            }}
             placeholder="Search chats..."
             className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
           />
@@ -206,21 +211,23 @@ const MainChatScreen = () => {
             Recent
           </h3>
           <ul className="space-y-3 text-[13px]">
-            {sortedProjects?.map((project) => (
-              <li
-                key={project.id}
-                onClick={() => {
-                  navigate(`/chatpage/${project.id}`);
-                  setSidebarOpen(false);
-                }}
-                className="text-gray-700 hover:text-black cursor-pointer"
-              >
-                {project.name}
-                <span className="text-gray-400 text-xs ml-1">
-                  • {getTimeAgo(project.updatedAt || project.createdAt)}
-                </span>
-              </li>
-            ))}
+            {
+              sortedProjects.length === 0 ? "Project Not Found" : sortedProjects?.map((project) => (
+                <li
+                  key={project.id}
+                  onClick={() => {
+                    navigate(`/chatpage/${project.id}`);
+                    setSidebarOpen(false);
+                  }}
+                  className="text-gray-700 hover:text-black cursor-pointer"
+                >
+                  {project.name}
+                  <span className="text-gray-400 text-xs ml-1">
+                    • {getTimeAgo(project.updatedAt || project.createdAt)}
+                  </span>
+                </li>
+              ))
+            }
           </ul>
         </div>
 
