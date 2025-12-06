@@ -93,9 +93,8 @@ const Project = () => {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white/90 border-r border-gray-200 shadow-lg flex flex-col justify-between transition-transform duration-300 w-64 md:w-64 z-50 backdrop-blur-sm ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0`}
+        className={`fixed top-0 left-0 h-full bg-white/90 border-r border-gray-200 shadow-lg flex flex-col justify-between transition-transform duration-300 w-64 md:w-64 z-50 backdrop-blur-sm ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0`}
       >
         <div className="flex flex-col h-full p-4 sm:p-5">
           {/* logo at side bar */}
@@ -136,7 +135,7 @@ const Project = () => {
                 >
                   <span>{project.name}</span>
                   <span className="text-gray-400 text-xs">
-                    {getTimeAgo(project.updatedAt)}
+                    {getTimeAgo(project.createdAt || project.updatedAt)}
                   </span>
                 </li>
               ))}
