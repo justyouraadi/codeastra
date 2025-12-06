@@ -38,7 +38,7 @@ import { useInView } from "react-intersection-observer";
 const Project = () => {
   const { fetchProjects, loadMoreProjects, hasMore, projects, loading } =
     useProjectContext();
-
+  const [searchText, setSearchText] = useState("");
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -93,9 +93,8 @@ const Project = () => {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white/90 border-r border-gray-200 shadow-lg flex flex-col justify-between transition-transform duration-300 w-64 md:w-64 z-50 backdrop-blur-sm ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0`}
+        className={`fixed top-0 left-0 h-full bg-white/90 border-r border-gray-200 shadow-lg flex flex-col justify-between transition-transform duration-300 w-64 md:w-64 z-50 backdrop-blur-sm ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0`}
       >
         <div className="flex flex-col h-full p-4 sm:p-5">
           {/* logo at side bar */}
@@ -112,6 +111,11 @@ const Project = () => {
 
           <Input
             placeholder="Search chats..."
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              fetchProjects(e.target.value);
+            }}
             className="mb-4 sm:mb-5 bg-gray-100 border-gray-200 rounded-lg"
           />
 
@@ -128,18 +132,20 @@ const Project = () => {
           <div className="mt-6 sm:mt-7 flex-1 overflow-y-auto">
             <h3 className="text-xs uppercase text-gray-500 mb-2">Recent</h3>
             <ul className="space-y-2 sm:space-y-3 text-sm sm:text-[14px]">
-              {projects?.map((project) => (
-                <li
-                  key={project.id}
-                  onClick={() => navigate(`/chatpage/${project.id}`)}
-                  className="flex justify-between items-center text-gray-700 hover:text-black cursor-pointer p-2 rounded-md hover:bg-gray-100"
-                >
-                  <span>{project.name}</span>
-                  <span className="text-gray-400 text-xs">
-                    {getTimeAgo(project.updatedAt)}
-                  </span>
-                </li>
-              ))}
+              {
+                projects.length === 0 ? "Project not found" : projects?.map((project) => (
+                  <li
+                    key={project.id}
+                    onClick={() => navigate(`/chatpage/${project.id}`)}
+                    className="flex justify-between items-center text-gray-700 hover:text-black cursor-pointer p-2 rounded-md hover:bg-gray-100"
+                  >
+                    <span>{project.name}</span>
+                    <span className="text-gray-400 text-xs">
+                      {getTimeAgo(project.createdAt || project.updatedAt)}
+                    </span>
+                  </li>
+                ))
+              }
             </ul>
           </div>
 

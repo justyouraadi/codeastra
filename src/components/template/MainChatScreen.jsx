@@ -41,15 +41,15 @@ import { useNavigate } from "react-router-dom";
 import { useProjectProvider } from "../../hooks/useProjectProvider";
 import { useProjectContext } from "@/context/ProjectProvider";
 import toast from "react-hot-toast";
+import LodingAnimation from "@/utils/LodingAnimation";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [message, setMessage] = useState(null);
   const [isLoadingFullScreen, setIsLoadingFullScreen] = useState(false);
-
+  const [searchText, setSearchText] = useState("");
   const { createProject, loading } = useProjectProvider();
   const { fetchProjects, projects } = useProjectContext();
 
@@ -95,18 +95,29 @@ const MainChatScreen = () => {
     }
 
     try {
-      setMessage(null);
-      setIsLoadingFullScreen(true); // Full-screen loader on
+      setIsLoadingFullScreen(true);
+
       const result = await createProject(prompt);
-      setMessage("Project created successfully!");
-      setTimeout(() => navigate(`/chatpage/${result?.data?.id}`), 400);
+
+      const success = result?.success;
+
+      if (success) {
+
+        setTimeout(() => navigate(`/chatpage/${result?.data?.id}`), 400);
+      } else {
+        toast.error(result?.message || "Something went wrong!");
+        return;
+      }
+
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      console.log(err.message);
+      toast.error("Server error! Try again.");
     } finally {
-      setPrompt("");
-      setIsLoadingFullScreen(false); // Full-screen loader off
+      setIsLoadingFullScreen(false);
+
     }
   };
+
 
   const handleLogout = () => {
     localStorage.removeItem("signin_token");
@@ -117,11 +128,8 @@ const MainChatScreen = () => {
     <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] min-h-screen flex relative">
       {/* Full-screen Loader */}
       {isLoadingFullScreen && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/50 backdrop-blur-xl">
-          <div className="w-24 h-24 border-8 border-t-black border-gray-200 rounded-full animate-spin"></div>
-          <p className="text-white mt-4 text-lg font-medium">
-            Creating Project...
-          </p>
+        <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+          <LodingAnimation />
         </div>
       )}
 
@@ -154,8 +162,7 @@ const MainChatScreen = () => {
         className={`
           fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
           transform transition-transform duration-300 ease-in-out
-          ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } md:translate-x-0
         `}
       >
@@ -175,6 +182,11 @@ const MainChatScreen = () => {
           </Button>
 
           <Input
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              fetchProjects(e.target.value);
+            }}
             placeholder="Search chats..."
             className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
           />
@@ -199,21 +211,23 @@ const MainChatScreen = () => {
             Recent
           </h3>
           <ul className="space-y-3 text-[13px]">
-            {sortedProjects?.map((project) => (
-              <li
-                key={project.id}
-                onClick={() => {
-                  navigate(`/chatpage/${project.id}`);
-                  setSidebarOpen(false);
-                }}
-                className="text-gray-700 hover:text-black cursor-pointer"
-              >
-                {project.name}
-                <span className="text-gray-400 text-xs ml-1">
-                  • {getTimeAgo(project.updatedAt || project.createdAt)}
-                </span>
-              </li>
-            ))}
+            {
+              sortedProjects.length === 0 ? "Project Not Found" : sortedProjects?.map((project) => (
+                <li
+                  key={project.id}
+                  onClick={() => {
+                    navigate(`/chatpage/${project.id}`);
+                    setSidebarOpen(false);
+                  }}
+                  className="text-gray-700 hover:text-black cursor-pointer"
+                >
+                  {project.name}
+                  <span className="text-gray-400 text-xs ml-1">
+                    • {getTimeAgo(project.updatedAt || project.createdAt)}
+                  </span>
+                </li>
+              ))
+            }
           </ul>
         </div>
 
@@ -325,9 +339,11 @@ const MainChatScreen = () => {
               <Input
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Ask anything or start a new project..."
                 className="flex-1 border-none shadow-none focus-visible:ring-0 text-gray-800"
               />
+
 
               <Button
                 variant="ghost"
