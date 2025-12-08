@@ -304,7 +304,7 @@ const ChatTemp = () => {
             <div>
               <Button
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 md:hidden"
                 onClick={() => {
                   // On mobile, toggle to preview view
                   if (isMobile) {
