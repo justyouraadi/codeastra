@@ -6,12 +6,16 @@ import toast from "react-hot-toast";
 
 const FormMolecules = () => {
   const navigate = useNavigate();
-  const { signin, loading, error } = useAuth();
+
+  // ✅ Added signinWithGoogle
+  const { signin, signinWithGoogle, loading, error } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Sign-in logic
+  // ------------------------------------------
+  // ✅ Normal Email + Password Sign-in
+  // ------------------------------------------
   const handleSignIn = async (e) => {
     e.preventDefault();
 
@@ -21,24 +25,36 @@ const FormMolecules = () => {
 
     try {
       localStorage.setItem("auth_mode", "signin");
+
       const response = await signin(email, password);
 
       toast.dismiss(toastId);
+
       if (response) {
-        toast.dismiss(toastId);
-        navigate("/otppages");
+        navigate("/otppages"); // ✅ OTP page
       }
     } catch (err) {
       toast.dismiss(toastId);
-      console.error("Signin error:", err);
-      toast.error("Something went wrong. Please try again later.");
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
-  // Google Sign-in placeholder
+  // ------------------------------------------
+  // ✅ Google Sign-in Logic (Frontend Only)
+  // ------------------------------------------
   const handleGoogleSignIn = async () => {
     if (loading) return;
-    toast("🚀 Google Sign-in coming soon!");
+
+    const toastId = toast.loading("Signing in with Google...");
+
+    // ✅ call context google signin
+    const success = await signinWithGoogle();
+
+    toast.dismiss(toastId);
+
+    if (success) {
+      navigate("/otppages"); // ✅ redirect to OTP page
+    }
   };
 
   return (
@@ -58,7 +74,7 @@ const FormMolecules = () => {
         onSubmit={handleSignIn}
         className="w-full max-w-md bg-white shadow-sm p-8 rounded-2xl border border-gray-100"
       >
-        {/* Google Sign In */}
+        {/* Google Sign In (UI EXACT SAME) */}
         <button
           type="button"
           onClick={handleGoogleSignIn}

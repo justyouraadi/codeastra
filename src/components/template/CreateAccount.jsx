@@ -17,7 +17,7 @@ const formData = {
 };
 
 const CreateAccount = () => {
-  const { signup, loading } = useAuth();
+  const { signup, signupWithGoogle, loading } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ email: "", password: "" });
@@ -26,7 +26,9 @@ const CreateAccount = () => {
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // Handle Signup
+  // ------------------------------------------
+  // ✅ Normal Signup
+  // ------------------------------------------
   const handleSignup = async () => {
     if (loading) return;
 
@@ -34,25 +36,35 @@ const CreateAccount = () => {
 
     try {
       localStorage.setItem("auth_mode", "signup");
+
       const response = await signup(form.email, form.password);
 
       toast.dismiss(toastId);
+
       if (response) {
-        toast.dismiss(toastId);
         navigate("/otppages");
       }
-
-      throw new Error(response?.error || "Signup failed");
     } catch (error) {
       toast.dismiss(toastId);
-      console.error("Signup error:", error);
+      toast.error("Signup failed ❌");
     }
   };
 
-  // Google Sign-In Placeholder
+  // ------------------------------------------
+  // ✅ Google Signup Logic
+  // ------------------------------------------
   const handleGoogle = async () => {
     if (loading) return;
-    toast("🚀 Google Sign-in coming soon!", { icon: "⚙️" });
+
+    const toastId = toast.loading("Connecting with Google...");
+
+    const success = await signupWithGoogle();
+
+    toast.dismiss(toastId);
+
+    if (success) {
+      navigate("/otppages"); // ✅ same OTP flow
+    }
   };
 
   return (
@@ -70,7 +82,7 @@ const CreateAccount = () => {
             </p>
           </header>
 
-          {/* Google Auth Button */}
+          {/* ✅ Google Button (UI unchanged) */}
           <ButtonAtom
             onClick={handleGoogle}
             disabled={loading}
@@ -87,7 +99,7 @@ const CreateAccount = () => {
             <hr className="flex-grow border-gray-300" />
           </div>
 
-          {/* Form Inputs */}
+          {/* Inputs */}
           <div className="space-y-4">
             <div>
               <Label className="text-sm text-gray-700">Email Address</Label>
@@ -147,7 +159,7 @@ const CreateAccount = () => {
         </div>
       </div>
 
-      {/* ---------- Right Side (Image Section) ---------- */}
+      {/* Image Section */}
       <div className="flex-1 hidden lg:flex">
         <SideimagsForm />
       </div>

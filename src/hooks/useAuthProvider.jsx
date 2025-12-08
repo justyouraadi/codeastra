@@ -89,9 +89,6 @@
 //   };
 // };
 
-
-
-
 // import { useState } from "react";
 // import { signupAPI } from "../apis/SingUp.Api";
 // import { verifySignupAPI } from "../apis/VerifySignup.Api";
@@ -200,12 +197,8 @@
 //   };
 // };
 
-
-
-
-
 import { useState } from "react";
-import { signupAPI } from "../apis/SingUp.Api";
+import { signinWithGoogleAPI, signupAPI } from "../apis/SingUp.Api";
 import { verifySignupAPI } from "../apis/VerifySignup.Api";
 import { createProfileAPI } from "../apis/CreateProfile.Api";
 import { signinAPI } from "../apis/Signin.Api";
@@ -235,6 +228,46 @@ export const useAuthProvider = () => {
     } catch (err) {
       console.error("❌ Signup Error:", err.message);
       setError(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signupWithGoogle = async () => {
+    try {
+      setLoading(true);
+
+      // ✅ Step 1 — Google popup
+      const google = await signinWithGoogleAPI();
+
+      if (!google.success) {
+        toast.error("Google signup failed");
+        return false;
+      }
+
+      const email = google.email;
+
+      localStorage.setItem("auth_mode", "google");
+
+      // ✅ Step 2 — Send to backend signup API (OTP flow)
+      const backend = await signupAPI(email, "google-auth");
+
+      const orderId = backend?.data;
+
+      localStorage.setItem("email", email);
+      localStorage.setItem("order_id", orderId);
+
+      setEmail(email);
+      setOrderId(orderId);
+      setUser({ email, orderId });
+
+      toast.success("Google signup successful ✅ OTP sent");
+
+      return true;
+    } catch (error) {
+      console.error("Google signup error:", error);
+      toast.error("Google signup failed ❌");
       return false;
     } finally {
       setLoading(false);
@@ -315,7 +348,9 @@ export const useAuthProvider = () => {
       const orderId = localStorage.getItem("order_id");
 
       if (!email || !orderId) {
-        toast.error("Missing email or order_id. Please go back and login again.");
+        toast.error(
+          "Missing email or order_id. Please go back and login again."
+        );
         return false;
       }
 
@@ -338,12 +373,51 @@ export const useAuthProvider = () => {
     }
   };
 
+  const signinWithGoogle = async () => {
+    try {
+      setLoading(true);
+
+      // 1️⃣ Step 1: Google Popup
+      const googleResult = await signinWithGoogleAPI();
+
+      if (!googleResult.success) {
+        toast.error("Google Sign-in failed");
+        return false;
+      }
+
+      const email = googleResult.email;
+      localStorage.setItem("auth_mode", "google");
+      localStorage.setItem("email", email);
+      setEmail(email);
+
+      // 2️⃣ Step 2: Ask your backend for OTP (using fake password "google-auth")
+      const signinResult = await signinAPI(email, "google-auth");
+
+      const orderId = signinResult?.data;
+      localStorage.setItem("order_id", orderId);
+      setOrderId(orderId);
+
+      setUser({ email, orderId });
+      toast.success("Google Sign-in successful! OTP sent.");
+
+      return true; // Now redirect to OTP page
+    } catch (err) {
+      console.error("Google Sign-in Error:", err.message);
+      toast.error("Google Sign-in failed.");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     signup,
     verifySignup,
     createProfile,
     signin,
-    verifySignin, // 👈 added here
+    verifySignin,
+    signinWithGoogle,
+    signupWithGoogle,
     user,
     email,
     orderId,
