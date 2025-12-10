@@ -132,7 +132,7 @@ const ChatTemp = () => {
   const [dividerX, setDividerX] = useState(() => {
     const width = window.innerWidth;
     if (width < 768) return 100;
-    if (width < 1024) return 50;
+    if (width < 1024) return 40;
     return parseFloat(localStorage.getItem("dividerX")) || 35;
   });
 
@@ -290,9 +290,9 @@ const ChatTemp = () => {
                   }
                   window.history.back();
                 }}
-                className="p-1"
+                className="p-2 text-xl cursor-pointer hover:bg-gray-200 rounded-md transition-all"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft />
               </Button>
 
               <h1 className="font-semibold text-lg text-gray-800">
@@ -409,7 +409,7 @@ const ChatTemp = () => {
             isMobile ? "h-[calc(100vh-48px)]" : ""
           }`}
         >
-          <div className="absolute inset-0 pt-14 flex justify-center items-start bg-white">
+          <div className="absolute inset-0 pt-25 flex justify-center items-start bg-white sm:pt-14">
             {viewMode === "output" ? (
               <iframe
                 key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
@@ -436,69 +436,70 @@ const ChatTemp = () => {
           </div>
 
           {/* TOP CONTROLS */}
-          <div className="absolute top-0 left-0 w-full flex flex-wrap items-center justify-between gap-3 px-3 md:px-6 py-3 bg-white/80 backdrop-blur border-b border-gray-200 z-20">
-            {/* LEFT BUTTONS */}
-            <div className="flex items-center gap-2  md:gap-4 sm:gap-6  ">
+          <div className="absolute top-0 left-0 w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-3 md:px-6 py-3 bg-white/80 backdrop-blur border-b border-gray-200 z-20">
+            <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto justify-between">
               {/* BACK BUTTON */}
               <Button
                 variant="ghost"
                 onClick={() => {
-                  // Mobile: switch back to chat
-                  if (isMobile) {
-                    setMobileView("chat");
-                  }
-
-                  // Desktop/Mobile both: focus chat section
+                  if (isMobile) setMobileView("chat");
                   setViewMode("code");
                 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-sm"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back
+                <span className="hidden sm:inline">Back</span>{" "}
+                {/* Hide text on very small screens */}
               </Button>
 
+              {/* PREVIEW */}
               <Button
                 variant="ghost"
                 onClick={() => {
                   setViewMode("output");
                   if (isMobile) setMobileView("preview");
                 }}
-                className={`${
+                className={`flex items-center gap-2 text-sm ${
                   viewMode === "output"
                     ? "font-semibold border-b-2 border-black"
                     : ""
                 }`}
               >
-                <Eye className="w-4 h-4 mr-2 " /> Preview
+                <Eye className="w-4 h-4" />
+                <span className="hidden sm:inline">Preview</span>{" "}
+                {/* Hide text on very small screens */}
               </Button>
 
+              {/* CODE */}
               <Button
                 variant="ghost"
                 onClick={() => setViewMode("code")}
-                className={`${
+                className={`flex items-center gap-2 text-sm ${
                   viewMode === "code"
                     ? "font-semibold border-b-2 border-black"
                     : ""
                 }`}
               >
-                <Code className="w-4 h-4 mr-2" /> Code
+                <Code className="w-4 h-4" />
+                <span className="hidden sm:inline">Code</span>{" "}
+                {/* Hide text on very small screens */}
               </Button>
 
+              {/* REFRESH ICON */}
               <RefreshCw
                 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer"
                 onClick={() => setRefreshTrigger((p) => p + 1)}
               />
             </div>
 
-            {/* RIGHT SECTION */}
-            <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-2 md:gap-4">
-              {/* LEFT: Select */}
-              <div className="flex items-center">
+            <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto justify-between flex-wrap">
+              {/* VERSION SELECT */}
+              <div className="flex items-center w-15">
                 <Select
                   value={selectedVersion}
                   onValueChange={setSelectedVersion}
                 >
-                  <SelectTrigger className="!w-[70px] sm:!w-[70px] md:!w-[150px] lg:!w-[180px] text-sm">
+                  <SelectTrigger className="!w-full sm:!w-[120px] md:!w-[150px] lg:!w-[180px] text-sm border-none shadow-none focus-visible:ring-0">
                     <SelectValue placeholder="Version" />
                   </SelectTrigger>
 
@@ -512,8 +513,8 @@ const ChatTemp = () => {
                 </Select>
               </div>
 
-              {/* RIGHT: Icons + Button */}
-              <div className="flex items-center gap-3 md:gap-4">
+              {/* ICONS + VIEW BUTTON */}
+              <div className="flex items-center gap-3 flex-wrap">
                 <Monitor
                   className={`hidden sm:block w-5 h-5 cursor-pointer ${
                     deviceView === "desktop"
@@ -540,7 +541,7 @@ const ChatTemp = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Button className="bg-black hover:bg-gray-900 text-white text-xs md:text-sm px-3 py-2">
+                    <Button className="bg-black hover:bg-gray-900 text-white text-xs md:text-sm px-3 py-2 w-full sm:w-auto">
                       View
                     </Button>
                   </a>
