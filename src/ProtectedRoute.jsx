@@ -43,7 +43,6 @@ const ProtectedRoute = () => {
     );
   }
 
-  // If token was invalid, we already navigated. So we only return Outlet if allowed.
   return <Outlet />;
 };
 
