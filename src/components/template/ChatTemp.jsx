@@ -238,7 +238,7 @@ const ChatTemp = () => {
 
   useEffect(() => {
     window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", stopDrag);
+    window.addEventListener("mouseup", stopDrag); 
     window.addEventListener("touchmove", handleTouchMove);
     window.addEventListener("touchend", stopDrag);
     return () => {
