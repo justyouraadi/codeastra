@@ -26,9 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Item, ItemContent, ItemMedia, ItemTitle } from "../ui/item";
+import { Spinner } from "../ui/spinner";
 
-const SOCKET_URL = "http://localhost:5000";
-const socket = io(SOCKET_URL, { autoConnect: false });
+// const SOCKET_URL = "http://localhost:5000";
+// const socket = io(SOCKET_URL, { autoConnect: false });
 
 const FolderTree = () => {
   const [open, setOpen] = useState({
@@ -127,7 +129,7 @@ const FolderTree = () => {
 
 const ChatTemp = () => {
   const { id } = useParams();
-  const { fetchProjectById, selectedProject } = useProjectProvider();
+  const { fetchProjectById, selectedProject, createChat } = useProjectProvider();
 
   const [dividerX, setDividerX] = useState(() => {
     const width = window.innerWidth;
@@ -152,6 +154,7 @@ const ChatTemp = () => {
 
   const isDragging = useRef(false);
   const chatContainerRef = useRef(null);
+  const [fetchGetApi,setFetchGetApi]=useState(false);
 
   useEffect(() => {
     const width = window.innerWidth;
@@ -183,30 +186,46 @@ const ChatTemp = () => {
         setSelectedVersion(data.data.versions[data.data.versions.length - 1]);
       }
     })();
-  }, [id]);
+  }, [id,fetchGetApi]);
 
-  useEffect(() => {
-    socket.connect();
-    socket.on("receive_message", (data) => {
-      setMessages((prev) => [...prev, { sender: "bot", text: data.text }]);
-      setWaitingForBot(false);
-      setRefreshTrigger((p) => p + 1);
-    });
-    return () => socket.disconnect();
-  }, []);
+  // useEffect(() => {
+  //   socket.connect();
+  //   socket.on("receive_message", (data) => {
+  //     setMessages((prev) => [...prev, { sender: "bot", text: data.text }]);
+  //     setWaitingForBot(false);
+  //     setRefreshTrigger((p) => p + 1);
+  //   });
+  //   return () => socket.disconnect();
+  // }, []);
 
   useEffect(() => {
     if (!chatContainerRef.current) return;
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
   }, [messages]);
 
-  const handleSend = () => {
-    if (!input.trim() || waitingForBot) return;
+  const ChatApi = async (params) =>{
+    const data = await createChat(params);
+    if (!data?.success) {
+      setWaitingForBot(false);
+      setFetchGetApi(false);
+      return;
+    }
+// setRefreshTrigger((p) => p + 1);
+    setWaitingForBot(false);
+    setFetchGetApi(false);
+    setRefreshTrigger((p) => p + 1);
+    return data;
+  }
+
+  const handleSend = async() => {
+    if (!input.trim()) return;
     const newMsg = { sender: "user", text: input };
     setMessages((p) => [...p, newMsg]);
     setInput("");
     setWaitingForBot(true);
-    socket.emit("send_message", newMsg);
+    setFetchGetApi(true)
+    await ChatApi({project_id:id,prompt:input})
+    // socket.emit("send_message", newMsg);
   };
 
   const handleKeyDown = (e) => {
@@ -324,43 +343,100 @@ const ChatTemp = () => {
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto p-6 space-y-5"
           >
-            {userTexts.map((text, i) => (
-              <div
-                key={"user-" + i}
-                className="flex items-start gap-2 justify-end"
-              >
-                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                  {text}
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <span className="text-[10px] text-gray-500 mt-1">
-                    {selectedProject?.data?.user?.full_name}
-                  </span>
-                </div>
-              </div>
-            ))}
+           {/* CASE 1: userTexts.length > 1 */}
+{userTexts.length > 1 ? (
+  <>
+    {/* 1. Show first user text */}
+    <div className="flex items-start gap-2 justify-end">
+      <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+        {userTexts[0]}
+      </div>
+      <div className="flex flex-col items-center">
+        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+          <User className="w-4 h-4" />
+        </div>
+        <span className="text-[10px] text-gray-500 mt-1">
+          {selectedProject?.data?.user?.full_name}
+        </span>
+      </div>
+    </div>
 
-            {botTexts.map((text, i) => (
-              <div
-                key={"bot-" + i}
-                className="flex items-start gap-2 justify-start"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                    CA
-                  </div>
-                  <span className="text-[10px] text-gray-500 mt-1">
-                    CodeAstra
-                  </span>
-                </div>
-                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
-                  {text}
-                </div>
-              </div>
-            ))}
+    {/* 2. Show first bot text */}
+    {botTexts[0] && (
+      <div className="flex items-start gap-2 justify-start">
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+            CA
+          </div>
+          <span className="text-[10px] text-gray-500 mt-1">CodeAstra</span>
+        </div>
+        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
+          {botTexts[0]}
+        </div>
+      </div>
+    )}
+
+    {/* 3. Map remaining user texts */}
+    {userTexts.slice(1).map((text, i) => (
+      <div
+        key={"user-rem-" + i}
+        className="flex items-start gap-2 justify-end"
+      >
+        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+          {text}
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+            <User className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] text-gray-500 mt-1">
+            {selectedProject?.data?.user?.full_name}
+          </span>
+        </div>
+      </div>
+    ))}
+  </>
+) : (
+  <>
+    {/* FALLBACK: Normal mapping when only one or zero user texts exist */}
+    {userTexts.map((text, i) => (
+      <div
+        key={"user-" + i}
+        className="flex items-start gap-2 justify-end"
+      >
+        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+          {text}
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+            <User className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] text-gray-500 mt-1">
+            {selectedProject?.data?.user?.full_name}
+          </span>
+        </div>
+      </div>
+    ))}
+
+    {botTexts.map((text, i) => (
+      <div
+        key={"bot-" + i}
+        className="flex items-start gap-2 justify-start"
+      >
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+            CA
+          </div>
+          <span className="text-[10px] text-gray-500 mt-1">CodeAstra</span>
+        </div>
+        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
+          {text}
+        </div>
+      </div>
+    ))}
+  </>
+)}
+
           </div>
 
           <div className="p-3 border-t border-gray-200 bg-white flex items-center gap-2">
@@ -411,6 +487,28 @@ const ChatTemp = () => {
         >
           <div className="absolute inset-0 pt-25 flex justify-center items-start bg-white sm:pt-14">
             {viewMode === "output" ? (
+
+              <>
+{
+                fetchGetApi && (
+                  <div className="absolute inset-0 bg-white flex items-center justify-center z-10">
+                    <div className="flex w-full max-w-xs flex-col gap-4 [--radius:1rem]">
+      <Item variant="muted">
+        <ItemMedia>
+          <Spinner />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle className="line-clamp-1">Updating changes...</ItemTitle>
+        </ItemContent>
+        <ItemContent className="flex-none justify-end">
+          <span className="text-sm tabular-nums">🚀</span>
+        </ItemContent>
+      </Item>
+    </div>
+                  </div>
+                )
+}
+              
               <iframe
                 key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                 src={
@@ -429,7 +527,11 @@ const ChatTemp = () => {
                       : "none",
                 }}
                 title="Live Preview"
+                onLoad={()=>{
+                  setFetchGetApi(false)
+                }}
               />
+              </>
             ) : (
               <FolderTree />
             )}

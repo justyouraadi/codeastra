@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createProjectAPI } from "../apis/CreateProject.Api";
 import { getProjectsAPI } from "../apis/GetProjects.Api";
 import { getProjectByIdAPI } from "../apis/GetProjectById.Api";
+import { createChatAPI } from "@/apis/Chat.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
@@ -109,6 +110,24 @@ const fetchProjects = async (searchTerm = "") => {
   };
 
   // ----------------------------------------------------------
+  // 🔹 Chat on a project
+  // ----------------------------------------------------------
+   const createChat = async (params) => {
+    try {
+      setLoading(true);
+      const result = await createChatAPI(params);
+      // setProjects((prev) => [...prev, result]);
+      return result;
+    } catch (err) {
+      console.error("❌ Project chat Error:", err.message);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ----------------------------------------------------------
   // 🔹 Returned Values for Components
   // ----------------------------------------------------------
   return {
@@ -116,6 +135,7 @@ const fetchProjects = async (searchTerm = "") => {
     fetchProjects,
     loadMoreProjects, // ✅ NEW
     fetchProjectById,
+    createChat, // ✅ NEW
     projects,
     selectedProject,
     loading,
