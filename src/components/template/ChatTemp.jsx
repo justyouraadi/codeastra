@@ -55,10 +55,10 @@ const FolderTree = ({ onSelectFile, selectedFile }) => {
 
   // simple static tree (replace or wire into real files if needed)
   return (
-    <div className="text-gray-700 font-mono text-sm px-4 py-4 bg-white h-full overflow-auto">
+    <div className="text-white font-mono text-sm px-4 py-4 bg-black h-full overflow-auto">
       <div className="space-y-3">
         <div
-          className="flex items-center gap-2 cursor-pointer hover:text-black"
+          className="flex items-center gap-2 cursor-pointer"
           onClick={() => setOpen({ ...open, src: !open.src })}
         >
           {open.src ? (
@@ -73,7 +73,7 @@ const FolderTree = ({ onSelectFile, selectedFile }) => {
           <div className="ml-5 mt-1 border-l border-gray-200 pl-3">
             <div
               className={`flex items-center gap-2 cursor-pointer py-1 px-2 rounded ${
-                selectedFile === "app.tsx" ? "bg-gray-100" : "hover:bg-gray-50"
+                selectedFile === "app.tsx" ? "bg-gray-100" : "hover:bg-gray-700"
               }`}
               onClick={() => onSelectFile && onSelectFile("app.tsx")}
             >
@@ -83,7 +83,7 @@ const FolderTree = ({ onSelectFile, selectedFile }) => {
 
             <div className="mt-2">
               <div
-                className="flex items-center gap-2 cursor-pointer hover:text-black"
+                className="flex items-center gap-2 cursor-pointer"
                 onClick={() =>
                   setOpen({ ...open, components: !open.components })
                 }
@@ -102,8 +102,8 @@ const FolderTree = ({ onSelectFile, selectedFile }) => {
                   <div
                     className={`flex items-center gap-2 py-1 px-2 rounded ${
                       selectedFile === "ChatTemp.jsx"
-                        ? "bg-gray-100"
-                        : "hover:bg-gray-50"
+                        ? "bg-gray-700"
+                        : "hover:bg-gray-700"
                     }`}
                     onClick={() => onSelectFile && onSelectFile("ChatTemp.jsx")}
                   >
@@ -113,7 +113,7 @@ const FolderTree = ({ onSelectFile, selectedFile }) => {
 
                   <div className="mt-2">
                     <div
-                      className="flex items-center gap-2 cursor-pointer hover:text-black"
+                      className="flex items-center gap-2 cursor-pointer"
                       onClick={() => setOpen({ ...open, pages: !open.pages })}
                     >
                       {open.pages ? (
@@ -130,8 +130,8 @@ const FolderTree = ({ onSelectFile, selectedFile }) => {
                         <div
                           className={`flex items-center gap-2 py-1 px-2 rounded ${
                             selectedFile === "interface.ts"
-                              ? "bg-gray-100"
-                              : "hover:bg-gray-50"
+                              ? "bg-gray-700"
+                              : "hover:bg-gray-700"
                           }`}
                           onClick={() =>
                             onSelectFile && onSelectFile("interface.ts")
@@ -149,7 +149,7 @@ const FolderTree = ({ onSelectFile, selectedFile }) => {
 
             <div className="mt-3">
               <div
-                className="flex items-center gap-2 cursor-pointer hover:text-black"
+                className="flex items-center gap-2 cursor-pointer"
                 onClick={() => setOpen({ ...open, ui: !open.ui })}
               >
                 {open.ui ? (
@@ -785,6 +785,7 @@ const ChatTemp = () => {
               className="relative flex-1 overflow-hidden bg-white"
               style={{ height: "100vh" }}
             >
+              {/* Content */}
               <div className="absolute inset-0 pt-16 flex justify-center items-start bg-white">
                 {viewMode === "output" ? (
                   <>
@@ -839,8 +840,10 @@ const ChatTemp = () => {
               </div>
 
               {/* TOP CONTROLS */}
-              <div className="absolute top-0 left-0 w-full flex items-center justify-between gap-3 px-4 py-3 bg-white/90 z-20 border-b border-gray-200">
-                <div className="flex items-center gap-3">
+              <div className="absolute top-0 left-0 w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-3 px-4 py-3 bg-white/90 z-20 border-b border-gray-200">
+                {/* Left Section */}
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  {/* Back button - mobile only */}
                   <Button
                     variant="ghost"
                     onClick={() => setViewMode("code")}
@@ -850,6 +853,7 @@ const ChatTemp = () => {
                     <span className="hidden sm:inline">Back</span>
                   </Button>
 
+                  {/* Preview button */}
                   <Button
                     variant="ghost"
                     onClick={() => setViewMode("output")}
@@ -863,6 +867,7 @@ const ChatTemp = () => {
                     <span className="hidden sm:inline">Preview</span>
                   </Button>
 
+                  {/* Code button */}
                   <Button
                     variant="ghost"
                     onClick={() => setViewMode("code")}
@@ -876,13 +881,16 @@ const ChatTemp = () => {
                     <span className="hidden sm:inline">Code</span>
                   </Button>
 
+                  {/* Refresh */}
                   <RefreshCw
                     className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer"
                     onClick={() => setRefreshTrigger((p) => p + 1)}
                   />
                 </div>
 
-                <div className="flex items-center gap-3">
+                {/* Right Section */}
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                  {/* Version selector - always visible */}
                   <Select
                     value={selectedVersion}
                     onValueChange={setSelectedVersion}
@@ -899,9 +907,11 @@ const ChatTemp = () => {
                     </SelectContent>
                   </Select>
 
-                  <div className="flex items-center gap-3">
+                  {/* Icons */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {/* Monitor + Smartphone - only md+ */}
                     <Monitor
-                      className={`hidden sm:block w-5 h-5 cursor-pointer ${
+                      className={`hidden md:inline-block w-5 h-5 cursor-pointer ${
                         deviceView === "desktop"
                           ? "text-black"
                           : "text-gray-600 hover:text-black"
@@ -909,14 +919,18 @@ const ChatTemp = () => {
                       onClick={() => setDeviceView("desktop")}
                     />
                     <Smartphone
-                      className={`hidden sm:block w-5 h-5 cursor-pointer ${
+                      className={`hidden md:inline-block w-5 h-5 cursor-pointer ${
                         deviceView === "mobile"
                           ? "text-black"
                           : "text-gray-600 hover:text-black"
                       }`}
                       onClick={() => setDeviceView("mobile")}
                     />
+
+                    {/* Share - always visible */}
                     <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+
+                    {/* View button - always visible if domain exists */}
                     {selectedProject?.data?.assigned_domain && (
                       <a
                         href={`https://${selectedProject.data.assigned_domain}`}
