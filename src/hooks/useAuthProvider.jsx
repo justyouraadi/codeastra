@@ -198,12 +198,17 @@
 // };
 
 import { useState } from "react";
-import { signinWithGoogleAPI, signupAPI } from "../apis/SingUp.Api";
+import {
+  googleMFASigninAPI,
+  signinWithGoogleAPI,
+  signupAPI,
+} from "../apis/SingUp.Api";
 import { verifySignupAPI } from "../apis/VerifySignup.Api";
 import { createProfileAPI } from "../apis/CreateProfile.Api";
 import { signinAPI } from "../apis/Signin.Api";
 import { verifySigninAPI } from "../apis/VerifySignin.Api"; // 👈 NEW IMPORT
 import toast from "react-hot-toast";
+import { signInWithPopup } from "firebase/auth";
 
 export const useAuthProvider = () => {
   const [user, setUser] = useState(null);
@@ -317,22 +322,28 @@ export const useAuthProvider = () => {
   const signin = async (email, password) => {
     try {
       setLoading(true);
+
       const result = await signinAPI(email, password);
       console.log("✅ Signin Successful:", result);
 
-      // Backend returns order_id to verify OTP next step
       const orderId = result?.data;
+
       localStorage.setItem("email", email);
       localStorage.setItem("order_id", orderId);
+
       setEmail(email);
       setOrderId(orderId);
       setUser({ email, orderId });
       setError(null);
-      return true;
+
+      // ✅ return full API response (no true/false)
+      return result;
     } catch (err) {
       console.error("❌ Signin Error:", err.message);
       setError(err.message);
-      return false;
+
+      // throw so frontend catch works properly
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -373,38 +384,75 @@ export const useAuthProvider = () => {
     }
   };
 
+  // const signinWithGoogle = async () => {
+  //   try {
+  //     setLoading(true);
+
+  //     // 1️⃣ Step 1: Google Popup
+  //     const googleResult = await signinWithGoogleAPI();
+
+  //     if (!googleResult.success) {
+  //       toast.error("Google Sign-in failed");
+  //       return false;
+  //     }
+
+  //     const email = googleResult.email;
+  //     localStorage.setItem("auth_mode", "google");
+  //     localStorage.setItem("email", email);
+  //     setEmail(email);
+
+  //     // 2️⃣ Step 2: Ask your backend for OTP (using fake password "google-auth")
+  //     const signinResult = await signinAPI(email, "google-auth");
+
+  //     const orderId = signinResult?.data;
+  //     localStorage.setItem("order_id", orderId);
+  //     setOrderId(orderId);
+
+  //     setUser({ email, orderId });
+  //     toast.success("Google Sign-in successful! OTP sent.");
+
+  //     return true; // Now redirect to OTP page
+  //   } catch (err) {
+  //     console.error("Google Sign-in Error:", err.message);
+  //     toast.error("Google Sign-in failed.");
+  //     return false;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const signinWithGoogle = async () => {
     try {
       setLoading(true);
 
-      // 1️⃣ Step 1: Google Popup
-      const googleResult = await signinWithGoogleAPI();
+      // 1️⃣ Firebase Google Popup
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const email = user.email;
 
-      if (!googleResult.success) {
-        toast.error("Google Sign-in failed");
-        return false;
-      }
+      if (!email) throw new Error("Google email not found");
 
-      const email = googleResult.email;
       localStorage.setItem("auth_mode", "google");
       localStorage.setItem("email", email);
       setEmail(email);
 
-      // 2️⃣ Step 2: Ask your backend for OTP (using fake password "google-auth")
-      const signinResult = await signinAPI(email, "google-auth");
+      // 2️⃣ Backend API call for Google MFA
+      const signinResult = await googleMFASigninAPI(email);
 
       const orderId = signinResult?.data;
       localStorage.setItem("order_id", orderId);
       setOrderId(orderId);
 
       setUser({ email, orderId });
-      toast.success("Google Sign-in successful! OTP sent.");
 
-      return true; // Now redirect to OTP page
+      toast.success("Google sign-in successful! OTP sent.");
+
+      return signinResult; // ✅ return API response
     } catch (err) {
-      console.error("Google Sign-in Error:", err.message);
+      console.error("Google Sign-in Error:", err);
+      setError(err.message);
       toast.error("Google Sign-in failed.");
-      return false;
+      throw err;
     } finally {
       setLoading(false);
     }

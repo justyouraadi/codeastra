@@ -19,5 +19,7 @@ export const signinAPI = async (email, password) => {
     throw new Error(data?.error?.explanation?.[0] || data.message);
   }
 
+  console.log(data, "i am the data from signin api");
+
   return data;
 };

@@ -6,8 +6,6 @@ import toast from "react-hot-toast";
 
 const FormMolecules = () => {
   const navigate = useNavigate();
-
-  // ✅ Added signinWithGoogle
   const { signin, signinWithGoogle, loading, error } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -17,46 +15,82 @@ const FormMolecules = () => {
   // ✅ Normal Email + Password Sign-in
   // ------------------------------------------
   const handleSignIn = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (loading) return;
+  if (loading) return;
 
-    const toastId = toast.loading("Signing in...");
+  const toastId = toast.loading("Signing in...");
 
-    try {
-      localStorage.setItem("auth_mode", "signin");
+  try {
+    localStorage.setItem("auth_mode", "signin");
 
-      const response = await signin(email, password);
+    const response = await signin(email, password); // now returns full response
+    console.log("vishu", response);
 
-      toast.dismiss(toastId);
+    toast.dismiss(toastId);
 
-      if (response) {
-        navigate("/otppages"); // ✅ OTP page
-      }
-    } catch (err) {
-      toast.dismiss(toastId);
+    // ✅ navigate only if API response exists (no true/false logic)
+    if (response?.data) {
+      navigate("/otppages");
+    }
+
+    console.log(response, "i am the response");
+
+  } catch (err) {
+    console.log("Vishu-------------------------------->>>>>>>>>>>>>>", err.message);
+    toast.dismiss(toastId);
+
+    if (err.message.includes("request already exists")) {
+      console.log("Signin request already exists, redirecting to OTP page...");
+      navigate("/otppages");
+    } else {
       toast.error("Something went wrong. Please try again.");
     }
-  };
+  }
+};
+
 
   // ------------------------------------------
   // ✅ Google Sign-in Logic (Frontend Only)
   // ------------------------------------------
-  const handleGoogleSignIn = async () => {
+  // const handleGoogleSignIn = async () => {
+  //   if (loading) return;
+
+  //   const toastId = toast.loading("Signing in with Google...");
+
+  //   // ✅ call context google signin
+  //   const success = await signinWithGoogle();
+
+  //   toast.dismiss(toastId);
+
+  //   if (success) {
+  //     navigate("/otppages"); // ✅ redirect to OTP page
+  //   }
+  // };
+
+
+  // const navigate = useNavigate();
+  // const { loading, signinWithGoogle } = useAuth();
+
+   const handleGoogleSignIn = async () => {
     if (loading) return;
 
     const toastId = toast.loading("Signing in with Google...");
 
-    // ✅ call context google signin
-    const success = await signinWithGoogle();
+    try {
+      const response = await signinWithGoogle(); // calls hook
+      toast.dismiss(toastId);
 
-    toast.dismiss(toastId);
+      if (response?.data) {
+        navigate("/otppages"); // ✅ redirect to OTP page
+      }
 
-    if (success) {
-      navigate("/otppages"); // ✅ redirect to OTP page
+    } catch (err) {
+      toast.dismiss(toastId);
+      console.log("Google Sign-in Error:", err);
     }
-  };
-
+  }
+  
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4">
       {/* Header */}
@@ -149,7 +183,7 @@ const FormMolecules = () => {
 
         {/* Footer */}
         <p className="text-center text-gray-600 mt-6 text-sm">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <button
             type="button"
             onClick={() => navigate("/createaccount")}
