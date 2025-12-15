@@ -299,7 +299,8 @@ const ChatTemp = () => {
     }
     setWaitingForBot(false);
     setFetchGetApi(false);
-    setRefreshTrigger((p) => p + 1);
+    // setRefreshTrigger((p) => p + 1);
+    window.location.reload()
     return data;
   };
 
