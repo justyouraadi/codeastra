@@ -488,6 +488,7 @@ const ChatTemp = () => {
           {mobileView === "preview" && (
             <div className="relative flex-1 overflow-hidden bg-white h-[100vh]">
               {/* top controls */}
+              {/* top controls */}
               <div className="absolute top-0 left-0 w-full flex items-center justify-between gap-3 px-3 py-3 bg-white/90 z-20 border-b border-gray-200">
                 <div className="flex items-center gap-2">
                   <Button
@@ -529,21 +530,51 @@ const ChatTemp = () => {
 
                 <div className="flex items-center gap-3">
                   <Monitor
-                    className={`w-5 h-5 cursor-pointer ${
+                    className={`w-5 h-5 cursor-pointer hidden  sm:hidden  ${
                       deviceView === "desktop" ? "text-black" : "text-gray-600"
                     }`}
                     onClick={() => setDeviceView("desktop")}
                   />
                   <Smartphone
-                    className={`w-5 h-5 cursor-pointer ${
+                    className={`w-5 h-5 cursor-pointer hidden  sm:hidden  ${
                       deviceView === "mobile" ? "text-black" : "text-gray-600"
                     }`}
                     onClick={() => setDeviceView("mobile")}
                   />
                   <RefreshCw
-                    className="w-5 h-5 cursor-pointer text-gray-600"
+                    className="w-5 h-5 cursor-pointer text-gray-600 hidden  sm:hidden "
                     onClick={() => setRefreshTrigger((p) => p + 1)}
                   />
+
+                  {/* View button - added for mobile */}
+                  <Select
+                    value={selectedVersion}
+                    onValueChange={setSelectedVersion}
+                    className=" sm:block"
+                  >
+                    <SelectTrigger className="   !w-[90px] text-sm border-none shadow-none focus-visible:ring-0 ">
+                      <SelectValue placeholder="Version" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedProject?.data?.versions?.map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+                  {selectedProject?.data?.assigned_domain && (
+                    <a
+                      href={`https://${selectedProject.data.assigned_domain}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button className="bg-black hover:bg-gray-900 text-white text-xs px-3 py-2">
+                        View
+                      </Button>
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -840,8 +871,9 @@ const ChatTemp = () => {
                   <Select
                     value={selectedVersion}
                     onValueChange={setSelectedVersion}
+                    className=" sm:block"
                   >
-                    <SelectTrigger className="!w-[160px] text-sm border-none shadow-none focus-visible:ring-0">
+                    <SelectTrigger className="   !w-[160px] text-sm border-none shadow-none focus-visible:ring-0 ">
                       <SelectValue placeholder="Version" />
                     </SelectTrigger>
                     <SelectContent>
@@ -857,7 +889,7 @@ const ChatTemp = () => {
                   <div className="flex items-center gap-3 flex-wrap">
                     {/* Monitor + Smartphone - only md+ */}
                     <Monitor
-                      className={`hidden md:inline-block w-5 h-5 cursor-pointer ${
+                      className={`hidden md:inline-block w-5 h-5 cursor-pointer sm:hidden  ${
                         deviceView === "desktop"
                           ? "text-black"
                           : "text-gray-600 hover:text-black"
@@ -883,7 +915,7 @@ const ChatTemp = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <Button className="bg-black hover:bg-gray-900 text-white text-xs md:text-sm px-3 py-2">
+                        <Button className="bg-black hover:bg-gray-900 text-white  text-xs md:text-sm px-3 py-2">
                           View
                         </Button>
                       </a>
