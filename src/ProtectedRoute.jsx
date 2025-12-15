@@ -9,11 +9,12 @@ const ProtectedRoute = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // no token → go to login
     if (!token) {
       navigate("/", { replace: true });
       return;
     }
+
+    let isMounted = true;
 
     const checkToken = async () => {
       try {
@@ -24,15 +25,21 @@ const ProtectedRoute = () => {
         // handle expired or invalid token
         if (err.status === 401 || err.status === 403) {
           localStorage.removeItem("signin_token");
+          window.location.reload();
         }
 
-        navigate("/", { replace: true });
-      } finally {
-        setLoading(false);
+        if (isMounted) navigate("/", { replace: true });
+        return;
       }
+
+      if (isMounted) setLoading(false);
     };
 
     checkToken();
+
+    return () => {
+      isMounted = false; // cleanup in case component unmounts
+    };
   }, [token, navigate]);
 
   if (loading) {

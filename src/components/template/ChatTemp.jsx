@@ -300,7 +300,7 @@ const ChatTemp = () => {
     setWaitingForBot(false);
     setFetchGetApi(false);
     // setRefreshTrigger((p) => p + 1);
-    window.location.reload()
+    window.location.reload();
     return data;
   };
 
@@ -427,7 +427,7 @@ const ChatTemp = () => {
                                   </span>
                                 </div>
                                 <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm max-w-none"
+                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
                                   dangerouslySetInnerHTML={{
                                     __html: text?.message,
                                   }}
@@ -664,7 +664,7 @@ const ChatTemp = () => {
                                   </span>
                                 </div>
                                 <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm max-w-none"
+                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
                                   dangerouslySetInnerHTML={{
                                     __html: text?.message,
                                   }}
