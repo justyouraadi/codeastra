@@ -219,6 +219,7 @@ const ChatTemp = () => {
   const chatContainerRef = useRef(null);
   const leftPanelRef = useRef(null);
   const resizableGroupRef = useRef(null);
+  const [finalMessage, setFinalMessages] = useState([]);
 
   const [fetchGetApi, setFetchGetApi] = useState(false);
 
@@ -235,12 +236,35 @@ const ChatTemp = () => {
       const data = await fetchProjectById(id);
       if (!data?.success) return;
 
+      let messages = [];
+      if (data.data.chats.length > 0) {
+        messages.push({
+          sender: "user",
+          message: data.data.chats[0].message,
+        });
+      }
+
+      if (data.data.description) {
+        messages.push({
+          sender: "bot",
+          message: data.data.description,
+        });
+      }
+
+      if (data.data.chats.length > 1) {
+        const remainingChats = data.data.chats.slice(1).map((chat) => chat);
+        messages.push(...remainingChats);
+      }
+
+      setFinalMessages(messages);
+
       const botArray = [];
       const userArray = [];
 
       if (data.data.description) botArray.push(data.data.description);
 
       const list = Array.isArray(data.data.chats) ? data.data.chats : [];
+
       list.forEach((item) => {
         if (item.sender === "user") userArray.push(item.message);
         else if (item.sender === "bot") botArray.push(item.message);
@@ -255,6 +279,10 @@ const ChatTemp = () => {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+  console.log(finalMessage, "sdfs");
+  // botTexts.forEach((text,index)=>{
+  //   console.log("text",text,index);
+  // })
 
   // always scroll chat to bottom when messages change
   useEffect(() => {
@@ -378,98 +406,56 @@ const ChatTemp = () => {
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto p-6 space-y-5"
               >
-                {/* Render conversation (userTexts & botTexts) */}
-                {userTexts.length > 1 ? (
+                {finalMessage.length > 0 ? (
                   <>
-                    <div className="flex items-start gap-2 justify-end">
-                      <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                        {userTexts[0]}
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                          <User className="w-4 h-4" />
-                        </div>
-                        <span className="text-[10px] text-gray-500 mt-1">
-                          {selectedProject?.data?.user?.full_name}
-                        </span>
-                      </div>
-                    </div>
-
-                    {botTexts[0] && (
-                      <div className="flex items-start gap-2 justify-start">
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                            CA
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-1">
-                            CodeAstra
-                          </span>
-                        </div>
-                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
-                          {botTexts[0]}
-                        </div>
-                      </div>
-                    )}
-
-                    {userTexts.slice(1).map((text, i) => (
-                      <div
-                        key={"user-rem-" + i}
-                        className="flex items-start gap-2 justify-end"
-                      >
-                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                          {text}
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                            <User className="w-4 h-4" />
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-1">
-                            {selectedProject?.data?.user?.full_name}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                    {finalMessage.map((text, index) => {
+                      return (
+                        <>
+                          {text?.sender === "bot" ? (
+                            <>
+                              <div
+                                key={index}
+                                className="flex items-start gap-2 justify-start"
+                              >
+                                <div className="flex flex-col items-center">
+                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                                    CA
+                                  </div>
+                                  <span className="text-[10px] text-gray-500 mt-1">
+                                    CodeAstra
+                                  </span>
+                                </div>
+                                <div
+                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm max-w-none"
+                                  dangerouslySetInnerHTML={{
+                                    __html: text?.message,
+                                  }}
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-start gap-2 justify-end">
+                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+                                  {text?.message}
+                                </div>
+                                <div className="flex flex-col items-center">
+                                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+                                    <User className="w-4 h-4" />
+                                  </div>
+                                  <span className="text-[10px] text-gray-500 mt-1">
+                                    {selectedProject?.data?.user?.full_name}
+                                  </span>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      );
+                    })}
                   </>
                 ) : (
-                  <>
-                    {userTexts.map((text, i) => (
-                      <div
-                        key={"user-" + i}
-                        className="flex items-start gap-2 justify-end"
-                      >
-                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                          {text}
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                            <User className="w-4 h-4" />
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-1">
-                            {selectedProject?.data?.user?.full_name}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-
-                    {botTexts.map((text, i) => (
-                      <div
-                        key={"bot-" + i}
-                        className="flex items-start gap-2 justify-start"
-                      >
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                            CA
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-1">
-                            CodeAstra
-                          </span>
-                        </div>
-                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
-                          {text}
-                        </div>
-                      </div>
-                    ))}
-                  </>
+                  <></>
                 )}
               </div>
 
@@ -657,97 +643,56 @@ const ChatTemp = () => {
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto p-6 space-y-5"
               >
-                {userTexts.length > 1 ? (
+                {finalMessage.length > 0 ? (
                   <>
-                    <div className="flex items-start gap-2 justify-end">
-                      <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                        {userTexts[0]}
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                          <User className="w-4 h-4" />
-                        </div>
-                        <span className="text-[10px] text-gray-500 mt-1">
-                          {selectedProject?.data?.user?.full_name}
-                        </span>
-                      </div>
-                    </div>
-
-                    {botTexts[0] && (
-                      <div className="flex items-start gap-2 justify-start">
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                            CA
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-1">
-                            CodeAstra
-                          </span>
-                        </div>
-                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
-                          {botTexts[0]}
-                        </div>
-                      </div>
-                    )}
-
-                    {userTexts.slice(1).map((text, i) => (
-                      <div
-                        key={"user-rem-" + i}
-                        className="flex items-start gap-2 justify-end"
-                      >
-                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                          {text}
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                            <User className="w-4 h-4" />
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-1">
-                            {selectedProject?.data?.user?.full_name}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                    {finalMessage.map((text, index) => {
+                      return (
+                        <>
+                          {text?.sender === "bot" ? (
+                            <>
+                              <div
+                                key={index}
+                                className="flex items-start gap-2 justify-start"
+                              >
+                                <div className="flex flex-col items-center">
+                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                                    CA
+                                  </div>
+                                  <span className="text-[10px] text-gray-500 mt-1">
+                                    CodeAstra
+                                  </span>
+                                </div>
+                                <div
+                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm max-w-none"
+                                  dangerouslySetInnerHTML={{
+                                    __html: text?.message,
+                                  }}
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-start gap-2 justify-end">
+                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+                                  {text?.message}
+                                </div>
+                                <div className="flex flex-col items-center">
+                                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+                                    <User className="w-4 h-4" />
+                                  </div>
+                                  <span className="text-[10px] text-gray-500 mt-1">
+                                    {selectedProject?.data?.user?.full_name}
+                                  </span>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      );
+                    })}
                   </>
                 ) : (
-                  <>
-                    {userTexts.map((text, i) => (
-                      <div
-                        key={"user-" + i}
-                        className="flex items-start gap-2 justify-end"
-                      >
-                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                          {text}
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                            <User className="w-4 h-4" />
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-1">
-                            {selectedProject?.data?.user?.full_name}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-
-                    {botTexts.map((text, i) => (
-                      <div
-                        key={"bot-" + i}
-                        className="flex items-start gap-2 justify-start"
-                      >
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                            CA
-                          </div>
-                          <span className="text-[10px] text-gray-500 mt-1">
-                            CodeAstra
-                          </span>
-                        </div>
-                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
-                          {text}
-                        </div>
-                      </div>
-                    ))}
-                  </>
+                  <></>
                 )}
               </div>
 

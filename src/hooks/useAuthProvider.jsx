@@ -208,7 +208,8 @@ import { createProfileAPI } from "../apis/CreateProfile.Api";
 import { signinAPI } from "../apis/Signin.Api";
 import { verifySigninAPI } from "../apis/VerifySignin.Api"; // 👈 NEW IMPORT
 import toast from "react-hot-toast";
-import { signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/utils/firebase";
 
 export const useAuthProvider = () => {
   const [user, setUser] = useState(null);
@@ -383,43 +384,6 @@ export const useAuthProvider = () => {
       setLoading(false);
     }
   };
-
-  // const signinWithGoogle = async () => {
-  //   try {
-  //     setLoading(true);
-
-  //     // 1️⃣ Step 1: Google Popup
-  //     const googleResult = await signinWithGoogleAPI();
-
-  //     if (!googleResult.success) {
-  //       toast.error("Google Sign-in failed");
-  //       return false;
-  //     }
-
-  //     const email = googleResult.email;
-  //     localStorage.setItem("auth_mode", "google");
-  //     localStorage.setItem("email", email);
-  //     setEmail(email);
-
-  //     // 2️⃣ Step 2: Ask your backend for OTP (using fake password "google-auth")
-  //     const signinResult = await signinAPI(email, "google-auth");
-
-  //     const orderId = signinResult?.data;
-  //     localStorage.setItem("order_id", orderId);
-  //     setOrderId(orderId);
-
-  //     setUser({ email, orderId });
-  //     toast.success("Google Sign-in successful! OTP sent.");
-
-  //     return true; // Now redirect to OTP page
-  //   } catch (err) {
-  //     console.error("Google Sign-in Error:", err.message);
-  //     toast.error("Google Sign-in failed.");
-  //     return false;
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const signinWithGoogle = async () => {
     try {
