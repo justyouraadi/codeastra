@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 import { auth, googleProvider } from "@/utils/firebase";
-// import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 
 /* ----------------------------------------------------
   SIGN UP API (Normal Email + Password)

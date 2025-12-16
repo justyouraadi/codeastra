@@ -22,12 +22,15 @@ const CreateAccount = () => {
 
   const [form, setForm] = useState({ email: "", password: "" });
 
-  // Handle input changes
-  const handleChange = (e) =>
+  // ------------------------------------------
+  // Handle Input Change
+  // ------------------------------------------
+  const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
 
   // ------------------------------------------
-  // ✅ Normal Signup
+  // ✅ Normal Signup (Email + Password)
   // ------------------------------------------
   const handleSignup = async () => {
     if (loading) return;
@@ -46,24 +49,32 @@ const CreateAccount = () => {
       }
     } catch (error) {
       toast.dismiss(toastId);
-      toast.error("Signup failed ❌");
+      toast.error("Signup failed. Please try again.");
+      console.error(error);
     }
   };
 
   // ------------------------------------------
-  // ✅ Google Signup Logic
+  // ✅ Google Signup (FINAL + FIXED)
   // ------------------------------------------
-  const handleGoogle = async () => {
+  const handleGoogleSignup = async () => {
     if (loading) return;
 
     const toastId = toast.loading("Connecting with Google...");
 
-    const success = await signupWithGoogle();
+    try {
+      const response = await signupWithGoogle();
 
-    toast.dismiss(toastId);
+      toast.dismiss(toastId);
 
-    if (success) {
-      navigate("/otppages"); // ✅ same OTP flow
+      // ✅ Backend JWT must exist
+      if (response?.token || response?.data) {
+        navigate("/otppages");
+      }
+    } catch (error) {
+      toast.dismiss(toastId);
+      toast.error("Google signup failed");
+      console.error("Google Signup Error:", error);
     }
   };
 
@@ -82,9 +93,9 @@ const CreateAccount = () => {
             </p>
           </header>
 
-          {/* ✅ Google Button (UI unchanged) */}
+          {/* ✅ Google Signup Button */}
           <ButtonAtom
-            onClick={handleGoogle}
+            onClick={handleGoogleSignup}
             disabled={loading}
             className="w-full bg-black text-white hover:bg-gray-900 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition disabled:opacity-50"
           >
@@ -105,10 +116,10 @@ const CreateAccount = () => {
               <Label className="text-sm text-gray-700">Email Address</Label>
               <InputAtom
                 name="email"
+                type="email"
                 value={form.email}
                 onChange={handleChange}
                 placeholder={formData.emailPlaceholder}
-                type="email"
                 className="w-full py-3 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-black"
               />
             </div>
@@ -117,10 +128,10 @@ const CreateAccount = () => {
               <Label className="text-sm text-gray-700">Password</Label>
               <InputAtom
                 name="password"
+                type="password"
                 value={form.password}
                 onChange={handleChange}
                 placeholder={formData.passwordPlaceholder}
-                type="password"
                 className="w-full py-3 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-black"
               />
             </div>
@@ -159,7 +170,7 @@ const CreateAccount = () => {
         </div>
       </div>
 
-      {/* Image Section */}
+      {/* ---------- Right Side Image ---------- */}
       <div className="flex-1 hidden lg:flex">
         <SideimagsForm />
       </div>

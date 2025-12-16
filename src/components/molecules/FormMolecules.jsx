@@ -6,46 +6,38 @@ import toast from "react-hot-toast";
 
 const FormMolecules = () => {
   const navigate = useNavigate();
-  const { signin, signinWithGoogle, loading, error } = useAuth();
+  const { signin, signinWithGoogle, loading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ------------------------------------------
-  // ✅ Normal Email + Password Sign-in
-  // ------------------------------------------
-  const handleSignIn = async (e) => {
-    e.preventDefault();
-
+  // -------------------------------------------------
+  // ✅ Unified Authentication Handler
+  // -------------------------------------------------
+  const handleAuth = async (authFn, { toastText, mode } = {}) => {
     if (loading) return;
 
-    const toastId = toast.loading("Signing in...");
+    const toastId = toast.loading(toastText || "Signing in...");
 
     try {
-      localStorage.setItem("auth_mode", "signin");
+      if (mode) {
+        localStorage.setItem("auth_mode", mode);
+      }
 
-      const response = await signin(email, password); // now returns full response
-      console.log("vishu", response);
+      const response = await authFn();
 
       toast.dismiss(toastId);
 
-      // ✅ navigate only if API response exists (no true/false logic)
+      // ✅ Redirect only when backend confirms
       if (response?.data) {
         navigate("/otppages");
       }
-
-      console.log(response, "i am the response");
     } catch (err) {
-      console.log(
-        "Vishu-------------------------------->>>>>>>>>>>>>>",
-        err.message
-      );
       toast.dismiss(toastId);
+      console.error("Authentication Error:", err);
 
-      if (err.message.includes("request already exists")) {
-        console.log(
-          "Signin request already exists, redirecting to OTP page..."
-        );
+      // ✅ If request already exists, redirect to OTP
+      if (err?.message?.includes("request already exists")) {
         navigate("/otppages");
       } else {
         toast.error("Something went wrong. Please try again.");
@@ -53,22 +45,25 @@ const FormMolecules = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    if (loading) return;
+  // -------------------------------------------------
+  // ✅ Email + Password Sign-in
+  // -------------------------------------------------
+  const handleSignIn = (e) => {
+    e.preventDefault();
 
-    const toastId = toast.loading("Signing in with Google...");
+    handleAuth(() => signin(email, password), {
+      toastText: "Signing in...",
+      mode: "signin",
+    });
+  };
 
-    try {
-      const response = await signinWithGoogle(); // calls hook
-      toast.dismiss(toastId);
-
-      if (response?.data) {
-        navigate("/otppages"); // ✅ redirect to OTP page
-      }
-    } catch (err) {
-      toast.dismiss(toastId);
-      console.log("Google Sign-in Error:", err);
-    }
+  // -------------------------------------------------
+  // ✅ Google Sign-in
+  // -------------------------------------------------
+  const handleGoogleSignIn = () => {
+    handleAuth(() => signinWithGoogle(), {
+      toastText: "Signing in with Google...",
+    });
   };
 
   return (
@@ -88,7 +83,7 @@ const FormMolecules = () => {
         onSubmit={handleSignIn}
         className="w-full max-w-md bg-white shadow-sm p-8 rounded-2xl border border-gray-100"
       >
-        {/* Google Sign In (UI EXACT SAME) */}
+        {/* Google Sign In */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -108,14 +103,10 @@ const FormMolecules = () => {
 
         {/* Email Input */}
         <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-gray-700 text-sm font-medium mb-1"
-          >
+          <label className="block text-gray-700 text-sm font-medium mb-1">
             Email Address
           </label>
           <input
-            id="email"
             type="email"
             placeholder="Enter your email"
             value={email}
@@ -126,14 +117,10 @@ const FormMolecules = () => {
 
         {/* Password Input */}
         <div className="mb-2">
-          <label
-            htmlFor="password"
-            className="block text-gray-700 text-sm font-medium mb-1"
-          >
+          <label className="block text-gray-700 text-sm font-medium mb-1">
             Password
           </label>
           <input
-            id="password"
             type="password"
             placeholder="Enter your password"
             value={password}

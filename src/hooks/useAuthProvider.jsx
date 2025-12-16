@@ -244,22 +244,53 @@ export const useAuthProvider = () => {
     try {
       setLoading(true);
 
-      // ✅ Step 1 — Google popup
-      const google = await signinWithGoogleAPI();
+      // --------------------------------
+      // Step 1: Firebase Google Login
+      // --------------------------------
+      const result = await signinWithGoogleAPI();
 
-      if (!google.success) {
+      if (!result?.user) {
         toast.error("Google signup failed");
         return false;
       }
 
-      const email = google.email;
+      const user = result.user;
+      const email = user.email;
+
+      // --------------------------------
+      // Step 2: Get Google ID Token
+      // --------------------------------
+      const idToken = await user.getIdToken();
 
       localStorage.setItem("auth_mode", "google");
 
-      // ✅ Step 2 — Send to backend signup API (OTP flow)
-      const backend = await signupAPI(email, "google-auth");
+      // --------------------------------
+      // Step 3: Send ID Token to Backend
+      // --------------------------------
+      const response = await fetch(
+        "https://gateway.codeastra.ai/api/v1/auth/request/google-signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        }
+      );
 
-      const orderId = backend?.data;
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.error?.explanation?.[0] || "Google signup failed");
+        return false;
+      }
+
+      // --------------------------------
+      // Step 4: Save backend response
+      // --------------------------------
+      const { orderId, token } = data;
+
+      if (token) {
+        localStorage.setItem("token", token);
+      }
 
       localStorage.setItem("email", email);
       localStorage.setItem("order_id", orderId);
