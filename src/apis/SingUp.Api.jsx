@@ -60,8 +60,8 @@ export const googleMFASigninAPI = async (email, token) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email,
-        token, // 🔥 SEND TOKEN IN BODY
+        email: email,
+        token: token, // 🔥 SEND TOKEN IN BODY
       }),
     }
   );

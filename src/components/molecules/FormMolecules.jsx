@@ -14,7 +14,10 @@ const FormMolecules = () => {
   // -------------------------------------------------
   // ✅ Unified Authentication Handler
   // -------------------------------------------------
-  const handleAuth = async (authFn, { toastText, mode } = {}) => {
+  const handleAuth = async (
+    authFn,
+    { toastText, mode, redirectTo = "/otppages" } = {}
+  ) => {
     if (loading) return;
 
     const toastId = toast.loading(toastText || "Signing in...");
@@ -30,14 +33,17 @@ const FormMolecules = () => {
 
       // ✅ Redirect only when backend confirms
       if (response?.data) {
-        navigate("/otppages");
+        navigate(redirectTo);
       }
     } catch (err) {
       toast.dismiss(toastId);
       console.error("Authentication Error:", err);
 
-      // ✅ If request already exists, redirect to OTP
-      if (err?.message?.includes("request already exists")) {
+      // ✅ If OTP request already exists → OTP page
+      if (
+        redirectTo === "/otppages" &&
+        err?.message?.includes("request already exists")
+      ) {
         navigate("/otppages");
       } else {
         toast.error("Something went wrong. Please try again.");
@@ -46,7 +52,7 @@ const FormMolecules = () => {
   };
 
   // -------------------------------------------------
-  // ✅ Email + Password Sign-in
+  // ✅ Email + Password Sign-in (OTP flow)
   // -------------------------------------------------
   const handleSignIn = (e) => {
     e.preventDefault();
@@ -54,15 +60,17 @@ const FormMolecules = () => {
     handleAuth(() => signin(email, password), {
       toastText: "Signing in...",
       mode: "signin",
+      redirectTo: "/otppages",
     });
   };
 
   // -------------------------------------------------
-  // ✅ Google Sign-in
+  // ✅ Google Sign-in (Direct Dashboard)
   // -------------------------------------------------
   const handleGoogleSignIn = () => {
     handleAuth(() => signinWithGoogle(), {
       toastText: "Signing in with Google...",
+      redirectTo: "/mainpagescreen",
     });
   };
 
@@ -112,6 +120,7 @@ const FormMolecules = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            required
           />
         </div>
 
@@ -126,6 +135,7 @@ const FormMolecules = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            required
           />
         </div>
 

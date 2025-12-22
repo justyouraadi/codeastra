@@ -438,10 +438,10 @@ export const useAuthProvider = () => {
       setEmail(email);
 
       // 4️⃣ Backend MFA initiation (🔥 FIX)
-      const response = await googleMFASigninAPI({
-        token,
+      const response = await googleMFASigninAPI(
         email,
-      });
+        token,
+      );
 
       const orderId = response?.data;
 
