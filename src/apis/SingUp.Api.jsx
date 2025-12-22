@@ -51,23 +51,28 @@ export const signinWithGoogleAPI = async () => {
 
 
 
-export const googleMFASigninAPI = async (email) => {
+export const googleMFASigninAPI = async (email, token) => {
   const response = await fetch(
     "https://gateway.codeastra.ai/api/v1/auth/initiate/google-mfa-signin",
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        token, // 🔥 SEND TOKEN IN BODY
+      }),
     }
   );
 
   const data = await response.json();
 
   if (!response.ok) {
-    toast.error(data?.error?.explanation?.[0] || data.message);
-    throw new Error(data?.error?.explanation?.[0] || data.message);
+    throw new Error(
+      data?.error?.explanation?.[0] || data?.message || "Google MFA failed"
+    );
   }
 
-  console.log(data, "Google MFA Signin API Response");
   return data;
 };

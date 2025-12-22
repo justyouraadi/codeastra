@@ -420,38 +420,47 @@ export const useAuthProvider = () => {
     try {
       setLoading(true);
 
-      // 1️⃣ Firebase Google Popup
+      // 1️⃣ Firebase Google Sign-in
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+
+      if (!user) throw new Error("Google authentication failed");
+
+      // 2️⃣ Extract required data
+      const token = await user.getIdToken();
       const email = user.email;
 
       if (!email) throw new Error("Google email not found");
 
+      // 3️⃣ Persist minimal state
       localStorage.setItem("auth_mode", "google");
       localStorage.setItem("email", email);
       setEmail(email);
 
-      // 2️⃣ Backend API call for Google MFA
-      const signinResult = await googleMFASigninAPI(email);
+      // 4️⃣ Backend MFA initiation (🔥 FIX)
+      const response = await googleMFASigninAPI({
+        token,
+        email,
+      });
 
-      const orderId = signinResult?.data;
+      const orderId = response?.data;
+
       localStorage.setItem("order_id", orderId);
       setOrderId(orderId);
-
       setUser({ email, orderId });
 
       toast.success("Google sign-in successful! OTP sent.");
 
-      return signinResult; // ✅ return API response
+      return response;
     } catch (err) {
       console.error("Google Sign-in Error:", err);
-      setError(err.message);
-      toast.error("Google Sign-in failed.");
+      toast.error(err.message || "Google Sign-in failed");
       throw err;
     } finally {
       setLoading(false);
     }
   };
+
 
   return {
     signup,

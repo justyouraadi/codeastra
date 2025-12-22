@@ -4,7 +4,7 @@ import { useAuthProvider } from "../hooks/useAuthProvider"; // ✅ tumhara custo
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-const auth = useAuthProvider(); // ✅ hook call
+const auth = useAuthProvider();
 return (
 <AuthContext.Provider value={auth}>
 {children}
