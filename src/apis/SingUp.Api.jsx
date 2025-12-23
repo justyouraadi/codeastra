@@ -68,6 +68,8 @@ export const googleMFASigninAPI = async (email, token) => {
 
   const data = await response.json();
 
+  localStorage.setItem("signin_token", data?.data || "");
+
   if (!response.ok) {
     throw new Error(
       data?.error?.explanation?.[0] || data?.message || "Google MFA failed"
