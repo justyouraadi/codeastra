@@ -299,12 +299,10 @@ export const useAuthProvider = () => {
       setOrderId(orderId);
       setUser({ email, orderId });
 
-      toast.success("Google signup successful ✅ OTP sent");
-
       return true;
     } catch (error) {
       console.error("Google signup error:", error);
-      toast.error("Google signup failed ❌");
+      toast.error("Google signup failed");
       return false;
     } finally {
       setLoading(false);
@@ -326,7 +324,7 @@ export const useAuthProvider = () => {
       setError(null);
       return true;
     } catch (err) {
-      console.error("❌ OTP Verification Error:", err.message);
+      console.error("OTP Verification Error:", err.message);
       setError(err.message);
       return false;
     } finally {
@@ -342,7 +340,7 @@ export const useAuthProvider = () => {
       setError(null);
       return data;
     } catch (err) {
-      console.error("❌ Profile Creation Error:", err.message);
+      console.error("Profile Creation Error:", err.message);
       setError(err.message);
       throw err;
     } finally {
@@ -356,7 +354,7 @@ export const useAuthProvider = () => {
       setLoading(true);
 
       const result = await signinAPI(email, password);
-      console.log("✅ Signin Successful:", result);
+      console.log("Signin Successful:", result);
 
       const orderId = result?.data;
 
@@ -371,7 +369,7 @@ export const useAuthProvider = () => {
       // ✅ return full API response (no true/false)
       return result;
     } catch (err) {
-      console.error("❌ Signin Error:", err.message);
+      console.error("Signin Error:", err.message);
       setError(err.message);
 
       // throw so frontend catch works properly
@@ -398,7 +396,7 @@ export const useAuthProvider = () => {
       }
 
       const data = await verifySigninAPI({ email, otp, orderId });
-      console.log("✅ Signin Verified:", data);
+      console.log("Signin Verified:", data);
 
       if (data?.success) {
         localStorage.setItem("signin_token", data?.data || "");
@@ -408,7 +406,7 @@ export const useAuthProvider = () => {
         return false;
       }
     } catch (err) {
-      console.error("❌ Verify Signin Error:", err.message);
+      console.error("Verify Signin Error:", err.message);
       setError(err.message);
       return false;
     } finally {
