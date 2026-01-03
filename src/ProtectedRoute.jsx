@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { pingAPI } from "../src/apis/ProtectedRoute.Api";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "./context/ContextProvider";
 
 const ProtectedRoute = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("signin_token");
   const [loading, setLoading] = useState(true);
+  const {setPingDetails} = useAuth()
 
   useEffect(() => {
     if (!token) {
@@ -18,7 +20,9 @@ const ProtectedRoute = () => {
 
     const checkToken = async () => {
       try {
-        await pingAPI();
+        let response = await pingAPI();
+       setPingDetails(response?.data)
+
       } catch (err) {
         console.log("Token failed --->", err);
 

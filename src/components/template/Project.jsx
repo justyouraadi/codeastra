@@ -36,11 +36,54 @@ import { Input } from "@/components/ui/input";
 
 import { useInView } from "react-intersection-observer";
 import { ArrowLeft } from "lucide-react";
+import { GraduationCap } from "lucide-react";
+import { Star } from "lucide-react";
+import { Zap } from "lucide-react";
+import { Moon } from "lucide-react";
+import { Share2 } from "lucide-react";
 
 const Project = () => {
+  const cardUtils = [
+    {
+      background:
+        "linear-gradient(45deg, rgba(245, 208, 254, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+      border: "1px solid rgba(255, 255, 255, 0.18)",
+      icon: <GraduationCap />,
+      iconBg: "#E6007E",
+    },
+    {
+      background:
+        "linear-gradient(45deg, rgba(196, 181, 253, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+      border: "1px solid rgba(255, 255, 255, 0.18)",
+      icon: <Star />,
+      iconBg: "linear-gradient(135deg, #C084FC 0%, #6366F1 70.71%)",
+    },
+    {
+      background:
+        "linear-gradient(45deg, rgba(167, 243, 208, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+      border: "1px solid rgba(255, 255, 255, 0.18)",
+      icon: <Zap />,
+      iconBg: "linear-gradient(135deg, #4ADE80 0%, #10B981 70.71%)",
+    },
+    {
+      background:
+        "linear-gradient(45deg, rgba(165, 243, 252, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+      border: "1px solid rgba(255, 255, 255, 0.18)",
+      icon: <Moon />,
+      iconBg: "linear-gradient(135deg, #22D3EE 0%, #3B82F6 70.71%)",
+    },
+    {
+      background:
+        "linear-gradient(45deg, rgba(254, 215, 170, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+      border: "1px solid rgba(255, 255, 255, 0.18)",
+      icon: <Share2 />,
+      iconBg: "linear-gradient(135deg, #FB923C 0%, #EF4444 70.71%)",
+    },
+  ];
+
   const navigate = useNavigate();
 
-  const { fetchProjects, loadMoreProjects, hasMore, projects, loading } =
+  const { fetchProjects, loadMoreProjects, hasMore, projects, loading,fetchProjectNamesForSidebar,sidebarProjects } =
     useProjectContext();
 
   const [searchText, setSearchText] = useState("");
@@ -57,6 +100,7 @@ const Project = () => {
 
   useEffect(() => {
     fetchProjects();
+    fetchProjectNamesForSidebar()
   }, []);
 
   useEffect(() => {
@@ -79,6 +123,10 @@ const Project = () => {
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
     return "just now";
+  };
+
+  const getCardByIndex = (index) => {
+    return cardUtils[index % cardUtils.length];
   };
 
   return (
@@ -106,7 +154,13 @@ const Project = () => {
       >
         <div className="p-5 flex flex-col">
           <div className="flex items-center justify-center mb-5">
-            <img src={logo} className="w-36 md:w-40 cursor-pointer" />
+            {logo && (
+              <img
+                src={logo}
+                alt="Logo"
+                className="w-36 md:w-40 cursor-pointer"
+              />
+            )}
           </div>
 
           <Button
@@ -123,7 +177,7 @@ const Project = () => {
             value={searchText}
             onChange={(e) => {
               setSearchText(e.target.value);
-              fetchProjects(e.target.value);
+              fetchProjectNamesForSidebar(e.target.value);
             }}
             placeholder="Search chats..."
             className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
@@ -149,9 +203,9 @@ const Project = () => {
           </h3>
 
           <ul className="space-y-3 text-[13px]">
-            {projects.length === 0
+            {sidebarProjects.length === 0
               ? "Project Not Found"
-              : projects.map((project) => (
+              : sidebarProjects.map((project) => (
                   <li
                     key={project.id}
                     onClick={() => {
@@ -182,14 +236,14 @@ const Project = () => {
               <DropdownMenuLabel>Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() => {
                   navigate("/profilepage");
                   setSidebarOpen(false);
                 }}
               >
                 <User className="w-4 h-4 mr-2" /> Profile
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               <DropdownMenuItem
                 onClick={() => {
@@ -201,14 +255,14 @@ const Project = () => {
                 <CiLogout className="w-4 h-4 mr-2" /> Logout
               </DropdownMenuItem>
 
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() => {
                   navigate("/billingpages");
                   setSidebarOpen(false);
                 }}
               >
                 <Crown className="w-4 h-4 mr-2 text-yellow-500" /> Upgrade
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -243,7 +297,14 @@ const Project = () => {
         <section className="px-4 py-6 flex gap-3">
           <div className="relative flex-1">
             <FaSearch className="absolute left-3 top-3 text-gray-400" />
-            <InputAtom className="pl-10 w-full" placeholder="Search apps..." />
+            <InputAtom
+              className="pl-10 w-full"
+              placeholder="Search apps..."
+              onChange={(e) => {
+                fetchProjects(e.target.value);
+              }}
+              type="search"
+            />
           </div>
 
           <ButtonAtom className="flex items-center gap-2 bg-black text-white">
@@ -255,30 +316,33 @@ const Project = () => {
             PROJECT GRID (FINAL CLEAN UX)
         ============================ */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 pb-10">
-          {projects.map((proj, i) => (
-            <div
-              key={proj.id || i}
-              onClick={() => navigate(`/chatpage/${proj.id}`)}
-              className="cursor-pointer hover:scale-[1.02] transition flex h-full"
-            >
-              <div className="w-full h-full flex">
-                <FormCard
-                  title={proj.name}
-                  description={proj.description || "No description"}
-                  author="User"
-                  createdAt={new Date(proj.createdAt).toLocaleDateString()}
-                  icon={<FaCode />}
-                  style={{
-                    background:
-                      "linear-gradient(45deg, rgba(199,210,254,0.3), rgba(255,255,255,0.2))",
-                  }}
-                  iconBg="bg-purple-400"
-                  iconColor="text-white"
-                  textColor="text-black"
-                />
+          {projects.map((proj, i) => {
+            const card = getCardByIndex(i);
+            return (
+              <div
+                key={proj.id || i}
+                onClick={() => navigate(`/chatpage/${proj.id}`)}
+                className="cursor-pointer hover:scale-[1.02] transition flex h-full"
+              >
+                <div className="w-full h-full flex">
+                  <FormCard
+                    title={proj.name}
+                    description={proj.description || "No description"}
+                    author="User"
+                    createdAt={new Date(proj.createdAt).toLocaleDateString()}
+                    icon={card.icon}
+                    style={{
+                      background: card.background,
+                      border: card.border,
+                    }}
+                    iconBg={card.iconBg}
+                    iconColor="text-white"
+                    textColor="text-black"
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Infinite Scroll */}
           <div ref={ref} className="col-span-full flex justify-center py-4">

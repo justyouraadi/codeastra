@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { createProjectAPI } from "../apis/CreateProject.Api";
-import { getProjectsAPI } from "../apis/GetProjects.Api";
+import { getProjectsAPI, getProjectsNamesApiForSidebar } from "../apis/GetProjects.Api";
 import { getProjectByIdAPI } from "../apis/GetProjectById.Api";
 import { createChatAPI } from "@/apis/Chat.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
+  const [sidebarProjects, setSidebarProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [sidebarLoading, setSidebarLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // 🔹 Pagination States
@@ -50,6 +52,29 @@ const fetchProjects = async (searchTerm = "") => {
 
     setProjects(items);
     setHasMore(items.length === limit);
+
+    return items;
+  } catch (err) {
+    console.error("❌ Fetch Projects Error:", err.message);
+    setError(err.message);
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
+const fetchProjectNamesForSidebar = async (searchTerm = "") => {
+  try {
+    setSidebarLoading(true);
+    setPage(1);
+
+    const data = await getProjectsNamesApiForSidebar(1, limit, searchTerm);
+    console.log("📥 API response:", data);
+
+    const items = data?.data?.projects || [];
+
+    setSidebarProjects(items);
+    // setHasMore(items.length === limit);
 
     return items;
   } catch (err) {
@@ -142,5 +167,8 @@ const fetchProjects = async (searchTerm = "") => {
     loadingMore, // ✅ NEW
     hasMore, // ✅ NEW
     error,
+    fetchProjectNamesForSidebar,
+    sidebarProjects,
+    sidebarLoading
   };
 };

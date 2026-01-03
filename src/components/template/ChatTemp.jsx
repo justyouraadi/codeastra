@@ -1,6 +1,7 @@
 // ChatTemp.jsx (final)
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom"
 import {
   Monitor,
   Smartphone,
@@ -188,6 +189,7 @@ const CodeViewer = ({ fileName }) => {
 };
 
 const ChatTemp = () => {
+const navigate  = useNavigate();
   const { id } = useParams();
   const { fetchProjectById, selectedProject, createChat } =
     useProjectProvider();
@@ -382,7 +384,7 @@ const ChatTemp = () => {
                 <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
-                    onClick={() => window.history.back()}
+                    onClick={() => navigate(-1)}
                     className="p-2 text-xl cursor-pointer hover:bg-gray-200 rounded-md transition-all"
                   >
                     <ArrowLeft />
@@ -563,7 +565,7 @@ const ChatTemp = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+                  {/* <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" /> */}
                   {selectedProject?.data?.assigned_domain && (
                     <a
                       href={`https://${selectedProject.data.assigned_domain}`}
@@ -906,7 +908,7 @@ const ChatTemp = () => {
                     />
 
                     {/* Share - always visible */}
-                    <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
+                    {/* <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" /> */}
 
                     {/* View button - always visible if domain exists */}
                     {selectedProject?.data?.assigned_domain && (

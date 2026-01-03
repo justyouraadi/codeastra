@@ -3,6 +3,7 @@ import { FaGoogle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/ContextProvider";
 import toast from "react-hot-toast";
+import { FcGoogle } from "react-icons/fc";
 
 const FormMolecules = () => {
   const navigate = useNavigate();
@@ -96,9 +97,9 @@ const FormMolecules = () => {
           type="button"
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="flex items-center justify-center w-full bg-black text-white py-2.5 rounded-lg mb-5 hover:bg-gray-900 transition disabled:opacity-50"
+          className="flex items-center gap-3 justify-center w-full bg-black text-white py-2.5 rounded-lg mb-5 hover:bg-gray-900 transition disabled:opacity-50"
         >
-          <FaGoogle className="text-xl mr-2" />
+          <FcGoogle className="w-5 h-5" />
           Continue with Google
         </button>
 
@@ -145,7 +146,7 @@ const FormMolecules = () => {
             type="button"
             className="text-sm text-gray-600 hover:text-black hover:underline"
           >
-            Forgot Password?
+            {/* Forgot Password? */}
           </button>
         </div>
 

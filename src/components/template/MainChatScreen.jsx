@@ -42,6 +42,8 @@ import { useProjectProvider } from "../../hooks/useProjectProvider";
 import { useProjectContext } from "@/context/ProjectProvider";
 import toast from "react-hot-toast";
 import LodingAnimation from "@/utils/LodingAnimation";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { useAuth } from "@/context/ContextProvider";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
@@ -50,11 +52,24 @@ const MainChatScreen = () => {
   const [prompt, setPrompt] = useState("");
   const [isLoadingFullScreen, setIsLoadingFullScreen] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const { createProject, loading } = useProjectProvider();
-  const { fetchProjects, projects } = useProjectContext();
+  // const { createProject, loading } = useProjectProvider();
+  // const { fetchProjects, projects } = useProjectContext();
+
+  const {
+    fetchProjects,
+    loadMoreProjects,
+    hasMore,
+    projects,
+    loading,
+    fetchProjectNamesForSidebar,
+    sidebarProjects,
+    createProject,
+  } = useProjectContext();
+  const { pingDetails } = useAuth();
 
   useEffect(() => {
     fetchProjects();
+    fetchProjectNamesForSidebar();
   }, []);
 
   useEffect(() => {
@@ -75,9 +90,9 @@ const MainChatScreen = () => {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
+    if (days > 0) return `${days} days ago`;
+    if (hours > 0) return `${hours} hours ago`;
+    if (minutes > 0) return `${minutes} minutes ago`;
     return "just now";
   };
 
@@ -102,22 +117,18 @@ const MainChatScreen = () => {
       const success = result?.success;
 
       if (success) {
-
         setTimeout(() => navigate(`/chatpage/${result?.data?.id}`), 400);
       } else {
         toast.error(result?.message || "Something went wrong!");
         return;
       }
-
     } catch (err) {
       console.log(err.message);
       toast.error("Server error! Try again.");
     } finally {
       setIsLoadingFullScreen(false);
-
     }
   };
-
 
   const handleLogout = () => {
     localStorage.removeItem("signin_token");
@@ -162,7 +173,8 @@ const MainChatScreen = () => {
         className={`
           fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
           transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } md:translate-x-0
         `}
       >
@@ -185,7 +197,7 @@ const MainChatScreen = () => {
             value={searchText}
             onChange={(e) => {
               setSearchText(e.target.value);
-              fetchProjects(e.target.value);
+              fetchProjectNamesForSidebar(e.target.value);
             }}
             placeholder="Search chats..."
             className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
@@ -211,23 +223,23 @@ const MainChatScreen = () => {
             Recent
           </h3>
           <ul className="space-y-3 text-[13px]">
-            {
-              sortedProjects.length === 0 ? "Project Not Found" : sortedProjects?.map((project) => (
-                <li
-                  key={project.id}
-                  onClick={() => {
-                    navigate(`/chatpage/${project.id}`);
-                    setSidebarOpen(false);
-                  }}
-                  className="text-gray-700 hover:text-black cursor-pointer"
-                >
-                  {project.name}
-                  <span className="text-gray-400 text-xs ml-1">
-                    • {getTimeAgo(project.updatedAt || project.createdAt)}
-                  </span>
-                </li>
-              ))
-            }
+            {sidebarProjects.length === 0
+              ? "Project Not Found"
+              : sidebarProjects?.map((project) => (
+                  <li
+                    key={project.id}
+                    onClick={() => {
+                      navigate(`/chatpage/${project.id}`);
+                      setSidebarOpen(false);
+                    }}
+                    className="text-gray-700 hover:text-black cursor-pointer"
+                  >
+                    {project.name}
+                    <span className="text-gray-400 text-xs ml-1">
+                      • {getTimeAgo(project.updatedAt || project.createdAt)}
+                    </span>
+                  </li>
+                ))}
           </ul>
         </div>
 
@@ -249,7 +261,7 @@ const MainChatScreen = () => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() => {
                   navigate("/profilepage");
                   setSidebarOpen(false);
@@ -257,7 +269,7 @@ const MainChatScreen = () => {
                 className="cursor-pointer hover:bg-gray-100 text-gray-800"
               >
                 <User className="w-4 h-4 mr-2 text-gray-500" /> Profile
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               <DropdownMenuItem
                 onClick={() => {
@@ -269,7 +281,7 @@ const MainChatScreen = () => {
                 <CiLogout className="w-4 h-4 mr-2" /> Log Out
               </DropdownMenuItem>
 
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() => {
                   navigate("/billingpages");
                   setSidebarOpen(false);
@@ -277,7 +289,7 @@ const MainChatScreen = () => {
                 className="cursor-pointer hover:bg-gray-100 text-gray-800"
               >
                 <Crown className="w-4 h-4 mr-2 text-yellow-500" /> Upgrade Plan
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -286,14 +298,23 @@ const MainChatScreen = () => {
       {/* Main Content */}
       <div className="flex-1 px-4 md:px-6 min-h-screen flex flex-col md:ml-64">
         <div className="w-full flex items-center justify-end gap-4 mt-4">
-          <a href="#" className="bg-black text-white rounded px-3 py-2">
+          {/* <a href="#" className="bg-black text-white rounded px-3 py-2">
             Upgrade
-          </a>
-          <img
+          </a> */}
+          {/* <img
             src={avatar}
             alt="Profile Photo"
             className="rounded-full w-12 h-12 border-2 border-gray-300"
-          />
+          /> */}
+          <Avatar className="w-12 h-12">
+            <AvatarImage
+              className={`object-cover`}
+              src={`https://gateway.codeastra.ai/blob?path=${pingDetails?.profile}&container=profiles`}
+            />
+            <AvatarFallback>
+              {pingDetails?.name?.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
         </div>
 
         <main className="flex-1 flex flex-col items-center justify-center px-2 sm:px-6 mt-6">
@@ -319,7 +340,7 @@ const MainChatScreen = () => {
                   </button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent
+                {/* <DropdownMenuContent
                   align="start"
                   side="top"
                   className="w-48 bg-white shadow-lg border border-gray-100 rounded-xl"
@@ -333,7 +354,7 @@ const MainChatScreen = () => {
                   <DropdownMenuItem>
                     <Video className="w-4 h-4 mr-2" /> Record Video
                   </DropdownMenuItem>
-                </DropdownMenuContent>
+                </DropdownMenuContent> */}
               </DropdownMenu>
 
               <Input
@@ -343,7 +364,6 @@ const MainChatScreen = () => {
                 placeholder="Ask anything or start a new project..."
                 className="flex-1 border-none shadow-none focus-visible:ring-0 text-gray-800"
               />
-
 
               <Button
                 variant="ghost"

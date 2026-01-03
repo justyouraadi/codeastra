@@ -217,6 +217,8 @@ export const useAuthProvider = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+   const [pingDetails,setPingDetails] = useState({});
+ 
 
   // 🔹 Signup (Register)
   const signup = async (email, password) => {
@@ -428,7 +430,7 @@ export const useAuthProvider = () => {
       const token = await user.getIdToken();
       const email = user.email;
 
-      if (!email) throw new Error("Google email not found");
+      if (!email) throw new Error("email not found");
 
       // 3️⃣ Persist minimal state
       localStorage.setItem("auth_mode", "google");
@@ -447,7 +449,6 @@ export const useAuthProvider = () => {
       setOrderId(orderId);
       setUser({ email, orderId });
 
-      toast.success("Google sign-in successful! OTP sent.");
 
       return response;
     } catch (err) {
@@ -473,5 +474,7 @@ export const useAuthProvider = () => {
     orderId,
     loading,
     error,
+    pingDetails,
+    setPingDetails
   };
 };
