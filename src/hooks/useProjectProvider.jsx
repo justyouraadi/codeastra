@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { createProjectAPI } from "../apis/CreateProject.Api";
-import { getProjectsAPI, getProjectsNamesApiForSidebar } from "../apis/GetProjects.Api";
+import {
+  fetchProjectFileContentAPI,
+  fetchProjectFilesAPI,
+  getProjectsAPI,
+  getProjectsNamesApiForSidebar,
+} from "../apis/GetProjects.Api";
 import { getProjectByIdAPI } from "../apis/GetProjectById.Api";
 import { createChatAPI } from "@/apis/Chat.Api";
 
@@ -8,6 +13,12 @@ export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
   const [sidebarProjects, setSidebarProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [projectFiles, setProjectFiles] = useState({
+    loading: false,
+    error: null,
+    files: [],
+  });
+  const [fileContent, setFileContent] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -40,51 +51,98 @@ export const useProjectProvider = () => {
   // ----------------------------------------------------------
   // 🔹 Fetch Projects — PAGE 1
   // ----------------------------------------------------------
-const fetchProjects = async (searchTerm = "") => {
-  try {
-    setLoading(true);
-    setPage(1);
+  const fetchProjects = async (searchTerm = "") => {
+    try {
+      setLoading(true);
+      setPage(1);
 
-    const data = await getProjectsAPI(1, limit, searchTerm);
-    console.log("📥 API response:", data);
+      const data = await getProjectsAPI(1, limit, searchTerm);
+      console.log("📥 API response:", data);
 
-    const items = data?.data?.projects || [];
+      const items = data?.data?.projects || [];
 
-    setProjects(items);
-    setHasMore(items.length === limit);
+      setProjects(items);
+      setHasMore(items.length === limit);
 
-    return items;
-  } catch (err) {
-    console.error("❌ Fetch Projects Error:", err.message);
-    setError(err.message);
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-};
+      return items;
+    } catch (err) {
+      console.error("❌ Fetch Projects Error:", err.message);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const fetchProjectNamesForSidebar = async (searchTerm = "") => {
-  try {
-    setSidebarLoading(true);
-    setPage(1);
+  const fetchProjectFiles = async (version = "v1", project_id) => {
+    try {
+      setProjectFiles((prev) => ({
+        ...prev,
+        loading: true,
+        error: null,
+      }));
 
-    const data = await getProjectsNamesApiForSidebar(1, limit, searchTerm);
-    console.log("📥 API response:", data);
+      const data = await fetchProjectFilesAPI(version, project_id);
 
-    const items = data?.data?.projects || [];
+      const items = data?.data?.files || [];
 
-    setSidebarProjects(items);
-    // setHasMore(items.length === limit);
+      setProjectFiles((prev) => ({
+        ...prev,
+        files: items,
+      }));
 
-    return items;
-  } catch (err) {
-    console.error("❌ Fetch Projects Error:", err.message);
-    setError(err.message);
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-};
+      return items;
+    } catch (err) {
+      console.error("❌ Fetch Project files Error:", err.message);
+      setProjectFiles((prev) => ({
+        ...prev,
+        error: err.message,
+      }));
+      throw err;
+    } finally {
+      setProjectFiles((prev) => ({
+        ...prev,
+        loading: false,
+      }));
+    }
+  };
+  const fetchProjectFileContent = async (version = "v1", project_id, file) => {
+    try {
+      const data = await fetchProjectFileContentAPI(version, project_id, file);
+
+      setFileContent(data?.data || "");
+
+      return data?.data || "";
+    } catch (err) {
+      console.error("❌ Fetch Project file content Error:", err.message);
+      throw err;
+    } finally {
+      
+    }
+  };
+
+  const fetchProjectNamesForSidebar = async (searchTerm = "") => {
+    try {
+      setSidebarLoading(true);
+      setPage(1);
+
+      const data = await getProjectsNamesApiForSidebar(1, limit, searchTerm);
+      console.log("📥 API response:", data);
+
+      const items = data?.data?.projects || [];
+
+      setSidebarProjects(items);
+      // setHasMore(items.length === limit);
+
+      return items;
+    } catch (err) {
+      console.error("❌ Fetch Projects Error:", err.message);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ----------------------------------------------------------
   // 🔹 Load More — Pagination (page 2, 3, 4...)
@@ -137,7 +195,7 @@ const fetchProjectNamesForSidebar = async (searchTerm = "") => {
   // ----------------------------------------------------------
   // 🔹 Chat on a project
   // ----------------------------------------------------------
-   const createChat = async (params) => {
+  const createChat = async (params) => {
     try {
       setLoading(true);
       const result = await createChatAPI(params);
@@ -169,6 +227,10 @@ const fetchProjectNamesForSidebar = async (searchTerm = "") => {
     error,
     fetchProjectNamesForSidebar,
     sidebarProjects,
-    sidebarLoading
+    sidebarLoading,
+    fetchProjectFiles,
+    projectFiles,
+    fetchProjectFileContent,
+    fileContent
   };
 };

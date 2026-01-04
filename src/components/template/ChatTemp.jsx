@@ -1,7 +1,7 @@
 // ChatTemp.jsx (final)
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 import {
   Monitor,
   Smartphone,
@@ -28,6 +28,7 @@ import {
 } from "../ui/select";
 import { Item, ItemContent, ItemMedia, ItemTitle } from "../ui/item";
 import { Spinner } from "../ui/spinner";
+import Editor from "@monaco-editor/react";
 
 // <-- shadcn resizable imports -->
 import {
@@ -35,164 +36,202 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { useMemo } from "react";
 
-/**
- * Final ChatTemp.jsx
- * - Desktop: two panels (Chat 35% | Preview/Code 65%) resizable via ResizablePanelGroup
- * - Mobile: stacked layout (Chat or Preview) preserved
- * - Chat area scrolls only inside chat container
- * - divider default 35% and persisted to localStorage
- * - Right panel contains Preview / Code toggle, device switch, refresh, version select, view button
- * - Code view shows a simple file tree + code viewer area
- */
+const buildFileTree = (files) => {
+  const root = {};
 
-const FolderTree = ({ onSelectFile, selectedFile }) => {
-  const [open, setOpen] = useState({
-    src: true,
-    components: true,
-    pages: true,
-    ui: true,
+  files.forEach(({ name }) => {
+    const parts = name.split("/");
+    let current = root;
+
+    parts.forEach((part, index) => {
+      if (!current[part]) {
+        current[part] = {
+          __isFile: index === parts.length - 1,
+          __children: {},
+        };
+      }
+      current = current[part].__children;
+    });
   });
 
-  // simple static tree (replace or wire into real files if needed)
+  return root;
+};
+
+/* -------------------------------
+   Recursive Tree Node
+-------------------------------- */
+const TreeNode = ({
+  nodeName,
+  node,
+  depth,
+  onSelectFile,
+  selectedFile,
+  fullPath,
+}) => {
+  const [open, setOpen] = useState(false); // ⬅️ important change
+  const isFile = node.__isFile;
+  const isActive = selectedFile === fullPath;
+
   return (
-    <div className="text-white font-mono text-sm px-4 py-4 bg-black h-full overflow-auto">
-      <div className="space-y-3">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => setOpen({ ...open, src: !open.src })}
-        >
-          {open.src ? (
+    <div>
+      <div
+        className={`flex items-center gap-2 py-1 px-2 rounded cursor-pointer
+          ${isActive ? "bg-gray-700" : "hover:bg-gray-700"}`}
+        style={{ paddingLeft: depth * 14 }}
+        onClick={() => {
+          if (isFile) {
+            onSelectFile(fullPath);
+          } else {
+            setOpen((p) => !p);
+          }
+        }}
+      >
+        {!isFile &&
+          (open ? (
             <ChevronDown className="w-4 h-4" />
           ) : (
             <ChevronRight className="w-4 h-4" />
-          )}
-          <Folder className="w-4 h-4 text-yellow-500" /> <span>src</span>
-        </div>
+          ))}
 
-        {open.src && (
-          <div className="ml-5 mt-1 border-l border-gray-200 pl-3">
-            <div
-              className={`flex items-center gap-2 cursor-pointer py-1 px-2 rounded ${
-                selectedFile === "app.tsx" ? "bg-gray-100" : "hover:bg-gray-700"
-              }`}
-              onClick={() => onSelectFile && onSelectFile("app.tsx")}
-            >
-              <File className="w-4 h-4 text-blue-500" />
-              <span>app.tsx</span>
-            </div>
-
-            <div className="mt-2">
-              <div
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={() =>
-                  setOpen({ ...open, components: !open.components })
-                }
-              >
-                {open.components ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-                <Folder className="w-4 h-4 text-yellow-500" />
-                <span>components</span>
-              </div>
-
-              {open.components && (
-                <div className="ml-5 mt-1 border-l border-gray-100 pl-3">
-                  <div
-                    className={`flex items-center gap-2 py-1 px-2 rounded ${
-                      selectedFile === "ChatTemp.jsx"
-                        ? "bg-gray-700"
-                        : "hover:bg-gray-700"
-                    }`}
-                    onClick={() => onSelectFile && onSelectFile("ChatTemp.jsx")}
-                  >
-                    <File className="w-4 h-4 text-blue-500" />
-                    <span>ChatTemp.jsx</span>
-                  </div>
-
-                  <div className="mt-2">
-                    <div
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => setOpen({ ...open, pages: !open.pages })}
-                    >
-                      {open.pages ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                      <Folder className="w-4 h-4 text-yellow-500" />
-                      <span>pages</span>
-                    </div>
-
-                    {open.pages && (
-                      <div className="ml-5 mt-1 border-l border-gray-100 pl-3">
-                        <div
-                          className={`flex items-center gap-2 py-1 px-2 rounded ${
-                            selectedFile === "interface.ts"
-                              ? "bg-gray-700"
-                              : "hover:bg-gray-700"
-                          }`}
-                          onClick={() =>
-                            onSelectFile && onSelectFile("interface.ts")
-                          }
-                        >
-                          <File className="w-4 h-4 text-blue-500" />
-                          <span>interface.ts</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-3">
-              <div
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={() => setOpen({ ...open, ui: !open.ui })}
-              >
-                {open.ui ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-                <Folder className="w-4 h-4 text-yellow-500" />
-                <span>ui</span>
-              </div>
-            </div>
-          </div>
+        {isFile ? (
+          <File className="w-4 h-4 text-blue-400" />
+        ) : (
+          <Folder className="w-4 h-4 text-yellow-500" />
         )}
+
+        <span className="text-sm truncate">{nodeName}</span>
       </div>
+
+      {!isFile && open && (
+        <div className="ml-4">
+          {Object.entries(node.__children)
+            .sort(([nameA, a], [nameB, b]) => {
+              if (a.__isFile !== b.__isFile) {
+                return a.__isFile ? 1 : -1;
+              }
+              return nameA.localeCompare(nameB);
+            })
+            .map(([childName, childNode]) => (
+              <TreeNode
+                key={childName}
+                nodeName={childName}
+                node={childNode}
+                depth={depth + 1}
+                onSelectFile={onSelectFile}
+                selectedFile={selectedFile}
+                fullPath={`${fullPath}/${childName}`}
+              />
+            ))}
+        </div>
+      )}
     </div>
   );
 };
 
-// Simple code viewer (replace with syntax highlighter if you want)
-const CodeViewer = ({ fileName }) => {
-  // demo code snippets for the sample file names
-  const demoFiles = {
-    "ChatTemp.jsx": `// Example: ChatTemp.jsx\n// Replace this string with the real file content or wire your code loader.\nconsole.log("ChatTemp demo file");`,
-    "app.tsx": `// Example: app.tsx\nexport default function App() { return <div>Hello</div> }`,
-    "interface.ts": `// Example: interface.ts\nexport interface Demo { id: string }`,
-    default: `// Select a file from the tree to view its contents.`,
-  };
-
-  const content = demoFiles[fileName] || demoFiles.default;
+const FolderTree = ({ files, selectedFile, onSelectFile }) => {
+  const tree = useMemo(() => buildFileTree(files || []), [files]);
 
   return (
-    <pre className="p-4 text-sm overflow-auto h-full bg-[#0b0b0b] text-[#dfe6ef] font-mono whitespace-pre-wrap">
-      {content}
-    </pre>
+    <div className="h-full overflow-auto bg-black text-white font-mono text-sm p-3">
+      {Object.entries(tree)
+        .sort(([nameA, a], [nameB, b]) => {
+          if (a.__isFile !== b.__isFile) {
+            return a.__isFile ? 1 : -1;
+          }
+          return nameA.localeCompare(nameB);
+        })
+        .map(([name, node]) => (
+          <TreeNode
+            key={name}
+            nodeName={name}
+            node={node}
+            depth={0}
+            onSelectFile={onSelectFile}
+            selectedFile={selectedFile}
+            fullPath={name}
+          />
+        ))}
+    </div>
   );
 };
 
+const decodeEscapedContent = (content = "") => {
+  try {
+    return content
+      .replace(/\\u003C/g, "<")
+      .replace(/\\u003E/g, ">")
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, "\n");
+  } catch {
+    return content;
+  }
+};
+
+const getLanguageFromFile = (path = "") => {
+  if (path.endsWith(".js") || path.endsWith(".jsx")) return "javascript";
+  if (path.endsWith(".ts") || path.endsWith(".tsx")) return "typescript";
+  if (path.endsWith(".json")) return "json";
+  if (path.endsWith(".html")) return "html";
+  if (path.endsWith(".css")) return "css";
+  if (path.endsWith(".md")) return "markdown";
+  return "plaintext";
+};
+
+
+
+const CodeViewer = ({ filePath, fileContent }) => {
+  return (
+    <Editor
+      height="100%"
+      theme="vs-dark"
+      language={getLanguageFromFile(filePath)}
+      value={decodeEscapedContent(fileContent)}
+      options={{
+        readOnly: true,
+        fontSize: 13,
+        lineNumbers: "on",
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        wordWrap: "on",
+        padding: { top: 16, bottom: 16 },
+        
+      }}
+    />
+  );
+};
+
+
 const ChatTemp = () => {
-const navigate  = useNavigate();
+  const navigate = useNavigate();
+  const [selectedFile, setSelectedFile] = useState("");
   const { id } = useParams();
-  const { fetchProjectById, selectedProject, createChat } =
-    useProjectProvider();
+  const {
+    fetchProjectById,
+    selectedProject,
+    createChat,
+    fetchProjectFiles,
+    projectFiles,
+    fetchProjectFileContent,
+    fileContent
+  } = useProjectProvider();
+
+  const handleSelectFile = async (filePath) => {
+  try {
+    setSelectedFile(filePath);
+
+    await fetchProjectFileContent("v1", id, filePath);
+  } 
+  catch (err) {
+    // setFileError("Failed to load file content");
+    console.error("❌ Fetch Project file content Error:", err.message);
+  } 
+  // finally {
+  //   setFileLoading(false);
+  // }
+};
+  
 
   // Divider initial: read from localStorage or default to 35 for desktop
   const computeInitialDivider = () => {
@@ -238,6 +277,7 @@ const navigate  = useNavigate();
       const data = await fetchProjectById(id);
       if (!data?.success) return;
 
+      await fetchProjectFiles("v1", id);
       let messages = [];
       if (data.data.chats.length > 0) {
         messages.push({
@@ -368,7 +408,7 @@ const navigate  = useNavigate();
   }, [leftPanelRef.current, isMobile]);
 
   // Code view file selection
-  const [selectedFile, setSelectedFile] = useState("ChatTemp.jsx");
+  
 
   return (
     <div className="min-h-screen flex bg-white text-gray-900 overflow-hidden flex-col md:flex-row">
@@ -617,14 +657,54 @@ const navigate  = useNavigate();
                   </>
                 ) : (
                   <div className="w-full h-full flex">
-                    <div className="w-1/3 border-r border-gray-200 h-full">
-                      <FolderTree
-                        onSelectFile={setSelectedFile}
-                        selectedFile={selectedFile}
-                      />
+                    <div className="w-1/3 border-r border-gray-200 h-full bg-black">
+                      {projectFiles.loading ? (
+                        // 🔄 Loading state
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                          <Spinner />
+                          <span className="text-sm">
+                            Loading project files…
+                          </span>
+                        </div>
+                      ) : projectFiles.error ? (
+                        // ❌ Error state
+                        <div className="h-full flex flex-col items-center justify-center text-red-400 px-4 text-center">
+                          <p className="text-sm font-medium">
+                            Failed to load files
+                          </p>
+                          <p className="text-xs mt-1 opacity-80">
+                            {projectFiles.error}
+                          </p>
+
+                          <Button
+                            size="sm"
+                            className="mt-3 bg-gray-800 hover:bg-gray-700 text-white"
+                            onClick={() => fetchProjectFiles("v1", id)}
+                          >
+                            Retry
+                          </Button>
+                        </div>
+                      ) : projectFiles.files.length === 0 ? (
+                        // 📭 Empty state
+                        <div className="h-full flex items-center justify-center text-gray-500 text-sm">
+                          No files found
+                        </div>
+                      ) : (
+                        // ✅ Success state
+                        <FolderTree
+                          files={projectFiles.files}
+                          onSelectFile={handleSelectFile}
+                          selectedFile={selectedFile}
+                        />
+                      )}
                     </div>
+
                     <div className="flex-1 h-full">
-                      <CodeViewer fileName={selectedFile} />
+                      <CodeViewer
+  filePath={selectedFile}
+  fileContent={fileContent}
+/>
+
                     </div>
                   </div>
                 )}
@@ -805,14 +885,50 @@ const navigate  = useNavigate();
                 ) : (
                   // CODE VIEW: File tree (left) + Code viewer (right)
                   <div className="w-full h-full flex">
-                    <div className="w-1/3 border-r border-gray-200 h-full">
-                      <FolderTree
-                        onSelectFile={setSelectedFile}
-                        selectedFile={selectedFile}
-                      />
+                    <div className="w-1/3 border-r border-gray-200 h-full bg-black">
+                      {projectFiles.loading ? (
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                          <Spinner />
+                          <span className="text-sm">
+                            Loading project files…
+                          </span>
+                        </div>
+                      ) : projectFiles.error ? (
+                        <div className="h-full flex flex-col items-center justify-center text-red-400 px-4 text-center">
+                          <p className="text-sm font-medium">
+                            Failed to load files
+                          </p>
+                          <p className="text-xs mt-1 opacity-80">
+                            {projectFiles.error}
+                          </p>
+
+                          <Button
+                            size="sm"
+                            className="mt-3 bg-gray-800 hover:bg-gray-700 text-white"
+                            onClick={() => fetchProjectFiles("v1", id)}
+                          >
+                            Retry
+                          </Button>
+                        </div>
+                      ) : projectFiles.files.length === 0 ? (
+                        <div className="h-full flex items-center justify-center text-gray-500 text-sm">
+                          No files found
+                        </div>
+                      ) : (
+                        <FolderTree
+                          files={projectFiles.files}
+                          onSelectFile={handleSelectFile}
+                          selectedFile={selectedFile}
+                        />
+                      )}
                     </div>
+
                     <div className="flex-1 h-full">
-                      <CodeViewer fileName={selectedFile} />
+                      <CodeViewer
+  filePath={selectedFile}
+  fileContent={fileContent}
+/>
+
                     </div>
                   </div>
                 )}
