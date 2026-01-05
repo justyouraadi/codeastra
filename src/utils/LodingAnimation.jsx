@@ -1,183 +1,154 @@
 import { useEffect, useState } from "react";
 
-export default function LodingAnimation() {
-    const cards = [
-        { id: 1, title: "Creating Your App", file: "app/globals.css" },
-        { id: 2, title: "Building UI Layout", file: "app/layout.js" },
-        { id: 3, title: "Rendering Home Page", file: "app/page.js" },
-    ];
+export default function ProjectCreationLobby() {
+  const steps = [
+    "Allocating workspace",
+    "Installing dependencies",
+    "Generating UI components",
+    "Linking routes",
+    "Optimizing build",
+    "Finalizing deployment",
+  ];
 
-    const [index, setIndex] = useState(0);
-    const [phase, setPhase] = useState("card");
+  const logs = [
+    "✔ Workspace allocated",
+    "✔ React environment ready",
+    "✔ Tailwind configured",
+    "✔ Routes mapped",
+    "✔ Assets optimized",
+    "⏳ Final checks running...",
+  ];
 
-    useEffect(() => {
-        let timer;
-        if (phase === "card") {
-            timer = setTimeout(() => setPhase("lines"), 900);
-        } else if (phase === "lines") {
-            timer = setTimeout(() => setPhase("boxes"), 1600);
-        } else if (phase === "boxes") {
-            timer = setTimeout(() => {
-                setIndex((prev) => (prev + 1) % cards.length);
-                setPhase("card");
-            }, 2000);
+  const [progress, setProgress] = useState(0);
+  const [activeStep, setActiveStep] = useState(0);
+  const [finalizing, setFinalizing] = useState(false);
+
+  /* ---------------- PROGRESS ENGINE (~1 MIN) ---------------- */
+  useEffect(() => {
+    if (progress >= 100) {
+      setFinalizing(true);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setProgress((p) => Math.min(p + 1, 100));
+    }, 600); // ~60 seconds total
+
+    return () => clearInterval(interval);
+  }, [progress]);
+
+  /* ---------------- STEP TRACKING ---------------- */
+  useEffect(() => {
+    if (progress >= 100) return;
+    setActiveStep(Math.floor((progress / 100) * steps.length));
+  }, [progress]);
+
+  return (
+    <div className="relative w-screen h-screen bg-[#050505] text-white overflow-hidden">
+      {/* AMBIENT GRID */}
+      <div className="absolute inset-0 opacity-[0.06] animate-[gridMove_24s_linear_infinite] bg-[linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] bg-[size:72px_72px]" />
+
+      <style>{`
+        @keyframes gridMove {
+          from { background-position: 0 0; }
+          to { background-position: 144px 144px; }
         }
-        return () => clearTimeout(timer);
-    }, [phase]);
-
-
-
-    return (
-        <div className="min-h-screen bg-black flex items-center justify-center relative p-4">
-
-            <style>{`
-        @keyframes cardIn {
-          0% { opacity: 0; transform: translateY(30px) scale(.88); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes pulse {
+          0%,100% { transform: scale(1); opacity: .6; }
+          50% { transform: scale(1.08); opacity: 1; }
         }
-        .card-anim { animation: cardIn 0.9s cubic-bezier(.18,.9,.22,1) forwards; }
-
-        @keyframes lineIn {
-          0% { transform: translateX(-40px); opacity: 0; }
-          100% { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes boxGrow {
-          0% { transform: scale(.6); opacity: 0; }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes breathe {
+          0%,100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
         }
       `}</style>
 
-            <div className="relative w-full max-w-[1250px] flex items-center justify-center">
+      <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
+        {/* LEFT – BUILD QUEUE */}
+        <aside className="hidden md:block lg:w-[18%] md:w-[28%] border-r border-white/10 p-6 lg:p-8">
+          <p className="text-xs tracking-[0.25em] text-white/50 mb-6">
+            BUILD QUEUE
+          </p>
 
-                {cards.map((c, i) => {
-                    const isCenter = i === index;
-                    const isLeft = i === (index - 1 + cards.length) % cards.length;
-                    const isRight = i === (index + 1) % cards.length;
+          <div className="space-y-4">
+            {steps.map((step, i) => (
+              <div
+                key={i}
+                className={`flex items-center gap-3 transition-all ${
+                  i <= activeStep ? "opacity-100" : "opacity-30"
+                }`}
+              >
+                <div
+                  className={`w-2.5 h-2.5 rounded-full ${
+                    i < activeStep
+                      ? "bg-emerald-400"
+                      : i === activeStep && !finalizing
+                      ? "bg-yellow-400 animate-pulse"
+                      : "bg-white/30"
+                  }`}
+                />
+                <p className="text-sm">{step}</p>
+              </div>
+            ))}
+          </div>
+        </aside>
 
-                    return (
-                        <div
-                            key={c.id}
-                            className={`
-                absolute rounded-3xl border backdrop-blur-xl shadow-2xl
-                ${isCenter ? "border-white" : "border-white/20"}
-                bg-white/5 overflow-hidden
-                transition-all duration-[950ms]
-                ${isCenter ? "z-30 scale-100 opacity-100" : "z-10 scale-[.70] opacity-30 blur-[2px]"}
-                ${isLeft ? "lg:-translate-x-[420px] md:-translate-x-[280px]" : ""}
-                ${isRight ? "lg:translate-x-[420px] md:translate-x-[280px]" : ""}
-                ${isCenter && phase === "card" ? "card-anim" : ""}
-              `}
-                            style={{
-                                width: "min(90vw, 520px)",
-                                height: "min(88vh, 500px)",
-                            }}
-                        >
-
-                            {/* TOP BAR */}
-                            <div className="px-6 pt-4 flex items-center justify-between">
-                                <div className="flex gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-yellow-400 border border-white"></div>
-                                    <div className="w-3 h-3 rounded-full bg-red-500 border border-white"></div>
-                                    <div className="w-3 h-3 rounded-full bg-blue-400 border border-white"></div>
-                                </div>
-                                <p className="text-sm text-white">{c.file}</p>
-                            </div>
-
-                            {/* TITLE */}
-                            {isCenter && (
-                                <p className="text-center mt-4 text-2xl font-semibold text-white tracking-wide">
-                                    {c.title}
-                                </p>
-                            )}
-
-                            {/* LINES */}
-                            {isCenter && phase === "lines" && (
-                                <div className="px-6 mt-6 space-y-3">
-                                    {Array.from({ length: 14 }).map((_, line) => (
-                                        <div
-                                            key={line}
-                                            className="h-4 rounded-lg bg-white/90 opacity-0"
-                                            style={{
-                                                width: `${70 + Math.random() * 25}%`,
-                                                animation: `lineIn 1s ease forwards`,
-                                                animationDelay: `${line * 120}ms`,
-                                            }}
-                                        ></div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* BOXES (responsive layout) */}
-                            {isCenter && phase === "boxes" && (
-                                <div className="px-6 pt-2 pb-4 mt-6 w-full h-[calc(100%-120px)] flex flex-col gap-3">
-                                    {/* Card 1 → 4 boxes */}
-                                    {index === 0 && (
-                                        <>
-                                            <div className="flex gap-3 flex-1">
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `0ms` }}></div>
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `140ms` }}></div>
-                                            </div>
-                                            <div className="flex gap-3 flex-1">
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `280ms` }}></div>
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `420ms` }}></div>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {/* Card 2 → 5 boxes */}
-                                    {index === 1 && (
-                                        <>
-                                            <div className="flex gap-3 flex-1">
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `0ms` }}></div>
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `140ms` }}></div>
-                                            </div>
-                                            <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `280ms` }}></div>
-                                            <div className="flex gap-3 flex-1">
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `420ms` }}></div>
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `560ms` }}></div>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {/* Card 3 → 6 boxes */}
-                                    {index === 2 && (
-                                        <>
-                                            <div className="flex gap-3 flex-1">
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `0ms` }}></div>
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `140ms` }}></div>
-                                            </div>
-                                            <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `280ms` }}></div>
-                                            <div className="flex gap-3 flex-1">
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `420ms` }}></div>
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `560ms` }}></div>
-                                                <div className="flex-1 rounded-2xl border border-white border-dashed opacity-0" style={{ animation: `boxGrow .7s forwards`, animationDelay: `700ms` }}></div>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-
-
-
-                        </div>
-                    );
-                })}
+        {/* CENTER – BUILD CORE */}
+        <main className="flex-1 flex flex-col items-center justify-center gap-8 px-6">
+          {/* CORE */}
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-white/10 blur-3xl animate-[pulse_3.5s_ease-in-out_infinite]" />
+            <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full border border-white/30 flex items-center justify-center animate-[breathe_4.5s_ease-in-out_infinite]">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-white/95 text-black flex items-center justify-center text-lg md:text-xl font-semibold">
+                {progress}%
+              </div>
             </div>
+          </div>
 
-            {/* DOTS */}
-            <div className="absolute bottom-10 md:bottom-12 flex gap-3">
-                {cards.map((_, i) => (
-                    <div
-                        key={i}
-                        className={`w-3 h-3 rounded-full transition-all ${i === index ? "scale-125" : "opacity-40"}`}
-                        style={{
-                            background: i === 0 ? "#F6C84C" : i === 1 ? "#F44444" : "#4EA3F5",
-                        }}
-                    ></div>
-                ))}
-            </div>
+          {/* STATUS */}
+          <div className="text-center space-y-2 max-w-md">
+            <p className="text-xl md:text-2xl font-medium">
+              {finalizing ? "Final checks running…" : "Creating your project"}
+            </p>
+            <p className="text-sm text-white/60">
+              {finalizing
+                ? "Making sure everything is ready before launch."
+                : "You can safely wait here while everything is prepared."}
+            </p>
+          </div>
 
-        </div>
-    );
+          {/* PROGRESS BAR */}
+          <div className="w-full max-w-[420px] md:max-w-[720px] h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-white transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* MOBILE STEP */}
+          <div className="md:hidden text-sm text-white/60 mt-4">
+            {finalizing
+              ? "Final checks running…"
+              : steps[activeStep] || "Preparing…"}
+          </div>
+        </main>
+
+        {/* RIGHT – SYSTEM LOGS */}
+        <aside className="hidden lg:block lg:w-[22%] border-l border-white/10 p-8">
+          <p className="text-xs tracking-[0.25em] text-white/50 mb-6">
+            SYSTEM LOGS
+          </p>
+
+          <div className="space-y-3 text-xs font-mono text-white/70">
+            {logs.slice(0, finalizing ? logs.length : activeStep + 1).map(
+              (log, i) => (
+                <div key={i}>{log}</div>
+              )
+            )}
+            <div className="animate-pulse">▌</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
 }
