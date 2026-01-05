@@ -37,6 +37,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { useMemo } from "react";
+import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
 
 const buildFileTree = (files) => {
   const root = {};
@@ -624,16 +625,7 @@ const ChatTemp = () => {
                 {viewMode === "output" ? (
                   <>
                     {fetchGetApi && (
-                      <div className="absolute inset-0 bg-white flex items-center justify-center z-10">
-                        <Item variant="muted">
-                          <ItemMedia>
-                            <Spinner />
-                          </ItemMedia>
-                          <ItemContent>
-                            <ItemTitle>Updating changes...</ItemTitle>
-                          </ItemContent>
-                        </Item>
-                      </div>
+                      <UpdatingLobbyOverlay visible={fetchGetApi} />
                     )}
                     <iframe
                       key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
@@ -848,17 +840,8 @@ const ChatTemp = () => {
               <div className="absolute inset-0 pt-16 flex justify-center items-start bg-white">
                 {viewMode === "output" ? (
                   <>
-                    {fetchGetApi && (
-                      <div className="absolute inset-0 bg-white flex items-center justify-center z-10">
-                        <Item variant="muted">
-                          <ItemMedia>
-                            <Spinner />
-                          </ItemMedia>
-                          <ItemContent>
-                            <ItemTitle>Updating changes...</ItemTitle>
-                          </ItemContent>
-                        </Item>
-                      </div>
+                   {fetchGetApi && (
+                      <UpdatingLobbyOverlay visible={fetchGetApi} />
                     )}
 
                     <iframe
