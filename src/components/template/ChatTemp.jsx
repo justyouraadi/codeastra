@@ -197,7 +197,7 @@ const CodeViewer = ({ filePath, fileContent }) => {
         scrollBeyondLastLine: false,
         wordWrap: "on",
         padding: { top: 16, bottom: 16 },
-        
+
       }}
     />
   );
@@ -219,20 +219,20 @@ const ChatTemp = () => {
   } = useProjectProvider();
 
   const handleSelectFile = async (filePath) => {
-  try {
-    setSelectedFile(filePath);
+    try {
+      setSelectedFile(filePath);
 
-    await fetchProjectFileContent("v1", id, filePath);
-  } 
-  catch (err) {
-    // setFileError("Failed to load file content");
-    console.error("❌ Fetch Project file content Error:", err.message);
-  } 
-  // finally {
-  //   setFileLoading(false);
-  // }
-};
-  
+      await fetchProjectFileContent("v1", id, filePath);
+    }
+    catch (err) {
+      // setFileError("Failed to load file content");
+      console.error("❌ Fetch Project file content Error:", err.message);
+    }
+    // finally {
+    //   setFileLoading(false);
+    // }
+  };
+
 
   // Divider initial: read from localStorage or default to 35 for desktop
   const computeInitialDivider = () => {
@@ -349,13 +349,14 @@ const ChatTemp = () => {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    const newMsg = { sender: "user", text: input };
-    setMessages((p) => [...p, newMsg]);
+    const newMsg = { sender: "user", message: input };
+    setFinalMessages((p) => [...p, newMsg]);
     setInput("");
     setWaitingForBot(true);
     setFetchGetApi(true);
     await ChatApi({ project_id: id, prompt: input });
   };
+
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -409,7 +410,7 @@ const ChatTemp = () => {
   }, [leftPanelRef.current, isMobile]);
 
   // Code view file selection
-  
+
 
   return (
     <div className="min-h-screen flex bg-white text-gray-900 overflow-hidden flex-col md:flex-row">
@@ -518,9 +519,8 @@ const ChatTemp = () => {
                 <Button
                   onClick={handleSend}
                   disabled={waitingForBot}
-                  className={`${
-                    waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
-                  } text-white`}
+                  className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
+                    } text-white`}
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -573,15 +573,13 @@ const ChatTemp = () => {
 
                 <div className="flex items-center gap-3">
                   <Monitor
-                    className={`w-5 h-5 cursor-pointer hidden  sm:hidden  ${
-                      deviceView === "desktop" ? "text-black" : "text-gray-600"
-                    }`}
+                    className={`w-5 h-5 cursor-pointer hidden  sm:hidden  ${deviceView === "desktop" ? "text-black" : "text-gray-600"
+                      }`}
                     onClick={() => setDeviceView("desktop")}
                   />
                   <Smartphone
-                    className={`w-5 h-5 cursor-pointer hidden  sm:hidden  ${
-                      deviceView === "mobile" ? "text-black" : "text-gray-600"
-                    }`}
+                    className={`w-5 h-5 cursor-pointer hidden  sm:hidden  ${deviceView === "mobile" ? "text-black" : "text-gray-600"
+                      }`}
                     onClick={() => setDeviceView("mobile")}
                   />
                   <RefreshCw
@@ -693,9 +691,9 @@ const ChatTemp = () => {
 
                     <div className="flex-1 h-full">
                       <CodeViewer
-  filePath={selectedFile}
-  fileContent={fileContent}
-/>
+                        filePath={selectedFile}
+                        fileContent={fileContent}
+                      />
 
                     </div>
                   </div>
@@ -817,9 +815,8 @@ const ChatTemp = () => {
                 <Button
                   onClick={handleSend}
                   disabled={waitingForBot}
-                  className={`${
-                    waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
-                  } text-white`}
+                  className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
+                    } text-white`}
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -840,7 +837,7 @@ const ChatTemp = () => {
               <div className="absolute inset-0 pt-16 flex justify-center items-start bg-white">
                 {viewMode === "output" ? (
                   <>
-                   {fetchGetApi && (
+                    {fetchGetApi && (
                       <UpdatingLobbyOverlay visible={fetchGetApi} />
                     )}
 
@@ -908,9 +905,9 @@ const ChatTemp = () => {
 
                     <div className="flex-1 h-full">
                       <CodeViewer
-  filePath={selectedFile}
-  fileContent={fileContent}
-/>
+                        filePath={selectedFile}
+                        fileContent={fileContent}
+                      />
 
                     </div>
                   </div>
@@ -935,11 +932,10 @@ const ChatTemp = () => {
                   <Button
                     variant="ghost"
                     onClick={() => setViewMode("output")}
-                    className={`flex items-center gap-2 text-sm ${
-                      viewMode === "output"
-                        ? "font-semibold border-b-2 border-black"
-                        : ""
-                    }`}
+                    className={`flex items-center gap-2 text-sm ${viewMode === "output"
+                      ? "font-semibold border-b-2 border-black"
+                      : ""
+                      }`}
                   >
                     <Eye className="w-4 h-4" />
                     <span className="hidden sm:inline">Preview</span>
@@ -949,11 +945,10 @@ const ChatTemp = () => {
                   <Button
                     variant="ghost"
                     onClick={() => setViewMode("code")}
-                    className={`flex items-center gap-2 text-sm ${
-                      viewMode === "code"
-                        ? "font-semibold border-b-2 border-black"
-                        : ""
-                    }`}
+                    className={`flex items-center gap-2 text-sm ${viewMode === "code"
+                      ? "font-semibold border-b-2 border-black"
+                      : ""
+                      }`}
                   >
                     <Code className="w-4 h-4" />
                     <span className="hidden sm:inline">Code</span>
@@ -990,19 +985,17 @@ const ChatTemp = () => {
                   <div className="flex items-center gap-3 flex-wrap">
                     {/* Monitor + Smartphone - only md+ */}
                     <Monitor
-                      className={`hidden md:inline-block w-5 h-5 cursor-pointer sm:hidden  ${
-                        deviceView === "desktop"
-                          ? "text-black"
-                          : "text-gray-600 hover:text-black"
-                      }`}
+                      className={`hidden md:inline-block w-5 h-5 cursor-pointer sm:hidden  ${deviceView === "desktop"
+                        ? "text-black"
+                        : "text-gray-600 hover:text-black"
+                        }`}
                       onClick={() => setDeviceView("desktop")}
                     />
                     <Smartphone
-                      className={`hidden md:inline-block w-5 h-5 cursor-pointer ${
-                        deviceView === "mobile"
-                          ? "text-black"
-                          : "text-gray-600 hover:text-black"
-                      }`}
+                      className={`hidden md:inline-block w-5 h-5 cursor-pointer ${deviceView === "mobile"
+                        ? "text-black"
+                        : "text-gray-600 hover:text-black"
+                        }`}
                       onClick={() => setDeviceView("mobile")}
                     />
 
