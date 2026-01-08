@@ -83,7 +83,7 @@ const Project = () => {
 
   const navigate = useNavigate();
 
-  const { fetchProjects, loadMoreProjects, hasMore, projects, loading,fetchProjectNamesForSidebar,sidebarProjects } =
+  const { fetchProjects, loadMoreProjects, hasMore, projects, loading, fetchProjectNamesForSidebar, sidebarProjects } =
     useProjectContext();
 
   const [searchText, setSearchText] = useState("");
@@ -206,20 +206,20 @@ const Project = () => {
             {sidebarProjects.length === 0
               ? "Project Not Found"
               : sidebarProjects.map((project) => (
-                  <li
-                    key={project.id}
-                    onClick={() => {
-                      navigate(`/chatpage/${project.id}`);
-                      setSidebarOpen(false);
-                    }}
-                    className="text-gray-700 hover:text-black cursor-pointer"
-                  >
-                    {project.name}
-                    <span className="text-gray-400 text-xs ml-1">
-                      • {getTimeAgo(project.updatedAt || project.createdAt)}
-                    </span>
-                  </li>
-                ))}
+                <li
+                  key={project.id}
+                  onClick={() => {
+                    navigate(`/chatpage/${project.id}`);
+                    setSidebarOpen(false);
+                  }}
+                  className="text-gray-700 hover:text-black cursor-pointer"
+                >
+                  {project.name}
+                  <span className="text-gray-400 text-xs ml-1">
+                    • {getTimeAgo(project.updatedAt || project.createdAt)}
+                  </span>
+                </li>
+              ))}
           </ul>
         </div>
 
@@ -318,6 +318,7 @@ const Project = () => {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 pb-10">
           {projects.map((proj, i) => {
             const card = getCardByIndex(i);
+            console.log("This is the time :-", proj.createdAt);
             return (
               <div
                 key={proj.id || i}
@@ -329,7 +330,13 @@ const Project = () => {
                     title={proj.name}
                     description={proj.description || "No description"}
                     author="User"
-                    createdAt={new Date(proj.createdAt).toLocaleDateString()}
+                    createdAt={new Date(proj.createdAt).toLocaleString("en-US", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                     icon={card.icon}
                     style={{
                       background: card.background,

@@ -453,7 +453,7 @@ export const useAuthProvider = () => {
       return response;
     } catch (err) {
       console.error("Google Sign-in Error:", err);
-      toast.error(err.message || "Google Sign-in failed");
+      // toast.error(err.message || "Google Sign-in failed");
       throw err;
     } finally {
       setLoading(false);
