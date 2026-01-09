@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/resizable";
 import { useMemo } from "react";
 import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
+import { use } from "react";
 
 const buildFileTree = (files) => {
   const root = {};
@@ -191,13 +192,14 @@ const CodeViewer = ({ filePath, fileContent }) => {
       value={decodeEscapedContent(fileContent)}
       options={{
         readOnly: true,
-        fontSize: 13,
+        fontSize: 14,
+        lineHeight: 24,
         lineNumbers: "on",
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
         wordWrap: "on",
+        insertSpaces: true,
         padding: { top: 16, bottom: 16 },
-
       }}
     />
   );
@@ -260,6 +262,7 @@ const ChatTemp = () => {
   // refs
   const chatContainerRef = useRef(null);
   const leftPanelRef = useRef(null);
+  const chatEndRef = useRef(null);
   const resizableGroupRef = useRef(null);
   const [finalMessage, setFinalMessages] = useState([]);
 
@@ -328,10 +331,19 @@ const ChatTemp = () => {
   // })
 
   // always scroll chat to bottom when messages change
+  // useEffect(() => {
+  //   if (!chatContainerRef.current) return;
+  //   chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+  // }, [messages, botTexts, userTexts]);
+
   useEffect(() => {
-    if (!chatContainerRef.current) return;
-    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-  }, [messages, botTexts, userTexts]);
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [finalMessage]);
 
   const ChatApi = async (params) => {
     const data = await createChat(params);
@@ -426,7 +438,7 @@ const ChatTemp = () => {
                 <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
-                    onClick={() => navigate(-1)}
+                    onClick={() => navigate("/mainpagescreen")}
                     className="p-2 text-xl cursor-pointer hover:bg-gray-200 rounded-md transition-all"
                   >
                     <ArrowLeft />
@@ -498,6 +510,7 @@ const ChatTemp = () => {
                         </>
                       );
                     })}
+                    <div ref={chatEndRef}></div>
                   </>
                 ) : (
                   <></>
@@ -720,7 +733,7 @@ const ChatTemp = () => {
                 <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
-                    onClick={() => window.history.back()}
+                    onClick={() => navigate("/mainpagescreen")}
                     className="p-2 text-xl cursor-pointer hover:bg-gray-200 rounded-md transition-all"
                   >
                     <ArrowLeft />
@@ -767,7 +780,7 @@ const ChatTemp = () => {
                                   </span>
                                 </div>
                                 <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
+                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
                                   dangerouslySetInnerHTML={{
                                     __html: text?.message,
                                   }}
@@ -777,7 +790,7 @@ const ChatTemp = () => {
                           ) : (
                             <>
                               <div className="flex items-start gap-2 justify-end">
-                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white p-3">
                                   {text?.message}
                                 </div>
                                 <div className="flex flex-col items-center">
@@ -794,6 +807,7 @@ const ChatTemp = () => {
                         </>
                       );
                     })}
+                    <div ref={chatEndRef}></div>
                   </>
                 ) : (
                   <></>
