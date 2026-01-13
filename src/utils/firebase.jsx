@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyASZn0Gl55GbGtD_tZL6wv6M7--cXK_j1Q",
-  authDomain: "codeastra-8bee9.firebaseapp.com",
+  authDomain: "auth.codeastra.ai",
   projectId: "codeastra-8bee9",
   storageBucket: "codeastra-8bee9.firebasestorage.app",
   messagingSenderId: "956650169084",
