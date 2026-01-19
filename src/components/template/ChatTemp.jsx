@@ -688,7 +688,6 @@ const ChatTemp = () => {
                           </Button>
                         </div>
                       ) : projectFiles.files.length === 0 ? (
-                        // 📭 Empty state
                         <div className="h-full flex items-center justify-center text-gray-500 text-sm">
                           No files found
                         </div>
