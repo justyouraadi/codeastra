@@ -8,7 +8,7 @@ import { signInWithPopup } from "firebase/auth";
 export const signupAPI = async (email, password) => {
   try {
     const response = await fetch(
-      "https://gateway.codeastra.ai/api/v1/auth/request/signup",
+      "https://gateway.codeastra.ai/api/v1/auth/googlesignup",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
