@@ -32,7 +32,7 @@ export default function ProjectCreationLobby() {
 
     const interval = setInterval(() => {
       setProgress((p) => Math.min(p + 1, 100));
-    }, 600); // ~60 seconds total
+    }, 3000); // ~60 seconds total
 
     return () => clearInterval(interval);
   }, [progress]);
