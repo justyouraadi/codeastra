@@ -337,23 +337,57 @@ const ProjectPlayground = () => {
     }, [finalMessage]);
 
     const ChatApi = async (params) => {
-        const data = await createChat(params);
-        if (!data?.success) {
+        try {
+            const data = await createChat(params);
+            if (!data?.success) {
+                setWaitingForBot(false);
+                setFetchGetApi(false);
+                // remove thinking placeholder
+                setFinalMessages((prev) => prev.filter((m) => !m.__thinking));
+                return;
+            }
+
+            // Fetch the latest project data to get the bot reply and update messages
+            const updated = await fetchProjectById(id);
+            if (updated?.success) {
+                let messages = [];
+                if (updated.data.chats.length > 0) {
+                    messages.push({ sender: "user", message: updated.data.chats[0].message });
+                }
+
+                if (updated.data.description) {
+                    messages.push({ sender: "bot", message: updated.data.description });
+                }
+
+                if (updated.data.chats.length > 1) {
+                    const remainingChats = updated.data.chats.slice(1).map((chat) => chat);
+                    messages.push(...remainingChats);
+                }
+
+                setFinalMessages(messages);
+            } else {
+                // fallback: just remove thinking placeholder
+                setFinalMessages((prev) => prev.filter((m) => !m.__thinking));
+            }
+
             setWaitingForBot(false);
             setFetchGetApi(false);
+            return data;
+        } catch (err) {
+            console.error("❌ Chat API Error:", err.message);
+            setWaitingForBot(false);
+            setFetchGetApi(false);
+            setFinalMessages((prev) => prev.filter((m) => !m.__thinking));
             return;
         }
-        setWaitingForBot(false);
-        setFetchGetApi(false);
-        // setRefreshTrigger((p) => p + 1);
-        window.location.reload();
-        return data;
     };
 
     const handleSend = async () => {
         if (!input.trim()) return;
         const newMsg = { sender: "user", message: input };
-        setFinalMessages((p) => [...p, newMsg]);
+        // thinking placeholder (will be replaced when API returns)
+        const thinkingMsg = { sender: "bot", message: "", __thinking: true, id: Date.now() };
+        setFinalMessages((p) => [...p, newMsg, thinkingMsg]);
         setInput("");
         setWaitingForBot(true);
         setFetchGetApi(true);
@@ -460,27 +494,32 @@ const ProjectPlayground = () => {
                                             return (
                                                 <>
                                                     {text?.sender === "bot" ? (
-                                                        <>
-                                                            <div
-                                                                key={index}
-                                                                className="flex items-start gap-2 justify-start"
-                                                            >
-                                                                <div className="flex flex-col items-center">
-                                                                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                                                                        CA
-                                                                    </div>
-                                                                    <span className="text-[10px] text-gray-500 mt-1">
-                                                                        CodeAstra
-                                                                    </span>
+                                                        <div
+                                                            key={index}
+                                                            className="flex items-start gap-2 justify-start"
+                                                        >
+                                                            <div className="flex flex-col items-center">
+                                                                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                                                                    CA
                                                                 </div>
+                                                                <span className="text-[10px] text-gray-500 mt-1">
+                                                                    CodeAstra
+                                                                </span>
+                                                            </div>
+                                                            {text.__thinking ? (
+                                                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 flex items-center gap-2">
+                                                                    <Spinner />
+                                                                    <span className="italic text-gray-600">Thinking...</span>
+                                                                </div>
+                                                            ) : (
                                                                 <div
                                                                     className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
                                                                     dangerouslySetInnerHTML={{
                                                                         __html: text?.message,
                                                                     }}
                                                                 />
-                                                            </div>
-                                                        </>
+                                                            )}
+                                                        </div>
                                                     ) : (
                                                         <>
                                                             <div className="flex items-start gap-2 justify-end">
@@ -500,7 +539,7 @@ const ProjectPlayground = () => {
                                                     )}
                                                 </>
                                             );
-                                        })}
+                                        })} 
                                         <div ref={chatEndRef}></div>
                                     </>
                                 ) : (
@@ -756,27 +795,32 @@ const ProjectPlayground = () => {
                                             return (
                                                 <>
                                                     {text?.sender === "bot" ? (
-                                                        <>
-                                                            <div
-                                                                key={index}
-                                                                className="flex items-start gap-2 justify-start"
-                                                            >
-                                                                <div className="flex flex-col items-center">
-                                                                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                                                                        CA
-                                                                    </div>
-                                                                    <span className="text-[10px] text-gray-500 mt-1">
-                                                                        CodeAstra
-                                                                    </span>
+                                                        <div
+                                                            key={index}
+                                                            className="flex items-start gap-2 justify-start"
+                                                        >
+                                                            <div className="flex flex-col items-center">
+                                                                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                                                                    CA
                                                                 </div>
+                                                                <span className="text-[10px] text-gray-500 mt-1">
+                                                                    CodeAstra
+                                                                </span>
+                                                            </div>
+                                                            {text.__thinking ? (
+                                                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 flex items-center gap-2">
+                                                                    <Spinner />
+                                                                    <span className="italic text-gray-600">Thinking...</span>
+                                                                </div>
+                                                            ) : (
                                                                 <div
                                                                     className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
                                                                     dangerouslySetInnerHTML={{
                                                                         __html: text?.message,
                                                                     }}
                                                                 />
-                                                            </div>
-                                                        </>
+                                                            )}
+                                                        </div>
                                                     ) : (
                                                         <>
                                                             <div className="flex items-start gap-2 justify-end">
@@ -1019,9 +1063,7 @@ const ProjectPlayground = () => {
                                             </a>
 
                                         )}
-                                        <TextShimmer className='font-mono text-sm' duration={1}>
-                                            Generating code...
-                                        </TextShimmer>
+                                        
                                     </div>
                                 </div>
                             </div>
