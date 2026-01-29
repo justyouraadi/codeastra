@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 export const signupAPI = async (email, password) => {
   try {
     const response = await fetch(
-      "https://gateway.codeastra.ai/api/v1/auth/signup",
+      "https://gateway.codeastra.ai/api/v1/auth/request/signup",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

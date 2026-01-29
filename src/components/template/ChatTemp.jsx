@@ -323,18 +323,7 @@ const ChatTemp = () => {
         setSelectedVersion(data.data.versions[data.data.versions.length - 1]);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-  console.log(finalMessage, "sdfs");
-  // botTexts.forEach((text,index)=>{
-  //   console.log("text",text,index);
-  // })
-
-  // always scroll chat to bottom when messages change
-  // useEffect(() => {
-  //   if (!chatContainerRef.current) return;
-  //   chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-  // }, [messages, botTexts, userTexts]);
 
   useEffect(() => {
     if (chatEndRef.current) {
