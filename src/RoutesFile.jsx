@@ -18,7 +18,7 @@ import CreateAccountPages from "./pages/CreateAccountPages";
 import OtpPages from "./pages/OtpPages";
 import CreateProfilePages from "./pages/CreateProfilePages";
 import ProtectedRoute from "./ProtectedRoute";
-import ProjectPlayground from "./components/template/ProjectPlayground";
+// import ProjectPlayground from "./components/template/ProjectPlayground";
 
 // Helper component to redirect based on token
 const RedirectIfLoggedIn = ({ children }) => {
@@ -48,7 +48,7 @@ const RoutesFile = () => {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/mainpagescreen" element={<MainPageScreen />} />
-          <Route path="/ProjectPlayground" element={<ProjectPlayground />} />
+          {/* <Route path="/ProjectPlayground" element={<ProjectPlayground />} /> */}
           <Route path="/projectpages" element={<ProjectPages />} />
           <Route path="/chatpage/:id" element={<Chatpage />} />
           <Route path="/NoAppsPage" element={<NoAppsPage />} />
