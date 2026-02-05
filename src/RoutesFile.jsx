@@ -48,7 +48,7 @@ const RoutesFile = () => {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/mainpagescreen" element={<MainPageScreen />} />
-          <Route path="/ProjectPlayground" element={<ProjectPlayground />} />
+          <Route path="/builder" element={<ProjectPlayground />} />
           <Route path="/projectpages" element={<ProjectPages />} />
           <Route path="/chatpage/:id" element={<Chatpage />} />
           <Route path="/NoAppsPage" element={<NoAppsPage />} />
