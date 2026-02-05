@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import logo from "../../assets/logo.png";
-import avatar from "../../assets/User-Avatar.png";
 import {
   Plus,
   Folder,
@@ -10,18 +8,24 @@ import {
   Lightbulb,
   Code,
   BarChart3,
-  User,
-  Crown,
-  Image,
-  FileText,
-  Video,
   Menu,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import { CiLogout } from "react-icons/ci";
 
+import logo from "../../assets/logo.png";
+import LodingAnimation from "@/utils/LodingAnimation";
+
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { useProjectContext } from "@/context/ProjectProvider";
+import { useAuth } from "@/context/ContextProvider";
+import { socket } from "@/socket/socket";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   Card,
   CardHeader,
@@ -37,37 +41,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { useNavigate } from "react-router-dom";
-import { useProjectContext } from "@/context/ProjectProvider";
-import toast from "react-hot-toast";
-import LodingAnimation from "@/utils/LodingAnimation";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useAuth } from "@/context/ContextProvider";
-import { socket } from "@/socket/socket";
-import { TextShimmer } from "../ui/text-shimmer";
-
 const MainChatScreen = () => {
   const navigate = useNavigate();
 
-  const [open, setOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [prompt, setPrompt] = useState("");
-  const [started, setStarted] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
+  // chat states
+  const [started, setStarted] = useState(false);
   const [thinking, setThinking] = useState(false);
   const [messages, setMessages] = useState([]);
 
   const [isLoadingFullScreen, setIsLoadingFullScreen] = useState(false);
-  const [searchText, setSearchText] = useState("");
 
-  const bottomRef = useRef(null);
+  // scroll refs
   const chatBodyRef = useRef(null);
+  const bottomRef = useRef(null);
 
   const {
     fetchProjects,
-    projects,
-    loading,
     fetchProjectNamesForSidebar,
     sidebarProjects,
     createProject,
@@ -93,22 +87,7 @@ const MainChatScreen = () => {
     return buildKeywords.some((k) => lower.includes(k)) ? "build" : "chat";
   };
 
-  // 🔥 Fetch sidebar projects
-  useEffect(() => {
-    fetchProjects();
-    fetchProjectNamesForSidebar();
-  }, []);
-
-  // 🔥 Sidebar scroll lock
-  useEffect(() => {
-    if (sidebarOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [sidebarOpen]);
-
-  // 🔥 AUTO SCROLL (smooth + safe)
+  // ✅ AUTO SCROLL HELPERS
   const scrollToBottom = (smooth = true) => {
     bottomRef.current?.scrollIntoView({
       behavior: smooth ? "smooth" : "auto",
@@ -119,50 +98,49 @@ const MainChatScreen = () => {
     const el = chatBodyRef.current;
     if (!el) return true;
 
-    const threshold = 120; // px
+    const threshold = 140;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-
     return distanceFromBottom < threshold;
   };
 
   useEffect(() => {
-    // only auto-scroll if user is near bottom
-    if (isUserNearBottom()) {
+    if (started && isUserNearBottom()) {
       scrollToBottom(true);
     }
-  }, [messages, thinking]);
+  }, [messages, thinking, started]);
 
-  // 🔥 SOCKET LISTENERS
+  // 🔥 Fetch sidebar projects
   useEffect(() => {
-    const onThinking = () => {
-      setThinking(true);
+    fetchProjects();
+    fetchProjectNamesForSidebar();
+  }, []);
+
+  // 🔥 Sidebar scroll lock (ONLY landing)
+  useEffect(() => {
+    if (!started && sidebarOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
     };
+  }, [sidebarOpen, started]);
+
+  // ✅ SOCKET LISTENERS
+  useEffect(() => {
+    const onThinking = () => setThinking(true);
 
     const onAIResponse = (data) => {
       setThinking(false);
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", text: data.text },
-      ]);
-    };
-
-    const onLayoutChange = (payload) => {
-      if (payload?.buildStart) {
-        navigate("/builder");
-      }
+      setMessages((prev) => [...prev, { role: "ai", text: data.text }]);
     };
 
     socket.on("thinking", onThinking);
     socket.on("ai_response", onAIResponse);
-    socket.on("layout_change", onLayoutChange);
 
     return () => {
       socket.off("thinking", onThinking);
       socket.off("ai_response", onAIResponse);
-      socket.off("layout_change", onLayoutChange);
     };
-  }, [navigate]);
+  }, []);
 
   const getTimeAgo = (dateString) => {
     const now = new Date();
@@ -189,31 +167,52 @@ const MainChatScreen = () => {
       return;
     }
 
+    // switch to chat UI
     if (!started) setStarted(true);
 
     const intent = detectIntent(prompt);
+    const currentPrompt = prompt;
 
-    // add user msg
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: prompt },
-    ]);
+    // show user msg
+    setMessages((prev) => [...prev, { role: "user", text: currentPrompt }]);
 
-    // send socket
+    // clear input
+    setPrompt("");
+
+    // show thinking instantly
+    setThinking(true);
+
+    // emit socket always
     socket.emit("send_message", {
-      text: prompt,
+      text: currentPrompt,
       intent,
     });
 
-    // build redirect
-    if (intent === "build") {
-      navigate("/builder");
-    }
-
-    setPrompt("");
-
-    // after send, force scroll to bottom
     setTimeout(() => scrollToBottom(true), 10);
+
+    // 🔥 BUILD → createProject + redirect
+    if (intent === "build") {
+      try {
+        setIsLoadingFullScreen(true);
+
+        const result = await createProject(currentPrompt);
+        const success = result?.success;
+
+        if (success) {
+          setTimeout(() => {
+            navigate(`/chatpage/${result?.data?.id}`, {
+              state: { firstPrompt: currentPrompt },
+            });
+          }, 300);
+        } else {
+          toast.error(result?.message || "Something went wrong!");
+        }
+      } catch (err) {
+        toast.error("Server error! Try again.");
+      } finally {
+        setIsLoadingFullScreen(false);
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -222,146 +221,164 @@ const MainChatScreen = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] h-screen overflow-hidden flex relative">
+    <div className="bg-gradient-to-br from-[#f4f7fb] to-[#e8f0f8] min-h-screen flex relative">
       {/* Full-screen Loader */}
-      {/* {isLoadingFullScreen && (
+      {isLoadingFullScreen && (
         <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
           <LodingAnimation />
         </div>
-      )} */}
-
-      {/* Mobile Menu Button */}
-      <div className="md:hidden fixed top-4 left-4 z-40">
-        <button
-          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-          onClick={() => setSidebarOpen((s) => !s)}
-          className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-        >
-          {sidebarOpen ? (
-            <X className="w-5 h-5" />
-          ) : (
-            <Menu className="w-5 h-5" />
-          )}
-        </button>
-      </div>
-
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={`
-          fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
-        `}
-      >
-        <div className="p-5 flex flex-col">
-          <div className="flex items-center justify-center mb-5">
-            <img src={logo} className="w-36 md:w-40 cursor-pointer" />
+      {/* -------------------------------
+          SIDEBAR (ONLY WHEN !started)
+      -------------------------------- */}
+      {!started && (
+        <>
+          {/* Mobile Menu Button */}
+          <div className="md:hidden fixed top-4 left-4 z-40">
+            <button
+              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+              onClick={() => setSidebarOpen((s) => !s)}
+              className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center shadow-md"
+            >
+              {sidebarOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
           </div>
 
-          <Button
-            className="w-full bg-black text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center hover:bg-gray-900"
-            onClick={() => {
-              navigate("/mainpagescreen");
-              setSidebarOpen(false);
-            }}
-          >
-            <Plus className="w-4 h-4 mr-2" /> New Chat
-          </Button>
-
-          <Input
-            value={searchText}
-            onChange={(e) => {
-              setSearchText(e.target.value);
-              fetchProjectNamesForSidebar(e.target.value);
-            }}
-            placeholder="Search chats..."
-            className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
-          />
-
-          <nav className="space-y-1 text-[14px] font-medium mb-5">
+          {/* Mobile overlay */}
+          {sidebarOpen && (
             <div
-              onClick={() => {
-                navigate("/projectpages");
-                setSidebarOpen(false);
-              }}
-              className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700"
-            >
-              <Folder className="w-4 h-4 mr-2" /> Projects
-            </div>
-          </nav>
-        </div>
+              className="fixed inset-0 bg-black/40 z-30 md:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
 
-        <div className="flex-1 px-5 overflow-y-auto">
-          <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
-            Recent
-          </h3>
-          <ul className="space-y-3 text-[13px]">
-            {sidebarProjects.length === 0
-              ? "Project Not Found"
-              : sidebarProjects?.map((project) => (
-                <li
-                  key={project.id}
-                  onClick={() => {
-                    navigate(`/chatpage/${project.id}`);
-                    setSidebarOpen(false);
-                  }}
-                  className="text-gray-700 hover:text-black cursor-pointer"
-                >
-                  {project.name}
-                  <span className="text-gray-400 text-xs ml-1">
-                    • {getTimeAgo(project.updatedAt || project.createdAt)}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        </div>
+          {/* Sidebar */}
+          <aside
+            className={`
+              fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
+              transform transition-transform duration-300 ease-in-out
+              ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
+            `}
+          >
+            <div className="p-5 flex flex-col">
+              <div className="flex items-center justify-center mb-5">
+                <img src={logo} className="w-36 md:w-40 cursor-pointer" />
+              </div>
 
-        <div className="p-4 border-t border-gray-200">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="flex w-full justify-start bg-black text-white border hover:bg-gray-100 hover:text-black">
-                <Settings className="w-4 h-4 mr-2" /> Settings
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              side="top"
-              className="w-56 bg-white shadow-lg border border-gray-100 rounded-lg"
-            >
-              <DropdownMenuLabel className="text-gray-700 font-semibold text-sm">
-                Account
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
+              <Button
+                className="w-full bg-black text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center hover:bg-gray-900"
                 onClick={() => {
-                  handleLogout();
+                  setStarted(false);
+                  setMessages([]);
+                  setThinking(false);
+                  setPrompt("");
+                  navigate("/mainpagescreen");
                   setSidebarOpen(false);
                 }}
-                className="cursor-pointer hover:bg-gray-100 text-red-900"
               >
-                <CiLogout className="w-4 h-4 mr-2" /> Log Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </aside>
+                <Plus className="w-4 h-4 mr-2" /> New Chat
+              </Button>
 
-      {/* Main Content */}
-      <div className="flex-1 px-4 md:px-6 flex flex-col md:ml-64 min-h-0">
+              <Input
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  fetchProjectNamesForSidebar(e.target.value);
+                }}
+                placeholder="Search chats..."
+                className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
+              />
+
+              <nav className="space-y-1 text-[14px] font-medium mb-5">
+                <div
+                  onClick={() => {
+                    navigate("/projectpages");
+                    setSidebarOpen(false);
+                  }}
+                  className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700"
+                >
+                  <Folder className="w-4 h-4 mr-2" /> Projects
+                </div>
+              </nav>
+            </div>
+
+            {/* Recent */}
+            <div className="flex-1 px-5 overflow-y-auto">
+              <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
+                Recent
+              </h3>
+
+              <ul className="space-y-3 text-[13px]">
+                {sidebarProjects.length === 0
+                  ? "Project Not Found"
+                  : sidebarProjects?.map((project) => (
+                    <li
+                      key={project.id}
+                      onClick={() => {
+                        navigate(`/chatpage/${project.id}`);
+                        setSidebarOpen(false);
+                      }}
+                      className="text-gray-700 hover:text-black cursor-pointer"
+                    >
+                      {project.name}
+                      <span className="text-gray-400 text-xs ml-1">
+                        • {getTimeAgo(project.updatedAt || project.createdAt)}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+
+            {/* Sidebar Bottom */}
+            <div className="p-4 border-t border-gray-200">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="flex w-full justify-start bg-black text-white border hover:bg-gray-100 hover:text-black">
+                    <Settings className="w-4 h-4 mr-2" /> Settings
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="start"
+                  side="top"
+                  className="w-56 bg-white shadow-lg border border-gray-100 rounded-lg"
+                >
+                  <DropdownMenuLabel className="text-gray-700 font-semibold text-sm">
+                    Account
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      handleLogout();
+                      setSidebarOpen(false);
+                    }}
+                    className="cursor-pointer hover:bg-gray-100 text-red-900"
+                  >
+                    <CiLogout className="w-4 h-4 mr-2" /> Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </aside>
+        </>
+      )}
+
+      {/* MAIN CONTENT */}
+      <div
+        className={`flex-1 px-4 md:px-6 min-h-screen flex flex-col ${started ? "md:ml-0" : "md:ml-64"
+          }`}
+      >
+        {/* TOP RIGHT AVATAR */}
         <div className="w-full flex items-center justify-end gap-4 mt-4">
           <Avatar className="w-12 h-12">
             <AvatarImage
-              className={`object-cover`}
+              className="object-cover"
               src={`https://gateway.codeastra.ai/blob?path=${pingDetails?.profile}&container=profiles`}
             />
             <AvatarFallback>
@@ -370,111 +387,58 @@ const MainChatScreen = () => {
           </Avatar>
         </div>
 
-        <main className="flex-1 min-h-0 flex flex-col justify-center items-center px-2 sm:px-6 mt-6 w-full h-full">
-
-          {/* LANDING HEADER */}
-          {!started && (
+        {/* -------------------------------
+            1) LANDING UI (start)
+        -------------------------------- */}
+        {!started && (
+          <main className="flex-1 flex flex-col items-center justify-center px-2 sm:px-6 mt-6 w-full">
             <div className="text-center mb-10">
               <div className="w-14 h-14 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-md">
                 <Plus className="w-5 h-5" />
               </div>
+
               <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-gray-900">
                 What's on your mind today?
               </h1>
+
               <p className="text-gray-600 text-sm sm:text-base max-w-md mx-auto">
                 I'm here to help with anything — ideas, code, projects and more.
               </p>
             </div>
-          )}
 
-          {/* CHAT MODE */}
-          {started && (
-            <div className="w-full max-w-4xl flex-1 min-h-0 flex flex-col">
-              {/* SCROLLABLE CHAT */}
-              <div
-                ref={chatBodyRef}
-                className="flex-1 min-h-0 overflow-y-auto no-scrollbar no-scrollbar"
-              >
-                {messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`mb-3 flex ${msg.role === "user" ? "justify-end" : "justify-start"
-                      }`}
-                  >
-                    <div
-                      className={`px-4 py-2 rounded-2xl max-w-[75%] text-sm shadow-sm ${msg.role === "user"
-                        ? "bg-black text-white"
-                        : "bg-white text-gray-800 border border-gray-200"
-                        }`}
-                    >
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
+            {/* Input */}
+            <div className="relative w-full max-w-xl mb-14">
+              <div className="flex items-center bg-white rounded-2xl shadow-md border border-gray-200 px-4 py-3">
+                <button className="cursor-pointer mr-3 text-gray-600 hover:text-black">
+                  <Plus className="w-5 h-5" />
+                </button>
 
-                {(thinking || isLoadingFullScreen) && (
-                  <div className="mb-3 flex justify-start">
-                    <div className="px-4 py-2 rounded-2xl bg-white text-gray-700 border border-gray-200 text-sm shadow-sm">
-                      <TextShimmer className='font-mono text-sm' duration={1}>
-                        Thinking ...
-                      </TextShimmer>
-                    </div>
-                  </div>
-                )}
+                <Input
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSend();
+                  }}
+                  placeholder="Ask anything or start a new project..."
+                  className="flex-1 border-none shadow-none focus-visible:ring-0 text-gray-800"
+                />
 
-                <div ref={bottomRef} />
+                <Button variant="ghost" size="icon" className="text-gray-600">
+                  <Mic className="w-5 h-5" />
+                </Button>
+
+                <Button
+                  onClick={handleSend}
+                  disabled={thinking || isLoadingFullScreen}
+                  className="bg-black text-white rounded-lg hover:bg-gray-900 ml-2"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
             </div>
-          )}
 
-          {/* INPUT SECTION */}
-          <div className="relative w-full max-w-xl mb-6">
-            <div className="flex items-center bg-white rounded-2xl shadow-md border border-gray-200 px-4 py-3">
-              <DropdownMenu open={open} onOpenChange={setOpen}>
-                <DropdownMenuTrigger asChild>
-                  <button className="cursor-pointer mr-3 text-gray-600 hover:text-black">
-                    <Plus className="w-5 h-5" />
-                  </button>
-                </DropdownMenuTrigger>
-              </DropdownMenu>
-
-              <Input
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !thinking && !isLoadingFullScreen) {
-                    handleSend();
-                  }
-                }}
-                placeholder={
-                  thinking
-                    ? "AI is thinking..."
-                    : "Ask anything or start a new project..."
-                }
-                className="flex-1 border-none shadow-none focus-visible:ring-0 text-gray-800"
-              />
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-gray-600 hover:text-black"
-              >
-                <Mic className="w-5 h-5" />
-              </Button>
-
-              <Button
-                onClick={handleSend}
-                disabled={loading || thinking || isLoadingFullScreen}
-                className="bg-black text-white rounded-lg hover:bg-gray-900 ml-2"
-              >
-                {loading || thinking || isLoadingFullScreen ? "..." : <Send className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* CARDS — ONLY BEFORE CHAT */}
-          {!started && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full mb-10">
+            {/* Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
               {[
                 {
                   icon: Lightbulb,
@@ -508,14 +472,138 @@ const MainChatScreen = () => {
                 </Card>
               ))}
             </div>
-          )}
-        </main>
+          </main>
+        )}
 
+        {/* -------------------------------
+            2) CHAT UI (after first msg)
+            ❌ NO SIDEBAR HERE
+        -------------------------------- */}
+        {started && (
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Chat top bar */}
+            <div className="h-14 flex items-center justify-between px-4 border-b border-gray-200 bg-white rounded-xl mt-4">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  className="rounded-xl"
+                  onClick={() => {
+                    setStarted(false);
+                    setMessages([]);
+                    setThinking(false);
+                    setPrompt("");
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Go Back
+                </Button>
+              </div>
 
+              <div className="text-sm font-medium text-gray-800">
+                AI Assistant
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button variant="outline" className="rounded-xl">
+                  Share
+                </Button>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div
+              ref={chatBodyRef}
+              className="flex-1 min-h-0 overflow-y-auto px-4 py-6"
+            >
+              <div className="w-full max-w-4xl mx-auto space-y-6">
+                {messages.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-start gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"
+                      }`}
+                  >
+                    {/* bot icon */}
+                    {msg.role === "ai" && (
+                      <div className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-sm">
+                        🤖
+                      </div>
+                    )}
+
+                    {/* bubble */}
+                    <div
+                      className={`
+                        rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm
+                        max-w-[70%]
+                        ${msg.role === "user"
+                          ? "bg-blue-50 text-gray-900 border border-blue-100"
+                          : "bg-white text-gray-900 border border-gray-200"
+                        }
+                      `}
+                    >
+                      {msg.text}
+                    </div>
+
+                    {/* user icon */}
+                    {msg.role === "user" && (
+                      <div className="w-9 h-9 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center">
+                        👤
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* thinking */}
+                {thinking && (
+                  <div className="flex items-start gap-3 justify-start">
+                    <div className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-sm">
+                      🤖
+                    </div>
+                    <div className="rounded-2xl px-4 py-3 text-sm shadow-sm bg-white border border-gray-200 text-gray-700">
+                      🤔 Thinking...
+                    </div>
+                  </div>
+                )}
+
+                <div ref={bottomRef} />
+              </div>
+            </div>
+
+            {/* Input fixed bottom */}
+            <div className="border-t border-gray-200 bg-white px-4 py-4">
+              <div className="w-full max-w-4xl mx-auto flex items-center gap-3">
+                <button className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50">
+                  <Plus className="w-5 h-5 text-gray-700" />
+                </button>
+
+                <input
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSend();
+                  }}
+                  disabled={thinking || isLoadingFullScreen}
+                  placeholder={thinking ? "AI is thinking..." : "Ask a follow-up..."}
+                  className="flex-1 h-12 px-4 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+
+                <button className="w-11 h-11 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50">
+                  <Mic className="w-5 h-5 text-gray-700" />
+                </button>
+
+                <button
+                  onClick={handleSend}
+                  disabled={thinking || isLoadingFullScreen}
+                  className="w-12 h-12 rounded-xl bg-black text-white flex items-center justify-center shadow-md disabled:opacity-60"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default MainChatScreen;
-

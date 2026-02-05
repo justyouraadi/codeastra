@@ -1,7 +1,6 @@
 // ChatTemp.jsx (final)
 import React, { useState, useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import {
   Monitor,
   Smartphone,
@@ -39,6 +38,7 @@ import {
 import { useMemo } from "react";
 import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
 import { use } from "react";
+import { TextShimmer } from "../ui/text-shimmer";
 
 const buildFileTree = (files) => {
   const root = {};
@@ -207,6 +207,9 @@ const CodeViewer = ({ filePath, fileContent }) => {
 
 
 const ChatTemp = () => {
+  const location = useLocation();
+  const firstPrompt = location?.state?.firstPrompt || "";
+  const hasAutoSentRef = useRef(false);
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState("");
   const { id } = useParams();
@@ -456,53 +459,87 @@ const ChatTemp = () => {
                   <>
                     {finalMessage.map((text, index) => {
                       return (
-                        <>
+                        <React.Fragment key={index}>
                           {text?.sender === "bot" ? (
-                            <>
+                            <div className="flex items-start gap-2 justify-start">
+                              <div className="flex flex-col items-center">
+                                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                                  CA
+                                </div>
+                                <span className="text-[10px] text-gray-500 mt-1">
+                                  CodeAstra
+                                </span>
+                              </div>
+
                               <div
-                                key={index}
-                                className="flex items-start gap-2 justify-start"
-                              >
-                                <div className="flex flex-col items-center">
-                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                                    CA
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 mt-1">
-                                    CodeAstra
-                                  </span>
-                                </div>
-                                <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
-                                  dangerouslySetInnerHTML={{
-                                    __html: text?.message,
-                                  }}
-                                />
-                              </div>
-                            </>
+                                className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
+                                dangerouslySetInnerHTML={{
+                                  __html: text?.message,
+                                }}
+                              />
+                            </div>
                           ) : (
-                            <>
-                              <div className="flex items-start gap-2 justify-end">
-                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                                  {text?.message}
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                                    <User className="w-4 h-4" />
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 mt-1">
-                                    {selectedProject?.data?.user?.full_name}
-                                  </span>
-                                </div>
+                            <div className="flex items-start gap-2 justify-end">
+                              <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
+                                {text?.message}
                               </div>
-                            </>
+
+                              <div className="flex flex-col items-center">
+                                <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+                                  <User className="w-4 h-4" />
+                                </div>
+                                <span className="text-[10px] text-gray-500 mt-1">
+                                  {selectedProject?.data?.user?.full_name}
+                                </span>
+                              </div>
+                            </div>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
+
+                    {/* ✅ THINKING MESSAGE */}
+                    {waitingForBot && (
+                      <div className="flex items-start gap-2 justify-start">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                            CA
+                          </div>
+                          <span className="text-[10px] text-gray-500 mt-1">
+                            CodeAstra
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
+                          🤔 Thinking...
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ AUTO SCROLL TARGET */}
                     <div ref={chatEndRef}></div>
                   </>
                 ) : (
-                  <></>
+                  <>
+                    {waitingForBot && (
+                      <div className="flex items-start gap-2 justify-start">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                            CA
+                          </div>
+                          <span className="text-[10px] text-gray-500 mt-1">
+                            CodeAstra
+                          </span>
+                        </div>
+
+                        <TextShimmer className='font-mono text-sm' duration={1}>
+                          Generating code...
+                        </TextShimmer>
+                      </div>
+                    )}
+
+                    <div ref={chatEndRef}></div>
+                  </>
                 )}
               </div>
 
@@ -744,6 +781,7 @@ const ChatTemp = () => {
               </div>
 
               {/* Chat messages area — only this scrolls */}
+              {/* Chat messages area — only this scrolls */}
               <div
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto p-6 space-y-5"
@@ -752,53 +790,88 @@ const ChatTemp = () => {
                   <>
                     {finalMessage.map((text, index) => {
                       return (
-                        <>
+                        <React.Fragment key={index}>
                           {text?.sender === "bot" ? (
-                            <>
+                            <div className="flex items-start gap-2 justify-start">
+                              <div className="flex flex-col items-center">
+                                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                                  CA
+                                </div>
+                                <span className="text-[10px] text-gray-500 mt-1">
+                                  CodeAstra
+                                </span>
+                              </div>
+
                               <div
-                                key={index}
-                                className="flex items-start gap-2 justify-start"
-                              >
-                                <div className="flex flex-col items-center">
-                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                                    CA
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 mt-1">
-                                    CodeAstra
-                                  </span>
-                                </div>
-                                <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
-                                  dangerouslySetInnerHTML={{
-                                    __html: text?.message,
-                                  }}
-                                />
-                              </div>
-                            </>
+                                className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
+                                dangerouslySetInnerHTML={{
+                                  __html: text?.message,
+                                }}
+                              />
+                            </div>
                           ) : (
-                            <>
-                              <div className="flex items-start gap-2 justify-end">
-                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white p-3">
-                                  {text?.message}
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                                    <User className="w-4 h-4" />
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 mt-1">
-                                    {selectedProject?.data?.user?.full_name}
-                                  </span>
-                                </div>
+                            <div className="flex items-start gap-2 justify-end">
+                              <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white p-3">
+                                {text?.message}
                               </div>
-                            </>
+
+                              <div className="flex flex-col items-center">
+                                <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+                                  <User className="w-4 h-4" />
+                                </div>
+                                <span className="text-[10px] text-gray-500 mt-1">
+                                  {selectedProject?.data?.user?.full_name}
+                                </span>
+                              </div>
+                            </div>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
+
+                    {/* ✅ THINKING MESSAGE */}
+                    {waitingForBot && (
+                      <div className="flex items-start gap-2 justify-start">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                            CA
+                          </div>
+                          <span className="text-[10px] text-gray-500 mt-1">
+                            CodeAstra
+                          </span>
+                        </div>
+
+                        <TextShimmer className='font-mono text-sm' duration={1}>
+                          Generating code...
+                        </TextShimmer>
+                      </div>
+                    )}
+
+                    {/* ✅ AUTO SCROLL TARGET */}
                     <div ref={chatEndRef}></div>
                   </>
                 ) : (
-                  <></>
+                  <>
+                    {/* Optional empty state */}
+                    {waitingForBot && (
+                      <div className="flex items-start gap-2 justify-start">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                            CA
+                          </div>
+                          <span className="text-[10px] text-gray-500 mt-1">
+                            CodeAstra
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800">
+                          🤔 Thinking...
+                        </div>
+                      </div>
+                    )}
+
+                    <div ref={chatEndRef}></div>
+                  </>
                 )}
               </div>
 
