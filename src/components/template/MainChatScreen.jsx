@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import logo from "../../assets/logo.png";
+
 import avatar from "../../assets/User-Avatar.png";
 import {
   Plus,
@@ -44,6 +45,7 @@ import toast from "react-hot-toast";
 import LodingAnimation from "@/utils/LodingAnimation";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useAuth } from "@/context/ContextProvider";
+import ChatInput from "../atoms/ChatInput";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
@@ -71,6 +73,29 @@ const MainChatScreen = () => {
     fetchProjects();
     fetchProjectNamesForSidebar();
   }, []);
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
 
   useEffect(() => {
     if (sidebarOpen) document.body.style.overflow = "hidden";
@@ -108,6 +133,23 @@ const MainChatScreen = () => {
       toast.error("Please enter something first!");
       return;
     }
+
+      const text = prompt.trim();
+
+  if (!text) return;
+ 
+  const words = text.split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+ 
+  if (wordCount < 5) {
+    toast.error("Prompt is too small !");
+    return;
+  }
+ 
+  if (wordCount > 70) {
+    toast.error("Prompt is too long !");
+    return;
+  } 
 
     try {
       setIsLoadingFullScreen(true);
@@ -330,58 +372,48 @@ const MainChatScreen = () => {
             </p>
           </div>
 
-          {/* Input Section */}
-          <div className="relative w-full max-w-xl mb-14">
-            <div className="flex items-center bg-white rounded-2xl shadow-md border border-gray-200 px-4 py-3">
-              <DropdownMenu open={open} onOpenChange={setOpen}>
-                <DropdownMenuTrigger asChild>
-                  <button className="cursor-pointer mr-3 text-gray-600 hover:text-black">
-                    <Plus className="w-5 h-5" />
-                  </button>
-                </DropdownMenuTrigger>
 
-                {/* <DropdownMenuContent
-                  align="start"
-                  side="top"
-                  className="w-48 bg-white shadow-lg border border-gray-100 rounded-xl"
-                >
-                  <DropdownMenuItem>
-                    <Image className="w-4 h-4 mr-2" /> Upload Image
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <FileText className="w-4 h-4 mr-2" /> Upload File
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Video className="w-4 h-4 mr-2" /> Record Video
-                  </DropdownMenuItem>
-                </DropdownMenuContent> */}
-              </DropdownMenu>
 
-              <Input
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Ask anything or start a new project..."
-                className="flex-1 border-none shadow-none focus-visible:ring-0 text-gray-800"
-              />
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-gray-600 hover:text-black"
-              >
-                <Mic className="w-5 h-5" />
-              </Button>
 
-              <Button
-                onClick={handleSend}
-                disabled={loading}
-                className="bg-black text-white rounded-lg hover:bg-gray-900 ml-2"
-              >
-                {loading ? "..." : <Send className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
+
+
+
+
+
+
+
+
+
+
+
+
+          <ChatInput
+  value={prompt}
+  onChange={(e) => setPrompt(e.target.value)}
+  onSend={handleSend}
+/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
           {/* Cards Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
