@@ -46,6 +46,7 @@ import LodingAnimation from "@/utils/LodingAnimation";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useAuth } from "@/context/ContextProvider";
 import ChatInput from "../atoms/ChatInput";
+import { socket } from "@/socket/socket";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
@@ -73,29 +74,6 @@ const MainChatScreen = () => {
     fetchProjects();
     fetchProjectNamesForSidebar();
   }, []);
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
 
   useEffect(() => {
     if (sidebarOpen) document.body.style.overflow = "hidden";
@@ -134,43 +112,59 @@ const MainChatScreen = () => {
       return;
     }
 
-      const text = prompt.trim();
+    const text = prompt.trim();
+    const words = text.split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
 
-  if (!text) return;
- 
-  const words = text.split(/\s+/).filter(Boolean);
-  const wordCount = words.length;
- 
-  if (wordCount < 5) {
-    toast.error("Prompt is too small !");
-    return;
-  }
- 
-  if (wordCount > 70) {
-    toast.error("Prompt is too long !");
-    return;
-  } 
+    if (wordCount < 5) {
+      toast.error("Prompt is too small!");
+      return;
+    }
+
+    if (wordCount > 70) {
+      toast.error("Prompt is too long!");
+      return;
+    }
 
     try {
-      setIsLoadingFullScreen(true);
+      // 🔥 Generate temporary ID
+      const tempId = `temp-${Date.now()}`;
 
-      const result = await createProject(prompt);
+      // Store temp data (optional)
+      localStorage.setItem(
+        "tempProject",
+        JSON.stringify({
+          id: tempId,
+          prompt: text,
+        })
+      );
 
-      const success = result?.success;
-
-      if (success) {
-        setTimeout(() => navigate(`/chatpage/${result?.data?.id}`), 400);
-      } else {
-        toast.error(result?.message || "Something went wrong!");
-        return;
+      // 🔌 Ensure socket is connected
+      if (!socket.connected) {
+        socket.connect();
       }
+
+      // 🔥 Emit create_project event
+      socket.emit("create_project", {
+        prompt: text,
+        user_id: 127,
+      });
+
+      // 🚀 Navigate immediately
+      navigate(`/ProjectPlayground/${tempId}`, {
+        state: {
+          initialPrompt: text
+        }
+      });
+
+      setPrompt("");
+
     } catch (err) {
       console.log(err.message);
-      toast.error("Server error! Try again.");
-    } finally {
-      setIsLoadingFullScreen(false);
+      toast.error("Something went wrong!");
     }
   };
+
 
   const handleLogout = () => {
     localStorage.removeItem("signin_token");
@@ -215,8 +209,7 @@ const MainChatScreen = () => {
         className={`
           fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
           transform transition-transform duration-300 ease-in-out
-          ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } md:translate-x-0
         `}
       >
@@ -268,20 +261,20 @@ const MainChatScreen = () => {
             {sidebarProjects.length === 0
               ? "Project Not Found"
               : sidebarProjects?.map((project) => (
-                  <li
-                    key={project.id}
-                    onClick={() => {
-                      navigate(`/chatpage/${project.id}`);
-                      setSidebarOpen(false);
-                    }}
-                    className="text-gray-700 hover:text-black cursor-pointer"
-                  >
-                    {project.name}
-                    <span className="text-gray-400 text-xs ml-1">
-                      • {getTimeAgo(project.updatedAt || project.createdAt)}
-                    </span>
-                  </li>
-                ))}
+                <li
+                  key={project.id}
+                  onClick={() => {
+                    navigate(`/chatpage/${project.id}`);
+                    setSidebarOpen(false);
+                  }}
+                  className="text-gray-700 hover:text-black cursor-pointer"
+                >
+                  {project.name}
+                  <span className="text-gray-400 text-xs ml-1">
+                    • {getTimeAgo(project.updatedAt || project.createdAt)}
+                  </span>
+                </li>
+              ))}
           </ul>
         </div>
 
@@ -389,10 +382,10 @@ const MainChatScreen = () => {
 
 
           <ChatInput
-  value={prompt}
-  onChange={(e) => setPrompt(e.target.value)}
-  onSend={handleSend}
-/>
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onSend={handleSend}
+          />
 
 
 
