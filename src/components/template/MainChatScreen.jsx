@@ -147,7 +147,7 @@ const MainChatScreen = () => {
       // 🔥 Emit create_project event
       socket.emit("create_project", {
         prompt: text,
-        user_id: 127,
+        user_id: pingDetails?.id,
       });
 
       // 🚀 Navigate immediately
