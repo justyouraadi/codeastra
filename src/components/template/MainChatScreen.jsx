@@ -127,10 +127,8 @@ const MainChatScreen = () => {
     }
 
     try {
-      // 🔥 Generate temporary ID
       const tempId = `temp-${Date.now()}`;
 
-      // Store temp data (optional)
       localStorage.setItem(
         "tempProject",
         JSON.stringify({
@@ -139,18 +137,15 @@ const MainChatScreen = () => {
         })
       );
 
-      // 🔌 Ensure socket is connected
       if (!socket.connected) {
         socket.connect();
       }
 
-      // 🔥 Emit create_project event
       socket.emit("create_project", {
         prompt: text,
         user_id: pingDetails?.id,
       });
 
-      // 🚀 Navigate immediately
       navigate(`/ProjectPlayground/${tempId}`, {
         state: {
           initialPrompt: text
@@ -180,7 +175,6 @@ const MainChatScreen = () => {
         </div>
       )}
 
-      {/* Mobile Menu Button */}
       <div className="md:hidden fixed top-4 left-4 z-40">
         <button
           aria-label={sidebarOpen ? "Close menu" : "Open menu"}
@@ -195,7 +189,6 @@ const MainChatScreen = () => {
         </button>
       </div>
 
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-30 md:hidden"
@@ -204,7 +197,6 @@ const MainChatScreen = () => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
@@ -238,7 +230,6 @@ const MainChatScreen = () => {
             className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
           />
 
-          {/* Navigation */}
           <nav className="space-y-1 text-[14px] font-medium mb-5">
             <div
               onClick={() => {
@@ -252,7 +243,6 @@ const MainChatScreen = () => {
           </nav>
         </div>
 
-        {/* Recent Section */}
         <div className="flex-1 px-5 overflow-y-auto">
           <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
             Recent
@@ -278,7 +268,6 @@ const MainChatScreen = () => {
           </ul>
         </div>
 
-        {/* Sidebar Bottom */}
         <div className="p-4 border-t border-gray-200">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
