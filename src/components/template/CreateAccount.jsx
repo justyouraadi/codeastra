@@ -63,14 +63,21 @@ const CreateAccount = () => {
     const toastId = toast.loading("Connecting with Google...");
 
     try {
-      const response = await signupWithGoogle();
+      const googleUser = await signupWithGoogle();
 
       toast.dismiss(toastId);
 
-      // ✅ Backend JWT must exist
-      if (response?.token || response?.data) {
-        navigate("/otppages");
+      if (googleUser?.email) {
+
+        // ✅ Email input me set karo
+        setForm((prev) => ({
+          ...prev,
+          email: googleUser.email,
+        }));
+
+        // navigate("/otppages");
       }
+
     } catch (error) {
       toast.dismiss(toastId);
       toast.error("Google signup failed");

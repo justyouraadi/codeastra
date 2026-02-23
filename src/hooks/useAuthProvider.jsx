@@ -215,8 +215,8 @@ export const useAuthProvider = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-   const [pingDetails,setPingDetails] = useState({});
- 
+  const [pingDetails, setPingDetails] = useState({});
+
 
   // 🔹 Signup (Register)
   const signup = async (email, password) => {
@@ -244,66 +244,37 @@ export const useAuthProvider = () => {
     try {
       setLoading(true);
 
-      // --------------------------------
-      // Step 1: Firebase Google Login
-      // --------------------------------
-      const result = await signinWithGoogleAPI();
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
 
       if (!result?.user) {
         toast.error("Google signup failed");
-        return false;
+        return null;
       }
 
       const user = result.user;
-      const email = user.email;
 
-      // --------------------------------
-      // Step 2: Get Google ID Token
-      // --------------------------------
       const idToken = await user.getIdToken();
 
       localStorage.setItem("auth_mode", "google");
+      localStorage.setItem("token", idToken);
+      localStorage.setItem("email", user.email);
 
-      // --------------------------------
-      // Step 3: Send ID Token to Backend
-      // --------------------------------
-      const response = await fetch(
-        "https://gateway.codeastra.ai/api/v1/auth/request/google-signup",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        }
-      );
+      setUser({
+        email: user.email,
+        name: user.displayName,
+        photo: user.photoURL,
+      });
 
-      const data = await response.json();
+      toast.success("Google signup successful 🎉");
 
-      if (!response.ok) {
-        toast.error(data?.error?.explanation?.[0] || "Google signup failed");
-        return false;
-      }
+      // ✅ IMPORTANT — return full user
+      return user;
 
-      // --------------------------------
-      // Step 4: Save backend response
-      // --------------------------------
-      const { orderId, token } = data;
-
-      if (token) {
-        localStorage.setItem("token", token);
-      }
-
-      localStorage.setItem("email", email);
-      localStorage.setItem("order_id", orderId);
-
-      setEmail(email);
-      setOrderId(orderId);
-      setUser({ email, orderId });
-
-      return true;
     } catch (error) {
       console.error("Google signup error:", error);
-      toast.error("Google signup failed");
-      return false;
+      toast.error(error.message);
+      return null;
     } finally {
       setLoading(false);
     }

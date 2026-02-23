@@ -68,17 +68,6 @@ const CreateProject = () => {
     console.log("checking the domain : ", selectedProject);
 
 
-
-
-    // useEffect(() => {
-    //     const timer = setTimeout(() => {
-    //         window.history.replaceState(null, "", "/chatpage/829");
-    //     }, 5000);
-
-    //     return () => clearTimeout(timer);
-    // }, []);
-
-
     const handleKeyDown = (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -149,10 +138,7 @@ const CreateProject = () => {
             />
         );
     };
-
-
-
-
+ 
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     useEffect(() => {
         const handleResize = () => {
