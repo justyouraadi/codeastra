@@ -203,7 +203,7 @@ import {
 } from "../apis/SingUp.Api";
 import { verifySignupAPI } from "../apis/VerifySignup.Api";
 import { createProfileAPI } from "../apis/CreateProfile.Api";
-import { googleMFASigninAPI, signinAPI, signinWithGoogleAPI } from "../apis/Signin.Api";
+import { googleMFASigninAPI, signinAPI, } from "../apis/Signin.Api";
 import { verifySigninAPI } from "../apis/VerifySignin.Api"; // 👈 NEW IMPORT
 import toast from "react-hot-toast";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
@@ -336,6 +336,8 @@ export const useAuthProvider = () => {
       setOrderId(orderId);
       setUser({ email, orderId });
       setError(null);
+      console.log(email, password);
+
 
       // ✅ return full API response (no true/false)
       return result;
@@ -389,41 +391,27 @@ export const useAuthProvider = () => {
     try {
       setLoading(true);
 
-      // 1️⃣ Firebase Google Sign-in
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
       if (!user) throw new Error("Google authentication failed");
 
-      // 2️⃣ Extract required data
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
       const email = user.email;
 
-      if (!email) throw new Error("email not found");
+      const response = await googleMFASigninAPI({ email, token });
 
-      // 3️⃣ Persist minimal state
-      localStorage.setItem("auth_mode", "google");
-      localStorage.setItem("email", email);
-      setEmail(email);
+      if (!response?.success) {
+        return {
+          success: false,
+          error: response?.error,
+        };
+      }
 
-      // 4️⃣ Backend MFA initiation (🔥 FIX)
-      const response = await googleMFASigninAPI(
-        email,
-        token,
-      );
+      localStorage.setItem("auth_token", response.data);
 
-      const orderId = response?.data;
+      return { success: true };
 
-      localStorage.setItem("order_id", orderId);
-      setOrderId(orderId);
-      setUser({ email, orderId });
-
-
-      return response;
-    } catch (err) {
-      console.error("Google Sign-in Error:", err);
-      // toast.error(err.message || "Google Sign-in failed");
-      throw err;
     } finally {
       setLoading(false);
     }

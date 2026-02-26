@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import InputAtom from "../atoms/InputAtom";
 import ButtonAtom from "../atoms/ButtonAtom";
 import SideimagsForm from "../molecules/SideimagsForm";
 import { FcGoogle } from "react-icons/fc";
 import { Label } from "../ui/label";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/ContextProvider";
 import toast from "react-hot-toast";
 
@@ -19,18 +19,39 @@ const formData = {
 const CreateAccount = () => {
   const { signup, signupWithGoogle, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [form, setForm] = useState({ email: "", password: "" });
+  const googleEmail = location.state?.email || "";
+
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  // ✅ If Google email comes from login page → autofill
+  useEffect(() => {
+    if (googleEmail) {
+      setForm((prev) => ({
+        ...prev,
+        email: googleEmail,
+      }));
+    }
+  }, [googleEmail]);
 
   // ------------------------------------------
   // Handle Input Change
   // ------------------------------------------
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // ------------------------------------------
-  // ✅ Normal Signup (Email + Password)
+  // Normal Signup
   // ------------------------------------------
   const handleSignup = async () => {
     if (loading) return;
@@ -55,7 +76,7 @@ const CreateAccount = () => {
   };
 
   // ------------------------------------------
-  // ✅ Google Signup (FINAL + FIXED)
+  // Google Signup (Only Prefill Email)
   // ------------------------------------------
   const handleGoogleSignup = async () => {
     if (loading) return;
@@ -68,39 +89,35 @@ const CreateAccount = () => {
       toast.dismiss(toastId);
 
       if (googleUser?.email) {
-
-        // ✅ Email input me set karo
         setForm((prev) => ({
           ...prev,
           email: googleUser.email,
         }));
-
-        // navigate("/otppages");
       }
-
     } catch (error) {
       toast.dismiss(toastId);
       toast.error("Google signup failed");
-      console.error("Google Signup Error:", error);
+      console.error(error);
     }
   };
 
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-white">
-      {/* ---------- Left Side (Form) ---------- */}
+      {/* Left Side */}
       <div className="flex-1 flex items-center justify-center p-6 bg-[#f7fbff]">
         <div className="w-full max-w-md space-y-6">
+
           {/* Header */}
           <header>
-            <h2 className="text-4xl text-center font-bold text-gray-900 leading-tight">
+            <h2 className="text-4xl text-center font-bold text-gray-900">
               {formData.title}
             </h2>
-            <p className="mt-2 text-gray-700 text-center text-sm sm:text-base">
+            <p className="mt-2 text-gray-700 text-center text-sm">
               {formData.subtitle}
             </p>
           </header>
 
-          {/* ✅ Google Signup Button */}
+          {/* Google Button */}
           <ButtonAtom
             onClick={handleGoogleSignup}
             disabled={loading}
@@ -119,20 +136,20 @@ const CreateAccount = () => {
 
           {/* Inputs */}
           <div className="space-y-4">
+
             <div>
-              <Label className="text-sm text-gray-700">Email Address</Label>
+              <Label>Email Address</Label>
               <InputAtom
                 name="email"
                 type="email"
                 value={form.email}
                 onChange={handleChange}
-                placeholder={formData.emailPlaceholder}
-                className="w-full py-3 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-black"
+                readOnly={!!googleEmail}
               />
             </div>
 
             <div>
-              <Label className="text-sm text-gray-700">Password</Label>
+              <Label>Password</Label>
               <InputAtom
                 name="password"
                 type="password"
@@ -142,6 +159,7 @@ const CreateAccount = () => {
                 className="w-full py-3 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-black"
               />
             </div>
+
           </div>
 
           {/* Signup Button */}
@@ -162,22 +180,11 @@ const CreateAccount = () => {
             >
               Log in
             </button>
-            <p className="mt-2 text-gray-400 text-xs">
-              By signing up, you agree to our{" "}
-              <a href="#" className="text-blue-600 hover:underline">
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a href="#" className="text-blue-600 hover:underline">
-                Privacy Policy
-              </a>
-              .
-            </p>
           </footer>
         </div>
       </div>
 
-      {/* ---------- Right Side Image ---------- */}
+      {/* Right Side */}
       <div className="flex-1 hidden lg:flex">
         <SideimagsForm />
       </div>
