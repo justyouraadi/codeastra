@@ -171,6 +171,12 @@ const CreateAccount = () => {
             {loading ? "Processing..." : formData.buttonText}
           </ButtonAtom>
 
+          <div>
+            <ButtonAtom
+              onClick={() => {navigate("/forgotpassword")}}
+            >Forgot Password ?</ButtonAtom>
+          </div>
+
           {/* Footer */}
           <footer className="text-center text-sm text-gray-600">
             Already have an account?{" "}
