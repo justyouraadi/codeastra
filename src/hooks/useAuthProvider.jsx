@@ -198,16 +198,17 @@
 // };
 
 import { useState } from "react";
-import {
-  signupAPI,
-} from "../apis/SingUp.Api";
+import { signupAPI } from "../apis/SingUp.Api";
 import { verifySignupAPI } from "../apis/VerifySignup.Api";
 import { createProfileAPI } from "../apis/CreateProfile.Api";
-import { googleMFASigninAPI, signinAPI, } from "../apis/Signin.Api";
+import { googleMFASigninAPI, signinAPI } from "../apis/Signin.Api";
 import { verifySigninAPI } from "../apis/VerifySignin.Api"; // 👈 NEW IMPORT
 import toast from "react-hot-toast";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/utils/firebase";
+import { forgotPasswordAPI } from "@/apis/ForgotPassword.Api";
+import { verifyForgotPasswordAPI } from "@/apis/VerifyForgotPassword.Api";
+import { resetPasswordAPI } from "@/apis/ResetPassword.Api";
 
 export const useAuthProvider = () => {
   const [user, setUser] = useState(null);
@@ -216,7 +217,6 @@ export const useAuthProvider = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pingDetails, setPingDetails] = useState({});
-
 
   // 🔹 Signup (Register)
   const signup = async (email, password) => {
@@ -270,7 +270,6 @@ export const useAuthProvider = () => {
 
       // ✅ IMPORTANT — return full user
       return user;
-
     } catch (error) {
       console.error("Google signup error:", error);
       toast.error(error.message);
@@ -338,7 +337,6 @@ export const useAuthProvider = () => {
       setError(null);
       console.log(email, password);
 
-
       // ✅ return full API response (no true/false)
       return result;
     } catch (err) {
@@ -363,7 +361,7 @@ export const useAuthProvider = () => {
 
       if (!email || !orderId) {
         toast.error(
-          "Missing email or order_id. Please go back and login again."
+          "Missing email or order_id. Please go back and login again.",
         );
         return false;
       }
@@ -411,12 +409,100 @@ export const useAuthProvider = () => {
       localStorage.setItem("auth_token", response.data);
 
       return { success: true };
-
     } finally {
       setLoading(false);
     }
   };
 
+const forgotPassword = async (email) => {
+  try {
+    setLoading(true);
+
+    const result = await forgotPasswordAPI(email);
+
+    console.log("Full Forgot Response:", result);
+
+    // ✅ FIX — data is directly string
+    const orderId = result?.data;
+
+    console.log("Extracted Order ID:", orderId);
+
+    if (!orderId) {
+      throw new Error("Order ID not received from server");
+    }
+
+    // Save for next steps
+    localStorage.setItem("email", email);
+    localStorage.setItem("order_id", orderId);
+
+    setOrderId(orderId);
+    setEmail(email);
+
+    return true;
+
+  } catch (err) {
+    setError(err.message);
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const verifyForgotPassword = async (otp) => {
+  try {
+    setLoading(true);
+
+    const email = localStorage.getItem("email");
+    const order_id = localStorage.getItem("order_id");
+
+    console.log("Verify Payload:", {
+      email,
+      order_id,
+      verification_code: otp
+    });
+
+    const result = await verifyForgotPasswordAPI({
+      email,
+      order_id,
+      verification_code: otp,
+    });
+console.log(result)
+    return true;
+
+  } catch (err) {
+    setError(err.message);
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
+
+const resetPassword = async (password) => {
+  try {
+    setLoading(true);
+
+    const email = localStorage.getItem("email");
+    const order_id = localStorage.getItem("order_id");
+
+    const result = await resetPasswordAPI({
+      email,
+      order_id,
+      password,
+    });
+    console.log(result)
+ 
+    localStorage.removeItem("order_id");
+    localStorage.removeItem("email");
+
+    return true;
+
+  } catch (err) {
+    setError(err.message);
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
 
   return {
     signup,
@@ -432,6 +518,9 @@ export const useAuthProvider = () => {
     loading,
     error,
     pingDetails,
-    setPingDetails
+    setPingDetails,
+    forgotPassword,
+    verifyForgotPassword,
+    resetPassword
   };
 };

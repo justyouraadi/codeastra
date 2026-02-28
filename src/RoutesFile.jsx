@@ -20,6 +20,8 @@ import CreateProfilePages from "./pages/CreateProfilePages";
 import ProtectedRoute from "./ProtectedRoute";
 import CreateProject from "./components/template/CreateProject";
 import ForgotPassword from "./components/template/ForgotPassword";
+import VerifyForgotOtp from "./components/template/VerifyForgotOtp";
+import ResetPassword from "./components/template/ResetPassword";
 // import ProjectPlayground from "./components/template/ProjectPlayground";
 
 // Helper component to redirect based on token
@@ -47,6 +49,8 @@ const RoutesFile = () => {
         <Route path="/createaccount" element={<CreateAccountPages />} />
         <Route path="/createprofile" element={<CreateProfilePages />} />
         <Route path="/forgotpassword" element={<ForgotPassword />} />
+        <Route path="/verify-forgot-otp" element={<VerifyForgotOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
