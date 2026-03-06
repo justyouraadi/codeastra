@@ -183,12 +183,12 @@ const FormMolecules = () => {
         </div>
 
         {/* Forgot Password */}
-        <div className="text-right mb-5">
+        <div className="flex justify-end mb-4">
           <button
-            type="button"
-            className="text-sm text-gray-600 hover:text-black hover:underline"
+            onClick={() => navigate("/forgotpassword")}
+            className="text-sm text-blue-600  hover:underline"
           >
-            {/* Forgot Password? */}
+            Forgot Password ?
           </button>
         </div>
 
