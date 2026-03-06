@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuthProvider } from "@/hooks/useAuthProvider";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import SideimagsForm from "../molecules/SideimagsForm";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -10,15 +11,16 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-  const email = localStorage.getItem("email");
-  const order_id = localStorage.getItem("order_id");
+    const email = localStorage.getItem("email");
+    const order_id = localStorage.getItem("order_id");
 
-  console.log("Reset Page Check:", email, order_id);
+    console.log("Reset Page Check:", email, order_id);
 
-  if (email === null || order_id === null) {
-    navigate("/forgotpassword");
-  }
-}, [navigate]); 
+    if (email === null || order_id === null) {
+      navigate("/forgotpassword");
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -45,41 +47,51 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md border border-gray-100"
-      >
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          Reset Password
-        </h2>
+    <div className="flex min-h-screen">
 
-        <input
-          type="password"
-          placeholder="New Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
-          required
-        />
-
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
-          required
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50"
+      {/* Reset Password Form */}
+      <div className="w-1/2 flex items-center justify-center bg-gray-50 px-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md border border-gray-100"
         >
-          {loading ? "Resetting..." : "Reset Password"}
-        </button>
-      </form>
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            Reset Password
+          </h2>
+
+          <input
+            type="password"
+            placeholder="New Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50"
+          >
+            {loading ? "Resetting..." : "Reset Password"}
+          </button>
+        </form>
+      </div>
+
+      {/* Sidebar Image */}
+      <div className="w-1/2">
+        <SideimagsForm />
+      </div>
+
     </div>
   );
 };

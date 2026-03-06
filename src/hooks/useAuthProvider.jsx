@@ -420,18 +420,8 @@ const forgotPassword = async (email) => {
 
     const result = await forgotPasswordAPI(email);
 
-    console.log("Full Forgot Response:", result);
-
-    // ✅ FIX — data is directly string
     const orderId = result?.data;
 
-    console.log("Extracted Order ID:", orderId);
-
-    if (!orderId) {
-      throw new Error("Order ID not received from server");
-    }
-
-    // Save for next steps
     localStorage.setItem("email", email);
     localStorage.setItem("order_id", orderId);
 
@@ -441,8 +431,14 @@ const forgotPassword = async (email) => {
     return true;
 
   } catch (err) {
+
+    if (err.message?.includes("Forgot password request already exists")) {
+      return true; // 👈 verify page par bhej do
+    }
+
     setError(err.message);
     return false;
+
   } finally {
     setLoading(false);
   }
@@ -470,6 +466,14 @@ console.log(result)
     return true;
 
   } catch (err) {
+       // 👇 agar OTP already verify ho chuka hai
+    if (err.message?.includes("OTP already verified")) {
+      return true;
+    }
+    // if (err.message?.includes("Verification code has expired, please initiate a new request")) {
+    //   return true
+    // }
+
     setError(err.message);
     return false;
   } finally {

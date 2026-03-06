@@ -162,20 +162,26 @@ const CreateAccount = () => {
 
           </div>
 
-          {/* Signup Button */}
-          <ButtonAtom
-            onClick={handleSignup}
-            disabled={loading}
-            className="w-full bg-black text-white hover:bg-gray-900 py-3 rounded-lg font-medium transition disabled:opacity-50"
-          >
-            {loading ? "Processing..." : formData.buttonText}
-          </ButtonAtom>
+         {/* Forgot Password */}
+<div className="flex justify-end ">
+  <button
+    onClick={() => navigate("/forgotpassword")}
+    className="text-sm text-blue-600  hover:underline"
+  >
+    Forgot Password ?
+  </button>
+</div>
 
-          <div>
-            <ButtonAtom
-              onClick={() => {navigate("/forgotpassword")}}
-            >Forgot Password ?</ButtonAtom>
-          </div>
+{/* Signup Button */}
+<ButtonAtom
+  onClick={handleSignup}
+  disabled={loading}
+  className="w-full bg-black text-white hover:bg-gray-900  rounded-lg font-medium transition disabled:opacity-50"
+>
+  {loading ? "Processing..." : formData.buttonText}
+</ButtonAtom>
+          
+
 
           {/* Footer */}
           <footer className="text-center text-sm text-gray-600">
