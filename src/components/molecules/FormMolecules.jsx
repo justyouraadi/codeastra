@@ -185,8 +185,13 @@ const FormMolecules = () => {
         {/* Forgot Password */}
         <div className="flex justify-end mb-4">
           <button
-            onClick={() => navigate("/forgotpassword")}
-            className="text-sm text-blue-600  hover:underline"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();   // form submit rokega
+              localStorage.setItem("auth_mode", "forgot_password");
+              navigate("/forgotpassword");
+            }}
+            className="text-sm text-blue-600 hover:underline"
           >
             Forgot Password ?
           </button>
