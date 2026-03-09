@@ -768,7 +768,7 @@ const ChatTemp = () => {
                                   </span>
                                 </div>
                                 <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
+                                  className="rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
                                   dangerouslySetInnerHTML={{
                                     __html: text?.message,
                                   }}
@@ -778,7 +778,7 @@ const ChatTemp = () => {
                           ) : (
                             <>
                               <div className="flex items-start gap-2 justify-end">
-                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white p-3">
+                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
                                   {text?.message}
                                 </div>
                                 <div className="flex flex-col items-center">

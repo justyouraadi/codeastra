@@ -198,16 +198,17 @@
 // };
 
 import { useState } from "react";
-import {
-  signupAPI,
-} from "../apis/SingUp.Api";
+import { signupAPI } from "../apis/SingUp.Api";
 import { verifySignupAPI } from "../apis/VerifySignup.Api";
 import { createProfileAPI } from "../apis/CreateProfile.Api";
-import { googleMFASigninAPI, signinAPI, signinWithGoogleAPI } from "../apis/Signin.Api";
+import { googleMFASigninAPI, signinAPI } from "../apis/Signin.Api";
 import { verifySigninAPI } from "../apis/VerifySignin.Api"; // 👈 NEW IMPORT
 import toast from "react-hot-toast";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/utils/firebase";
+import { forgotPasswordAPI } from "@/apis/ForgotPassword.Api";
+import { verifyForgotPasswordAPI } from "@/apis/VerifyForgotPassword.Api";
+import { resetPasswordAPI } from "@/apis/ResetPassword.Api";
 
 export const useAuthProvider = () => {
   const [user, setUser] = useState(null);
@@ -215,8 +216,7 @@ export const useAuthProvider = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-   const [pingDetails,setPingDetails] = useState({});
- 
+  const [pingDetails, setPingDetails] = useState({});
 
   // 🔹 Signup (Register)
   const signup = async (email, password) => {
@@ -244,66 +244,36 @@ export const useAuthProvider = () => {
     try {
       setLoading(true);
 
-      // --------------------------------
-      // Step 1: Firebase Google Login
-      // --------------------------------
-      const result = await signinWithGoogleAPI();
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
 
       if (!result?.user) {
         toast.error("Google signup failed");
-        return false;
+        return null;
       }
 
       const user = result.user;
-      const email = user.email;
 
-      // --------------------------------
-      // Step 2: Get Google ID Token
-      // --------------------------------
       const idToken = await user.getIdToken();
 
       localStorage.setItem("auth_mode", "google");
+      localStorage.setItem("token", idToken);
+      localStorage.setItem("email", user.email);
 
-      // --------------------------------
-      // Step 3: Send ID Token to Backend
-      // --------------------------------
-      const response = await fetch(
-        "https://gateway.codeastra.ai/api/v1/auth/request/google-signup",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
-        }
-      );
+      setUser({
+        email: user.email,
+        name: user.displayName,
+        photo: user.photoURL,
+      });
 
-      const data = await response.json();
+      toast.success("Google signup successful 🎉");
 
-      if (!response.ok) {
-        toast.error(data?.error?.explanation?.[0] || "Google signup failed");
-        return false;
-      }
-
-      // --------------------------------
-      // Step 4: Save backend response
-      // --------------------------------
-      const { orderId, token } = data;
-
-      if (token) {
-        localStorage.setItem("token", token);
-      }
-
-      localStorage.setItem("email", email);
-      localStorage.setItem("order_id", orderId);
-
-      setEmail(email);
-      setOrderId(orderId);
-      setUser({ email, orderId });
-
-      return true;
+      // ✅ IMPORTANT — return full user
+      return user;
     } catch (error) {
       console.error("Google signup error:", error);
-      toast.error("Google signup failed");
-      return false;
+      toast.error(error.message);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -365,6 +335,7 @@ export const useAuthProvider = () => {
       setOrderId(orderId);
       setUser({ email, orderId });
       setError(null);
+      console.log(email, password);
 
       // ✅ return full API response (no true/false)
       return result;
@@ -390,7 +361,7 @@ export const useAuthProvider = () => {
 
       if (!email || !orderId) {
         toast.error(
-          "Missing email or order_id. Please go back and login again."
+          "Missing email or order_id. Please go back and login again.",
         );
         return false;
       }
@@ -418,46 +389,124 @@ export const useAuthProvider = () => {
     try {
       setLoading(true);
 
-      // 1️⃣ Firebase Google Sign-in
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
       if (!user) throw new Error("Google authentication failed");
 
-      // 2️⃣ Extract required data
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
       const email = user.email;
 
-      if (!email) throw new Error("email not found");
+      const response = await googleMFASigninAPI({ email, token });
 
-      // 3️⃣ Persist minimal state
-      localStorage.setItem("auth_mode", "google");
-      localStorage.setItem("email", email);
-      setEmail(email);
+      if (!response?.success) {
+        return {
+          success: false,
+          error: response?.error,
+        };
+      }
 
-      // 4️⃣ Backend MFA initiation (🔥 FIX)
-      const response = await googleMFASigninAPI(
-        email,
-        token,
-      );
+      localStorage.setItem("auth_token", response.data);
 
-      const orderId = response?.data;
-
-      localStorage.setItem("order_id", orderId);
-      setOrderId(orderId);
-      setUser({ email, orderId });
-
-
-      return response;
-    } catch (err) {
-      console.error("Google Sign-in Error:", err);
-      // toast.error(err.message || "Google Sign-in failed");
-      throw err;
+      return { success: true };
     } finally {
       setLoading(false);
     }
   };
 
+const forgotPassword = async (email) => {
+  try {
+    setLoading(true);
+
+    const result = await forgotPasswordAPI(email);
+
+    const orderId = result?.data;
+
+    localStorage.setItem("email", email);
+    localStorage.setItem("order_id", orderId);
+
+    setOrderId(orderId);
+    setEmail(email);
+
+    return true;
+
+  } catch (err) {
+
+    if (err.message?.includes("Forgot password request already exists")) {
+      return true; // 👈 verify page par bhej do
+    }
+
+    setError(err.message);
+    return false;
+
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const verifyForgotPassword = async (otp) => {
+  try {
+    setLoading(true);
+
+    const email = localStorage.getItem("email");
+    const order_id = localStorage.getItem("order_id");
+
+    console.log("Verify Payload:", {
+      email,
+      order_id,
+      verification_code: otp
+    });
+
+    const result = await verifyForgotPasswordAPI({
+      email,
+      order_id,
+      verification_code: otp,
+    });
+console.log(result)
+    return true;
+
+  } catch (err) {
+       // 👇 agar OTP already verify ho chuka hai
+    if (err.message?.includes("OTP already verified")) {
+      return true;
+    }
+    // if (err.message?.includes("Verification code has expired, please initiate a new request")) {
+    //   return true
+    // }
+
+    setError(err.message);
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
+
+const resetPassword = async (password) => {
+  try {
+    setLoading(true);
+
+    const email = localStorage.getItem("email");
+    const order_id = localStorage.getItem("order_id");
+
+    const result = await resetPasswordAPI({
+      email,
+      order_id,
+      password,
+    });
+    console.log(result)
+ 
+    localStorage.removeItem("order_id");
+    localStorage.removeItem("email");
+
+    return true;
+
+  } catch (err) {
+    setError(err.message);
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
 
   return {
     signup,
@@ -473,6 +522,9 @@ export const useAuthProvider = () => {
     loading,
     error,
     pingDetails,
-    setPingDetails
+    setPingDetails,
+    forgotPassword,
+    verifyForgotPassword,
+    resetPassword
   };
 };

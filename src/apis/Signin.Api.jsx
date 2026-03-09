@@ -3,7 +3,7 @@ import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/utils/firebase";
 
 /* ----------------------------------------------------
-   NORMAL SIGN IN (EMAIL + PASSWORD)
+   NORMAL SIGN IN
 ---------------------------------------------------- */
 export const signinAPI = async (email, password) => {
   try {
@@ -19,15 +19,9 @@ export const signinAPI = async (email, password) => {
     const data = await response.json();
 
     if (!response.ok) {
-      toast.error(data?.error?.explanation?.[0] || "Signin failed");
-      throw new Error(data?.message || "Signin failed");
+      throw new Error(data?.error?.explanation?.[0] || "Signin failed");
     }
 
-    if (data?.token) {
-      localStorage.setItem("token", data.token);
-    }
-
-    localStorage.setItem("auth_mode", "signin");
     return data;
   } catch (error) {
     console.error("Signin API Error:", error);
@@ -36,70 +30,38 @@ export const signinAPI = async (email, password) => {
 };
 
 /* ----------------------------------------------------
-   GOOGLE SIGN IN (FIREBASE → BACKEND)
+   GOOGLE FIREBASE ONLY
 ---------------------------------------------------- */
-export const signinWithGoogleAPI = async () => {
+export const signinWithGoogleFirebase = async () => {
   try {
-    // 🔹 Firebase Popup
     const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-
-    // 🔹 Google ID Token
-    const idToken = await user.getIdToken();
-
-    // 🔹 Backend Call
-    const response = await fetch(
-      "https://gateway.codeastra.ai/api/v1/auth/initiate/google-mfa-signin",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      toast.error(data?.error?.explanation?.[0] || "Google signin failed");
-      throw new Error(data?.message || "Google signin failed");
-    }
-
-    if (data?.token) {
-      localStorage.setItem("token", data.token);
-    }
-
-    localStorage.setItem("auth_mode", "google");
-    return data;
+    return result.user;
   } catch (error) {
-    console.error("Google Signin Error:", error);
+    console.error("Google Firebase Error:", error);
     throw error;
   }
 };
 
 /* ----------------------------------------------------
-   GOOGLE MFA VERIFY (IF REQUIRED)
+   GOOGLE BACKEND VERIFY
 ---------------------------------------------------- */
-export const googleMFASigninAPI = async (email, token) => {
-  try {
-    const response = await fetch(
-      "https://gateway.codeastra.ai/api/v1/auth/initiate/google-mfa-signin",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, token }),
-      }
-    );
+export const googleMFASigninAPI = async ({email, token}) => {
+  console.log("api section -> :", token);
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data?.message || "Google MFA failed");
+  const response = await fetch(
+    "https://gateway.codeastra.ai/api/v1/auth/initiate/google-mfa-signin",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        token,
+      }),
     }
+  );
 
-    localStorage.setItem("signin_token", data?.data || "");
-    return data;
-  } catch (error) {
-    console.error("Google MFA Error:", error);
-    throw error;
-  }
+  const data = await response.json();
+  console.log("Backend data:", data);
+
+  return data;
 };

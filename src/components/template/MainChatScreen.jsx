@@ -46,6 +46,7 @@ import LodingAnimation from "@/utils/LodingAnimation";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useAuth } from "@/context/ContextProvider";
 import ChatInput from "../atoms/ChatInput";
+import { socket } from "@/socket/socket";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
@@ -73,29 +74,6 @@ const MainChatScreen = () => {
     fetchProjects();
     fetchProjectNamesForSidebar();
   }, []);
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
 
   useEffect(() => {
     if (sidebarOpen) document.body.style.overflow = "hidden";
@@ -134,43 +112,54 @@ const MainChatScreen = () => {
       return;
     }
 
-      const text = prompt.trim();
+    const text = prompt.trim();
+    const words = text.split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
 
-  if (!text) return;
- 
-  const words = text.split(/\s+/).filter(Boolean);
-  const wordCount = words.length;
- 
-  if (wordCount < 5) {
-    toast.error("Prompt is too small !");
-    return;
-  }
- 
-  if (wordCount > 70) {
-    toast.error("Prompt is too long !");
-    return;
-  } 
+    if (wordCount < 5) {
+      toast.error("Prompt is too small!");
+      return;
+    }
+
+    if (wordCount > 70) {
+      toast.error("Prompt is too long!");
+      return;
+    }
 
     try {
-      setIsLoadingFullScreen(true);
+      const tempId = `temp-${Date.now()}`;
 
-      const result = await createProject(prompt);
+      localStorage.setItem(
+        "tempProject",
+        JSON.stringify({
+          id: tempId,
+          prompt: text,
+        })
+      );
 
-      const success = result?.success;
-
-      if (success) {
-        setTimeout(() => navigate(`/chatpage/${result?.data?.id}`), 400);
-      } else {
-        toast.error(result?.message || "Something went wrong!");
-        return;
+      if (!socket.connected) {
+        socket.connect();
       }
+
+      socket.emit("create_project", {
+        prompt: text,
+        user_id: pingDetails?.id,
+      });
+
+      navigate(`/ProjectPlayground/${tempId}`, {
+        state: {
+          initialPrompt: text
+        }
+      });
+
+      setPrompt("");
+
     } catch (err) {
       console.log(err.message);
-      toast.error("Server error! Try again.");
-    } finally {
-      setIsLoadingFullScreen(false);
+      toast.error("Something went wrong!");
     }
   };
+
 
   const handleLogout = () => {
     localStorage.removeItem("signin_token");
@@ -186,7 +175,6 @@ const MainChatScreen = () => {
         </div>
       )}
 
-      {/* Mobile Menu Button */}
       <div className="md:hidden fixed top-4 left-4 z-40">
         <button
           aria-label={sidebarOpen ? "Close menu" : "Open menu"}
@@ -201,7 +189,6 @@ const MainChatScreen = () => {
         </button>
       </div>
 
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-30 md:hidden"
@@ -210,13 +197,11 @@ const MainChatScreen = () => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
           transform transition-transform duration-300 ease-in-out
-          ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } md:translate-x-0
         `}
       >
@@ -245,7 +230,6 @@ const MainChatScreen = () => {
             className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
           />
 
-          {/* Navigation */}
           <nav className="space-y-1 text-[14px] font-medium mb-5">
             <div
               onClick={() => {
@@ -259,7 +243,6 @@ const MainChatScreen = () => {
           </nav>
         </div>
 
-        {/* Recent Section */}
         <div className="flex-1 px-5 overflow-y-auto">
           <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2 tracking-wide">
             Recent
@@ -268,24 +251,23 @@ const MainChatScreen = () => {
             {sidebarProjects.length === 0
               ? "Project Not Found"
               : sidebarProjects?.map((project) => (
-                  <li
-                    key={project.id}
-                    onClick={() => {
-                      navigate(`/chatpage/${project.id}`);
-                      setSidebarOpen(false);
-                    }}
-                    className="text-gray-700 hover:text-black cursor-pointer"
-                  >
-                    {project.name}
-                    <span className="text-gray-400 text-xs ml-1">
-                      • {getTimeAgo(project.updatedAt || project.createdAt)}
-                    </span>
-                  </li>
-                ))}
+                <li
+                  key={project.id}
+                  onClick={() => {
+                    navigate(`/chatpage/${project.id}`);
+                    setSidebarOpen(false);
+                  }}
+                  className="text-gray-700 hover:text-black cursor-pointer"
+                >
+                  {project.name}
+                  <span className="text-gray-400 text-xs ml-1">
+                    • {getTimeAgo(project.updatedAt || project.createdAt)}
+                  </span>
+                </li>
+              ))}
           </ul>
         </div>
 
-        {/* Sidebar Bottom */}
         <div className="p-4 border-t border-gray-200">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -389,10 +371,10 @@ const MainChatScreen = () => {
 
 
           <ChatInput
-  value={prompt}
-  onChange={(e) => setPrompt(e.target.value)}
-  onSend={handleSend}
-/>
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onSend={handleSend}
+          />
 
 
 

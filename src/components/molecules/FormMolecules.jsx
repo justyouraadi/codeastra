@@ -4,6 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/ContextProvider";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
+import {
+  signinWithGoogleFirebase,
+  googleMFASigninAPI,
+} from "@/apis/Signin.Api";
 
 const FormMolecules = () => {
   const navigate = useNavigate();
@@ -68,11 +72,49 @@ const FormMolecules = () => {
   // -------------------------------------------------
   // ✅ Google Sign-in (Direct Dashboard)
   // -------------------------------------------------
-  const handleGoogleSignIn = () => {
-    handleAuth(() => signinWithGoogle(), {
-      toastText: "Signing in with Google...",
-      redirectTo: "/mainpagescreen",
-    });
+  const handleGoogleSignIn = async () => {
+    try {
+      const user = await signinWithGoogleFirebase();
+
+      if (!user?.email) {
+        toast.error("Google email not found");
+        return;
+      }
+
+      const token = await user.getIdToken(true);
+
+      const response = await googleMFASigninAPI({
+        email: user.email,
+        token,
+      });
+
+      console.log("Backend response:", response);
+
+      if (!response?.success) {
+        const explanation = response?.error?.explanation?.[0];
+
+        if (explanation === "Email is not associated with any account") {
+          navigate("/createaccount", { state: { email: user.email } });
+          return;
+        }
+
+        toast.error(explanation || "Login failed");
+        return;
+      }
+
+      // ✅ Save JWT token
+      localStorage.setItem("signin_token", response.data);
+
+      toast.success("Login successful");
+      navigate("/mainpagescreen");
+
+    } catch (error) {
+      console.error("Google Signin Flow Error:", error);
+      toast.error(
+        error?.response?.data?.error?.explanation?.[0] ||
+        "Something went wrong"
+      );
+    }
   };
 
   return (
@@ -141,12 +183,17 @@ const FormMolecules = () => {
         </div>
 
         {/* Forgot Password */}
-        <div className="text-right mb-5">
+        <div className="flex justify-end mb-4">
           <button
             type="button"
-            className="text-sm text-gray-600 hover:text-black hover:underline"
+            onClick={(e) => {
+              e.preventDefault();   // form submit rokega
+              localStorage.setItem("auth_mode", "forgot_password");
+              navigate("/forgotpassword");
+            }}
+            className="text-sm text-blue-600 hover:underline"
           >
-            {/* Forgot Password? */}
+            Forgot Password ?
           </button>
         </div>
 
