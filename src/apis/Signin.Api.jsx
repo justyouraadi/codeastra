@@ -1,4 +1,3 @@
-import toast from "react-hot-toast";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/utils/firebase";
 

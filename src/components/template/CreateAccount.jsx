@@ -7,6 +7,13 @@ import { Label } from "../ui/label";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/ContextProvider";
 import toast from "react-hot-toast";
+import {
+  successToast,
+  errorToast,
+  loadingToast,
+  dismissToast,
+} from "@/components/atoms/Toast.Atom";
+
 
 const formData = {
   title: "Create your account",
@@ -56,21 +63,21 @@ const CreateAccount = () => {
   const handleSignup = async () => {
     if (loading) return;
 
-    const toastId = toast.loading("Creating your account...");
+    const toastId = loadingToast("Creating your account...");
 
     try {
       localStorage.setItem("auth_mode", "signup");
 
       const response = await signup(form.email, form.password);
 
-      toast.dismiss(toastId);
+      dismissToast(toastId);
 
       if (response) {
         navigate("/otppages");
       }
     } catch (error) {
-      toast.dismiss(toastId);
-      toast.error("Signup failed. Please try again.");
+      dismissToast(toastId);
+      errorToast("Signup failed. Please try again.");
       console.error(error);
     }
   };
@@ -81,12 +88,12 @@ const CreateAccount = () => {
   const handleGoogleSignup = async () => {
     if (loading) return;
 
-    const toastId = toast.loading("Connecting with Google...");
+    const toastId = loadingToast("Connecting with Google...");
 
     try {
       const googleUser = await signupWithGoogle();
 
-      toast.dismiss(toastId);
+      dismissToast(toastId);
 
       if (googleUser?.email) {
         setForm((prev) => ({
@@ -95,8 +102,8 @@ const CreateAccount = () => {
         }));
       }
     } catch (error) {
-      toast.dismiss(toastId);
-      toast.error("Google signup failed");
+      dismissToast(toastId);
+      errorToast("Google signup failed");
       console.error(error);
     }
   };

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import { useAuthProvider } from "@/hooks/useAuthProvider";
 import SideimagsForm from "../molecules/SideimagsForm";
 
@@ -10,6 +9,10 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+
+import {
+  errorToast,
+} from "@/components/atoms/Toast.Atom";
 
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 
@@ -23,7 +26,7 @@ const VerifyForgotOtp = () => {
     const order_id = localStorage.getItem("order_id");
 
     if (!email || !order_id) {
-      toast.error("Session expired. Please try again.");
+      errorToast("Session expired. Please try again.");
       navigate("/forgotpassword");
     }
   }, [navigate]);
@@ -32,12 +35,12 @@ const VerifyForgotOtp = () => {
     e.preventDefault();
 
     if (!otp) {
-      toast.error("Please enter OTP");
+      errorToast("Please enter OTP");
       return;
     }
 
     if (otp.length !== 6) {
-      toast.error("OTP must be 6 digits");
+      errorToast("OTP must be 6 digits");
       return;
     }
 

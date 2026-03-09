@@ -4,13 +4,15 @@ import SideimagsForm from "../molecules/SideimagsForm";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/ContextProvider";
-import { toast } from "react-hot-toast";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import {
+  errorToast,
+} from "@/components/atoms/Toast.Atom";
 
 const OtpTemp = () => {
   const [timer, setTimer] = useState(120);
@@ -33,12 +35,12 @@ const OtpTemp = () => {
     const email = localStorage.getItem("email");
 
     if (!email) {
-      toast.error("Missing email. Please go back and try again.");
+      errorToast("Missing email. Please go back and try again.");
       return;
     }
 
     if (otpValue.length !== 6) {
-      toast("Please enter the full 6-digit OTP.");
+      errorToast("Please enter the full 6-digit OTP.");
       return;
     }
 
