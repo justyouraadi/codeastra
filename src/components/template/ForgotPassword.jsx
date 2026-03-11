@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import SideimagsForm from "../molecules/SideimagsForm";
 import { useAuthProvider } from "@/hooks/useAuthProvider";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
+import {
+  errorToast,
+  successToast
+} from "@/components/atoms/Toast.Atom";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -13,14 +17,14 @@ const ForgotPassword = () => {
     e.preventDefault();
 
     if (!email) {
-      toast.error("Please enter your email");
+      errorToast("Please enter your email");
       return;
     }
 
     const success = await forgotPassword(email);
 
     if (success) {
-      toast.success("OTP Sent Successfully ✅");
+      successToast("OTP Sent Successfully");
 
       // ✅ redirect to verify page
       navigate("/verify-forgot-otp");

@@ -1,4 +1,7 @@
-import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
+import {
+  errorToast,
+} from "@/components/atoms/Toast.Atom";
 
 /* ----------------------------------------------------
    NORMAL SIGN UP (EMAIL + PASSWORD)
@@ -17,7 +20,7 @@ export const signupAPI = async (email, password) => {
     const data = await response.json();
 
     if (!response.ok) {
-      toast.error(data?.error?.explanation?.[0] || "Signup failed");
+      errorToast(data?.error?.explanation?.[0] || "Signup failed");
       throw new Error(data?.message || "Signup failed");
     }
 

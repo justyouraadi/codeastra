@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuthProvider } from "@/hooks/useAuthProvider";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import SideimagsForm from "../molecules/SideimagsForm";
+import {
+  errorToast,
+} from "@/components/atoms/Toast.Atom";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -25,17 +27,17 @@ const ResetPassword = () => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
-      toast.error("All fields are required");
+      errorToast("All fields are required");
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      errorToast("Passwords do not match");
       return;
     }
 
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      errorToast("Password must be at least 8 characters");
       return;
     }
 

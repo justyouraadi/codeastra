@@ -8,6 +8,12 @@ import {
   signinWithGoogleFirebase,
   googleMFASigninAPI,
 } from "@/apis/Signin.Api";
+import {
+  successToast,
+  errorToast,
+  loadingToast,
+  dismissToast,
+} from "@/components/atoms/Toast.Atom";
 
 const FormMolecules = () => {
   const navigate = useNavigate();
@@ -25,7 +31,7 @@ const FormMolecules = () => {
   ) => {
     if (loading) return;
 
-    const toastId = toast.loading(toastText || "Signing in...");
+    const toastId = loadingToast(toastText || "Signing in...");
 
     try {
       if (mode) {
@@ -34,15 +40,14 @@ const FormMolecules = () => {
 
       const response = await authFn();
 
-      toast.dismiss(toastId);
+      dismissToast(toastId);
 
       // ✅ Redirect only when backend confirms
       if (response?.data) {
         navigate(redirectTo);
       }
     } catch (err) {
-      toast.dismiss(toastId);
-      console.error("Authentication Error:", err);
+      dismissToast(toastId);
 
       // ✅ If OTP request already exists → OTP page
       if (
@@ -51,7 +56,7 @@ const FormMolecules = () => {
       ) {
         navigate("/otppages");
       } else {
-        toast.error("Something went wrong. Please try again.");
+        errorToast("Something went wrong. Please try again.");
       }
     }
   };
@@ -77,7 +82,7 @@ const FormMolecules = () => {
       const user = await signinWithGoogleFirebase();
 
       if (!user?.email) {
-        toast.error("Google email not found");
+        errorToast("Google email not found");
         return;
       }
 
@@ -98,19 +103,19 @@ const FormMolecules = () => {
           return;
         }
 
-        toast.error(explanation || "Login failed");
+        errorToast(explanation || "Login failed");
         return;
       }
 
       // ✅ Save JWT token
       localStorage.setItem("signin_token", response.data);
 
-      toast.success("Login successful");
+      successToast("Login successful");
       navigate("/mainpagescreen");
 
     } catch (error) {
       console.error("Google Signin Flow Error:", error);
-      toast.error(
+      errorToast(
         error?.response?.data?.error?.explanation?.[0] ||
         "Something went wrong"
       );

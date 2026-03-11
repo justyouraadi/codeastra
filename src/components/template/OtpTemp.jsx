@@ -4,17 +4,19 @@ import SideimagsForm from "../molecules/SideimagsForm";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/ContextProvider";
-import { toast } from "react-hot-toast";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { errorToast } from "@/components/atoms/Toast.Atom";
 
 const OtpTemp = () => {
   const [timer, setTimer] = useState(120);
+  const [otp, setOtp] = useState("");
   const { verifySignup, verifySignin } = useAuth();
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,25 +28,33 @@ const OtpTemp = () => {
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
+
     return () => clearInterval(interval);
   }, []);
 
   const handleVerify = async (otpValue) => {
+    const finalOtp = otpValue || otp;
+
     const email = localStorage.getItem("email");
 
     if (!email) {
-      toast.error("Missing email. Please go back and try again.");
+      errorToast("Missing email. Please go back and try again.");
       return;
     }
 
-    if (otpValue.length !== 6) {
-      toast("Please enter the full 6-digit OTP.");
+    if (!finalOtp) {
+      errorToast("OTP is required.");
+      return;
+    }
+
+    if (!/^[0-9]{6}$/.test(finalOtp)) {
+      errorToast("OTP must be exactly 6 digits.");
       return;
     }
 
     const result = isSigninFlow
-      ? await verifySignin(otpValue)
-      : await verifySignup({ email, otp: otpValue });
+      ? await verifySignin(finalOtp)
+      : await verifySignup({ email, otp: finalOtp });
 
     if (result?.data) {
       localStorage.setItem("token", result.data);
@@ -70,6 +80,7 @@ const OtpTemp = () => {
           <h2 className="text-4xl font-bold text-gray-900">
             {isSigninFlow ? "Verify Your Login" : "Verify Your Account"}
           </h2>
+
           <p className="text-gray-500 text-sm">
             Enter the 6-digit code sent to your{" "}
             {isSigninFlow ? "email" : "phone/email"}.
@@ -79,15 +90,22 @@ const OtpTemp = () => {
           <div className="flex justify-center w-full">
             <InputOTP
               maxLength={6}
+              value={otp}
+              onChange={(value) => {
+                if (/^\d*$/.test(value)) {
+                  setOtp(value);
+                }
+              }}
               onComplete={handleVerify}
-              className="mx-auto"
             >
               <InputOTPGroup>
                 <InputOTPSlot index={0} />
                 <InputOTPSlot index={1} />
                 <InputOTPSlot index={2} />
               </InputOTPGroup>
+
               <InputOTPSeparator />
+
               <InputOTPGroup>
                 <InputOTPSlot index={3} />
                 <InputOTPSlot index={4} />
@@ -96,19 +114,27 @@ const OtpTemp = () => {
             </InputOTP>
           </div>
 
-          {/* Timer + Action Links */}
+          {/* Timer */}
           <div className="text-gray-600 text-sm space-y-1 mt-4">
             <div>⏳ {`00:${timer < 10 ? `0${timer}` : timer}`}</div>
-            <button className="text-black font-medium hover:underline">
+
+            <button
+              className="text-black font-medium hover:underline"
+              disabled={timer > 0}
+            >
               Resend OTP
             </button>
+
             <div className="text-gray-400 text-xs cursor-pointer hover:underline">
               Change Phone Number
             </div>
           </div>
 
           {/* Verify Button */}
-          <ButtonAtom onClick={() => handleVerify()} className="w-full bg-black text-white hover:bg-gray-800 py-4 rounded-md">
+          <ButtonAtom
+            onClick={() => handleVerify()}
+            className="w-full bg-black text-white hover:bg-gray-800 py-4 rounded-md"
+          >
             Verify OTP
           </ButtonAtom>
         </div>
