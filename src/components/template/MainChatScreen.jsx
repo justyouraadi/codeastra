@@ -152,7 +152,7 @@ const MainChatScreen = () => {
         user_id: pingDetails?.id,
       });
 
-      navigate(`/ProjectPlayground/${tempId}`, {
+      navigate(`/chatpage/${tempId}`, {
         state: {
           initialPrompt: text
         }
