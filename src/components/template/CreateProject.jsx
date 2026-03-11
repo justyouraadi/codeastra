@@ -138,7 +138,7 @@ const CreateProject = () => {
             />
         );
     };
- 
+
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     useEffect(() => {
         const handleResize = () => {
@@ -194,7 +194,7 @@ const CreateProject = () => {
             setFinalMessages(prev => {
                 const updated = [
                     { sender: "user", message: initialPrompt },
-                    { sender: "bot", message: "thinking...",textType:"shimmer" }
+                    { sender: "bot", message: "thinking...", textType: "shimmer" }
                 ];
 
                 // Store bot index
@@ -262,13 +262,17 @@ const CreateProject = () => {
 
             const createdProject = data?.project;
 
+            if (createdProject?.id) {
+                navigate(`/chatpage/${createdProject.id}`, { replace: true });
+            }
+
             if (createdProject?.assigned_domain) {
                 setProjectDomain(createdProject.assigned_domain);
             }
 
             setWaitingForBot(false);
             setCodeReady(true);
-            setViewMode("output");   // 👈 show preview directly
+            setViewMode("output");
 
             botMessageIndexRef.current = null;
         };
@@ -663,20 +667,20 @@ const CreateProject = () => {
 
                                                                 {
                                                                     text?.textType == "shimmer" && (
-                                                             <TextShimmer className="p-3 rounded-lg text-sm max-w-[80%] bg-transparent prose prose-sm" duration={1}>
-                                                                    {text?.message}
-                                                                </TextShimmer>
+                                                                        <TextShimmer className="p-3 rounded-lg text-sm max-w-[80%] bg-transparent prose prose-sm" duration={1}>
+                                                                            {text?.message}
+                                                                        </TextShimmer>
                                                                     )
                                                                 }
 
                                                                 {
                                                                     text?.textType != "shimmer" && (
                                                                         <TextShimmer className="p-3 rounded-lg text-sm shadow max-w-[80%]  text-gray-800 prose prose-sm" duration={1}>
-                                                                    {text?.message}
-                                                                </TextShimmer>
+                                                                            {text?.message}
+                                                                        </TextShimmer>
                                                                     )
                                                                 }
-                                                                
+
                                                             </div>
                                                         </>
                                                     ) : (
