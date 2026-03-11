@@ -16,9 +16,9 @@ export const signinAPI = async (email, password) => {
     );
 
     const data = await response.json();
-
+    
     if (!response.ok) {
-      throw new Error(data?.error?.explanation?.[0] || "Signin failed");
+      throw new Error(data?.error?.explanation?.[0] || data?.message);
     }
 
     return data;

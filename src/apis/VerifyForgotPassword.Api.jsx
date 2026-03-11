@@ -1,3 +1,4 @@
+import { errorToast } from "@/components/atoms/Toast.Atom";
 import toast from "react-hot-toast";
 
 export const verifyForgotPasswordAPI = async ({
@@ -32,11 +33,11 @@ export const verifyForgotPasswordAPI = async ({
         data?.message ||
         "OTP verification failed";
 
-      toast.error(msg);
+      errorToast(msg);
       throw new Error(msg);
     }
 
-    toast.success("OTP verified successfully ✅");
+    successToast("OTP verified successfully.");
     return data;
 
   } catch (err) {

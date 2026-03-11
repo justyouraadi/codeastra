@@ -1,3 +1,4 @@
+import { errorToast } from "@/components/atoms/Toast.Atom";
 import toast from "react-hot-toast";
 
 export const forgotPasswordAPI = async (email) => {
@@ -22,11 +23,11 @@ export const forgotPasswordAPI = async (email) => {
         data?.message?.[0] ||
         "Failed to send OTP";
 
-      toast.error(msg);
+      errorToast(msg);
       throw new Error(msg);
     }
 
-    toast.success("OTP sent successfully ✅");
+    successToast("OTP sent successfully.");
 
     return data;
   } catch (err) {
