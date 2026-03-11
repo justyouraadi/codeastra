@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import { FaGoogle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/ContextProvider";
-import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import {
   signinWithGoogleFirebase,
@@ -38,7 +36,7 @@ const FormMolecules = () => {
         localStorage.setItem("auth_mode", mode);
       }
 
-      const response = await authFn();
+      const response = await authFn();      
 
       dismissToast(toastId);
 
@@ -56,7 +54,7 @@ const FormMolecules = () => {
       ) {
         navigate("/otppages");
       } else {
-        errorToast("Something went wrong. Please try again.");
+        errorToast(err?.message);
       }
     }
   };

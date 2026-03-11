@@ -1,4 +1,7 @@
-import toast from "react-hot-toast";
+import {
+  successToast,
+  errorToast,
+} from "@/components/atoms/Toast.Atom";
 
 export const resetPasswordAPI = async ({
   email,
@@ -31,11 +34,11 @@ export const resetPasswordAPI = async ({
         data?.message ||
         "Password reset failed";
 
-      toast.error(msg);
+      errorToast(msg);
       throw new Error(msg);
     }
 
-    toast.success("Password reset successfully 🎉");
+    successToast("Password reset successfully.");
     return data;
 
   } catch (err) {

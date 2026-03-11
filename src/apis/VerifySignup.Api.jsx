@@ -1,3 +1,4 @@
+import { errorToast } from "@/components/atoms/Toast.Atom";
 import toast from "react-hot-toast";
 
 export const verifySignupAPI = async ({ email, otp, orderId }) => {
@@ -17,7 +18,7 @@ export const verifySignupAPI = async ({ email, otp, orderId }) => {
   console.log("🟢 Verify API Response =>", data);
 
   if (!res.ok) {
-    toast.error(data?.error?.explanation?.[0] || data.message);
+    errorToast(data?.error?.explanation?.[0] || data.message);
     throw new Error(data?.error?.explanation?.[0] || data.message || "OTP verification failed");
   }
 

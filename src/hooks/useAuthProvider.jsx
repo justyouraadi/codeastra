@@ -209,6 +209,7 @@ import { auth, googleProvider } from "@/utils/firebase";
 import { forgotPasswordAPI } from "@/apis/ForgotPassword.Api";
 import { verifyForgotPasswordAPI } from "@/apis/VerifyForgotPassword.Api";
 import { resetPasswordAPI } from "@/apis/ResetPassword.Api";
+import { errorToast, successToast } from "@/components/atoms/Toast.Atom";
 
 export const useAuthProvider = () => {
   const [user, setUser] = useState(null);
@@ -248,7 +249,7 @@ export const useAuthProvider = () => {
       const result = await signInWithPopup(auth, provider);
 
       if (!result?.user) {
-        toast.error("Google signup failed");
+        errorToast("Google signup failed");
         return null;
       }
 
@@ -266,13 +267,13 @@ export const useAuthProvider = () => {
         photo: user.photoURL,
       });
 
-      toast.success("Google signup successful 🎉");
+      successToast("Google signup successful 🎉");
 
       // ✅ IMPORTANT — return full user
       return user;
     } catch (error) {
       console.error("Google signup error:", error);
-      toast.error(error.message);
+      errorToast(error.message);
       return null;
     } finally {
       setLoading(false);
@@ -360,7 +361,7 @@ export const useAuthProvider = () => {
       const orderId = localStorage.getItem("order_id");
 
       if (!email || !orderId) {
-        toast.error(
+        errorToast(
           "Missing email or order_id. Please go back and login again.",
         );
         return false;
@@ -373,7 +374,7 @@ export const useAuthProvider = () => {
         localStorage.setItem("signin_token", data?.data || "");
         return true;
       } else {
-        toast.error(`⚠️ ${data?.message || "Signin verification failed"}`);
+        errorToast(`⚠️ ${data?.message || "Signin verification failed"}`);
         return false;
       }
     } catch (err) {

@@ -41,12 +41,18 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useProjectProvider } from "../../hooks/useProjectProvider";
 import { useProjectContext } from "@/context/ProjectProvider";
-import toast from "react-hot-toast";
 import LodingAnimation from "@/utils/LodingAnimation";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useAuth } from "@/context/ContextProvider";
 import ChatInput from "../atoms/ChatInput";
 import { socket } from "@/socket/socket";
+
+import {
+  successToast,
+  errorToast,
+  loadingToast,
+  dismissToast,
+} from "@/components/atoms/Toast.Atom";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
@@ -108,7 +114,7 @@ const MainChatScreen = () => {
 
   const handleSend = async () => {
     if (!prompt.trim()) {
-      toast.error("Please enter something first!");
+      errorToast("Please enter something first!");
       return;
     }
 
@@ -117,12 +123,12 @@ const MainChatScreen = () => {
     const wordCount = words.length;
 
     if (wordCount < 5) {
-      toast.error("Prompt is too small!");
+      errorToast("Prompt is too small!");
       return;
     }
 
     if (wordCount > 70) {
-      toast.error("Prompt is too long!");
+      errorToast("Prompt is too long!");
       return;
     }
 
@@ -156,7 +162,7 @@ const MainChatScreen = () => {
 
     } catch (err) {
       console.log(err.message);
-      toast.error("Something went wrong!");
+      errorToast("Something went wrong!");
     }
   };
 

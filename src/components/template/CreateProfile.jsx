@@ -7,6 +7,7 @@ import ButtonAtom from "../atoms/ButtonAtom";
 import SideimagsForm from "../molecules/SideimagsForm";
 import { Label } from "../ui/label";
 import { useAuth } from "../../context/ContextProvider";
+import { errorToast, successToast } from "../atoms/Toast.Atom";
 
 const CreateProfile = ({
   onBack,
@@ -58,7 +59,7 @@ const CreateProfile = ({
   const handleSubmit = async () => {
     const order_id = localStorage.getItem("order_id");
     if (!order_id) {
-      toast.error("Missing order_id. Please complete verification first.");
+      errorToast("Missing order_id. Please complete verification first.");
       return;
     }
 
@@ -77,15 +78,15 @@ const CreateProfile = ({
       toast.dismiss(toastId);
 
       if (response?.success) {
-        toast.success("🎉 Account created successfully!");
+        successToast("🎉 Account created successfully!");
         setTimeout(() => navigate("/"), 1000);
       } else {
-        toast.error(response?.message || "Signup failed.");
+        errorToast(response?.message || "Signup failed.");
       }
     } catch (err) {
       toast.dismiss(toastId);
       console.error("Signup error:", err);
-      toast.error("An unexpected error occurred.");
+      errorToast("An unexpected error occurred.");
     }
   };
 
@@ -211,9 +212,8 @@ const CreateProfile = ({
           <ButtonAtom
             onClick={handleSubmit}
             disabled={loading}
-            className={`w-full text-white py-2 rounded-md text-sm transition ${
-              loading ? "bg-gray-400" : "bg-black hover:bg-gray-800"
-            }`}
+            className={`w-full text-white py-2 rounded-md text-sm transition ${loading ? "bg-gray-400" : "bg-black hover:bg-gray-800"
+              }`}
           >
             {loading ? "Creating..." : formData.buttonText}
           </ButtonAtom>

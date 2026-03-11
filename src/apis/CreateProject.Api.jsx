@@ -1,3 +1,4 @@
+import { errorToast } from "@/components/atoms/Toast.Atom";
 import toast from "react-hot-toast";
 
 export const createProjectAPI = async (prompt) => {
@@ -24,7 +25,7 @@ export const createProjectAPI = async (prompt) => {
     if (!res.ok) {
       const msg = data?.error?.explanation?.[0] || "Something went wrong";
 
-      toast.error(msg);
+      errorToast(msg);
 
       throw new Error(msg);
     }
