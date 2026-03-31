@@ -176,6 +176,8 @@ const CreateProject = () => {
             ro.observe(el);
         } catch (err) {
             // ResizeObserver not supported - ignore
+            
+            console.log(err.message);
         }
         return () => {
             if (ro && el) ro.unobserve(el);
