@@ -135,24 +135,24 @@ const MainChatScreen = () => {
     try {
       const tempId = `temp-${Date.now()}`;
 
-      localStorage.setItem(
-        "tempProject",
-        JSON.stringify({
-          id: tempId,
-          prompt: text,
-        })
-      );
+      // localStorage.setItem(
+      //   "tempProject",
+      //   JSON.stringify({
+      //     id: tempId,
+      //     prompt: text,
+      //   })
+      // );
 
       if (!socket.connected) {
         socket.connect();
       }
 
-      socket.emit("create_project", {
-        prompt: text,
-        user_id: pingDetails?.id,
-      });
+      // socket.emit("create_project", {
+      //   prompt: text,
+      //   user_id: pingDetails?.id,
+      // });
 
-      navigate(`/ProjectPlayground/${tempId}`, {
+      navigate(`/project/${tempId}`, {
         state: {
           initialPrompt: text
         }

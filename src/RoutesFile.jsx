@@ -22,6 +22,7 @@ import CreateProject from "./components/template/CreateProject";
 import ForgotPassword from "./components/template/ForgotPassword";
 import VerifyForgotOtp from "./components/template/VerifyForgotOtp";
 import ResetPassword from "./components/template/ResetPassword";
+import Project from "./pages/Project";
 // import ProjectPlayground from "./components/template/ProjectPlayground";
 
 // Helper component to redirect based on token
@@ -59,6 +60,7 @@ const RoutesFile = () => {
           <Route path="/projectpages" element={<ProjectPages />} />
           <Route path="/chatpage/:id" element={<Chatpage />} />
           <Route path="/NoAppsPage" element={<NoAppsPage />} />
+          <Route path="/project/:id" element={<Project />} />
 
           {/* Nested Layout Routes */}
           <Route element={<Layout />}>

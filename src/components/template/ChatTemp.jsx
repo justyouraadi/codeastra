@@ -39,6 +39,7 @@ import {
 import { useMemo } from "react";
 import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
 import { use } from "react";
+import MarkdownRenderer from "../ui/markdown-renderer";
 
 const buildFileTree = (files) => {
   const root = {};
@@ -282,27 +283,27 @@ const ChatTemp = () => {
       if (!data?.success) return;
 
       await fetchProjectFiles("v1", id);
-      let messages = [];
-      if (data.data.chats.length > 0) {
-        messages.push({
-          sender: "user",
-          message: data.data.chats[0].message,
-        });
-      }
+      // let messages = [];
+      // if (data.data.chats.length > 0) {
+      //   messages.push({
+      //     sender: "user",
+      //     message: data.data.chats[0].message,
+      //   });
+      // }
 
-      if (data.data.description) {
-        messages.push({
-          sender: "bot",
-          message: data.data.description,
-        });
-      }
+      // if (data.data.description) {
+      //   messages.push({
+      //     sender: "bot",
+      //     message: data.data.description,
+      //   });
+      // }
 
-      if (data.data.chats.length > 1) {
-        const remainingChats = data.data.chats.slice(1).map((chat) => chat);
-        messages.push(...remainingChats);
-      }
+      // if (data.data.chats.length > 1) {
+      //   const remainingChats = data.data.chats.slice(1).map((chat) => chat);
+      //   messages.push(...remainingChats);
+      // }
 
-      setFinalMessages(messages);
+      setFinalMessages(data.data.chats);
 
       const botArray = [];
       const userArray = [];
@@ -473,10 +474,14 @@ const ChatTemp = () => {
                                 </div>
                                 <div
                                   className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
-                                  dangerouslySetInnerHTML={{
-                                    __html: text?.message,
-                                  }}
-                                />
+                                  // dangerouslySetInnerHTML={{
+                                  //   __html: text?.message,
+                                  // }}
+                                >
+                                  {
+                                    text?.type == "string"? text?.message : <MarkdownRenderer>{text?.message}</MarkdownRenderer>
+                                  }
+                                  </div>
                               </div>
                             </>
                           ) : (
@@ -558,7 +563,7 @@ const ChatTemp = () => {
                       <Eye className="w-4 h-4" />{" "}
                       <span className="hidden sm:inline">Preview</span>
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       onClick={() => setViewMode("code")}
                       className={
@@ -569,7 +574,7 @@ const ChatTemp = () => {
                     >
                       <Code className="w-4 h-4" />{" "}
                       <span className="hidden sm:inline">Code</span>
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
 
@@ -590,7 +595,7 @@ const ChatTemp = () => {
                   />
 
                   {/* View button - added for mobile */}
-                  <Select
+                  {/* <Select
                     value={selectedVersion}
                     onValueChange={setSelectedVersion}
                     className=" sm:block"
@@ -605,11 +610,11 @@ const ChatTemp = () => {
                         </SelectItem>
                       ))}
                     </SelectContent>
-                  </Select>
+                  </Select> */}
                   {/* <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" /> */}
                   {selectedProject?.data?.assigned_domain && (
                     <a
-                      href={`https://${selectedProject.data.assigned_domain}`}
+                      href={selectedProject.data.assigned_domain}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -631,7 +636,7 @@ const ChatTemp = () => {
                       key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                       src={
                         selectedProject?.data?.assigned_domain
-                          ? `https://${selectedProject.data.assigned_domain}`
+                          ? selectedProject.data.assigned_domain
                           : ""
                       }
                       className="border-0"
@@ -768,11 +773,15 @@ const ChatTemp = () => {
                                   </span>
                                 </div>
                                 <div
-                                  className="rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
-                                  dangerouslySetInnerHTML={{
-                                    __html: text?.message,
-                                  }}
-                                />
+                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
+                                  // dangerouslySetInnerHTML={{
+                                  //   __html: text?.message,
+                                  // }}
+                                >
+                                  {
+                                    text?.type == "string"? text?.message : <MarkdownRenderer>{text?.message}</MarkdownRenderer>
+                                  }
+                                  </div>
                               </div>
                             </>
                           ) : (
@@ -847,7 +856,7 @@ const ChatTemp = () => {
                       key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                       src={
                         selectedProject?.data?.assigned_domain
-                          ? `https://${selectedProject.data.assigned_domain}`
+                          ? selectedProject.data.assigned_domain
                           : ""
                       }
                       className="border-0"
@@ -944,7 +953,7 @@ const ChatTemp = () => {
                   </Button>
 
                   {/* Code button */}
-                  <Button
+                  {/* <Button
                     variant="ghost"
                     onClick={() => setViewMode("code")}
                     className={`flex items-center gap-2 text-sm ${viewMode === "code"
@@ -954,7 +963,7 @@ const ChatTemp = () => {
                   >
                     <Code className="w-4 h-4" />
                     <span className="hidden sm:inline">Code</span>
-                  </Button>
+                  </Button> */}
 
                   {/* Refresh */}
                   <RefreshCw
@@ -966,12 +975,12 @@ const ChatTemp = () => {
                 {/* Right Section */}
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                   {/* Version selector - always visible */}
-                  <Select
+                  {/* <Select
                     value={selectedVersion}
                     onValueChange={setSelectedVersion}
                     className=" sm:block"
                   >
-                    <SelectTrigger className="   !w-[160px] text-sm border-none shadow-none focus-visible:ring-0 ">
+                    <SelectTrigger className="   w-40! text-sm border-none shadow-none focus-visible:ring-0 ">
                       <SelectValue placeholder="Version" />
                     </SelectTrigger>
                     <SelectContent>
@@ -981,7 +990,7 @@ const ChatTemp = () => {
                         </SelectItem>
                       ))}
                     </SelectContent>
-                  </Select>
+                  </Select> */}
 
                   {/* Icons */}
                   <div className="flex items-center gap-3 flex-wrap">
@@ -1007,7 +1016,7 @@ const ChatTemp = () => {
                     {/* View button - always visible if domain exists */}
                     {selectedProject?.data?.assigned_domain && (
                       <a
-                        href={`https://${selectedProject.data.assigned_domain}`}
+                        href={selectedProject.data.assigned_domain}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

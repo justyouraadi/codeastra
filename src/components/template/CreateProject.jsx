@@ -138,7 +138,7 @@ const CreateProject = () => {
             />
         );
     };
- 
+
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     useEffect(() => {
         const handleResize = () => {
@@ -176,6 +176,8 @@ const CreateProject = () => {
             ro.observe(el);
         } catch (err) {
             // ResizeObserver not supported - ignore
+            
+            console.log(err.message);
         }
         return () => {
             if (ro && el) ro.unobserve(el);
@@ -194,7 +196,7 @@ const CreateProject = () => {
             setFinalMessages(prev => {
                 const updated = [
                     { sender: "user", message: initialPrompt },
-                    { sender: "bot", message: "thinking...",textType:"shimmer" }
+                    { sender: "bot", message: "thinking...", textType: "shimmer" }
                 ];
 
                 // Store bot index
@@ -262,13 +264,17 @@ const CreateProject = () => {
 
             const createdProject = data?.project;
 
+            if (createdProject?.id) {
+                navigate(`/chatpage/${createdProject.id}`, { replace: true });
+            }
+
             if (createdProject?.assigned_domain) {
                 setProjectDomain(createdProject.assigned_domain);
             }
 
             setWaitingForBot(false);
             setCodeReady(true);
-            setViewMode("output");   // 👈 show preview directly
+            setViewMode("output");
 
             botMessageIndexRef.current = null;
         };
@@ -495,7 +501,7 @@ const CreateProject = () => {
                                     {/* <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" /> */}
                                     {selectedProject?.data?.assigned_domain && (
                                         <a
-                                            href={`https://${selectedProject.data.assigned_domain}`}
+                                            href={selectedProject.data.assigned_domain}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
@@ -663,20 +669,20 @@ const CreateProject = () => {
 
                                                                 {
                                                                     text?.textType == "shimmer" && (
-                                                             <TextShimmer className="p-3 rounded-lg text-sm max-w-[80%] bg-transparent prose prose-sm" duration={1}>
-                                                                    {text?.message}
-                                                                </TextShimmer>
+                                                                        <TextShimmer className="p-3 rounded-lg text-sm max-w-[80%] bg-transparent prose prose-sm" duration={1}>
+                                                                            {text?.message}
+                                                                        </TextShimmer>
                                                                     )
                                                                 }
 
                                                                 {
                                                                     text?.textType != "shimmer" && (
                                                                         <TextShimmer className="p-3 rounded-lg text-sm shadow max-w-[80%]  text-gray-800 prose prose-sm" duration={1}>
-                                                                    {text?.message}
-                                                                </TextShimmer>
+                                                                            {text?.message}
+                                                                        </TextShimmer>
                                                                     )
                                                                 }
-                                                                
+
                                                             </div>
                                                         </>
                                                     ) : (
@@ -914,7 +920,7 @@ const CreateProject = () => {
                                         {/* View button - always visible if domain exists */}
                                         {selectedProject?.data?.assigned_domain && (
                                             <a
-                                                href={`https://${selectedProject.data.assigned_domain}`}
+                                                href={selectedProject.data.assigned_domain}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >

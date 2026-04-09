@@ -597,7 +597,7 @@ const ProjectPlayground = () => {
                                         onValueChange={setSelectedVersion}
                                         className=" sm:block"
                                     >
-                                        <SelectTrigger className="   !w-[90px] text-sm border-none shadow-none focus-visible:ring-0 ">
+                                        <SelectTrigger className="   w-[90px]! text-sm border-none shadow-none focus-visible:ring-0 ">
                                             <SelectValue placeholder="Version" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -611,7 +611,7 @@ const ProjectPlayground = () => {
                                     {/* <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" /> */}
                                     {selectedProject?.data?.assigned_domain && (
                                         <a
-                                            href={`https://${selectedProject.data.assigned_domain}`}
+                                            href={selectedProject.data.assigned_domain}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
@@ -633,7 +633,7 @@ const ProjectPlayground = () => {
                                             key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                                             src={
                                                 selectedProject?.data?.assigned_domain
-                                                    ? `https://${selectedProject.data.assigned_domain}`
+                                                    ? selectedProject.data.assigned_domain
                                                     : ""
                                             }
                                             className="border-0"
@@ -849,7 +849,7 @@ const ProjectPlayground = () => {
                                             key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                                             src={
                                                 selectedProject?.data?.assigned_domain
-                                                    ? `https://${selectedProject.data.assigned_domain}`
+                                                    ? selectedProject.data.assigned_domain
                                                     : ""
                                             }
                                             className="border-0"
@@ -1009,7 +1009,7 @@ const ProjectPlayground = () => {
                                         {/* View button - always visible if domain exists */}
                                         {selectedProject?.data?.assigned_domain && (
                                             <a
-                                                href={`https://${selectedProject.data.assigned_domain}`}
+                                                href={selectedProject.data.assigned_domain}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
