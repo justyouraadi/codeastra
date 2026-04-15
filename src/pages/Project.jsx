@@ -270,6 +270,7 @@ export default function Project() {
       );
       setWaitingForBot(false);
       successToast("Project created successfully!");
+      navigate(`/chatpage/${data?.data?.project_id}`,{replace:true});
     };
 
     const onProjectError = (data) => {
