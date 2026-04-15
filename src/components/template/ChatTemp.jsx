@@ -1,5 +1,5 @@
 // ChatTemp.jsx (final)
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import {
@@ -36,10 +36,11 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useMemo } from "react";
 import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
-import { use } from "react";
 import MarkdownRenderer from "../ui/markdown-renderer";
+import { useAuth } from "@/context/ContextProvider";
+import { socket } from "@/socket/socket";
+import { errorToast, successToast } from "@/components/atoms/Toast.Atom";
 
 const buildFileTree = (files) => {
   const root = {};
@@ -209,12 +210,12 @@ const CodeViewer = ({ filePath, fileContent }) => {
 
 const ChatTemp = () => {
   const navigate = useNavigate();
+  const { pingDetails } = useAuth();
   const [selectedFile, setSelectedFile] = useState("");
   const { id } = useParams();
   const {
     fetchProjectById,
     selectedProject,
-    createChat,
     fetchProjectFiles,
     projectFiles,
     fetchProjectFileContent,
@@ -266,8 +267,8 @@ const ChatTemp = () => {
   const chatEndRef = useRef(null);
   const resizableGroupRef = useRef(null);
   const [finalMessage, setFinalMessages] = useState([]);
-
-  const [fetchGetApi, setFetchGetApi] = useState(false);
+  const [projectStatus, setProjectStatus] = useState("Working on your update...");
+  const botMessageIndexRef = useRef(null);
 
   // persist divider on changes (desktop only)
   useEffect(() => {
@@ -303,7 +304,8 @@ const ChatTemp = () => {
       //   messages.push(...remainingChats);
       // }
 
-      setFinalMessages(data.data.chats);
+      setFinalMessages(Array.isArray(data?.data?.chats) ? data.data.chats : []);
+      botMessageIndexRef.current = null;
 
       const botArray = [];
       const userArray = [];
@@ -335,28 +337,182 @@ const ChatTemp = () => {
     }
   }, [finalMessage]);
 
-  const ChatApi = async (params) => {
-    const data = await createChat(params);
-    if (!data?.success) {
+  const updateBotMessage = useCallback(
+    (content, type = "string", textType = "normal") => {
+      setFinalMessages((prev) => {
+        const updated = [...prev];
+
+        if (
+          botMessageIndexRef.current !== null &&
+          updated[botMessageIndexRef.current]?.sender === "bot"
+        ) {
+          updated[botMessageIndexRef.current] = {
+            sender: "bot",
+            message: content,
+            type,
+            textType,
+          };
+        } else {
+          updated.push({
+            sender: "bot",
+            message: content,
+            type,
+            textType,
+          });
+          botMessageIndexRef.current = updated.length - 1;
+        }
+
+        return updated;
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!id) return;
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const onGeneratingUpdateReply = (data) => {
+      setWaitingForBot(true);
+      setProjectStatus(data?.message || "AI is thinking...");
+      updateBotMessage(data?.message || "AI is thinking...", "string", "shimmer");
+    };
+
+    const onGeneratedUpdateReply = (data) => {
+      const reply = data?.data?.reply || data?.message || "AI has generated a response";
+      const type = data?.data?.type || "string";
+
+      updateBotMessage(reply, type, "normal");
+      setProjectStatus(data?.message || "AI has generated a response");
+
+      if (!data?.success) {
+        setWaitingForBot(false);
+        botMessageIndexRef.current = null;
+        errorToast(data?.message || "Failed to generate response");
+      }
+    };
+
+    const onFetchingUpdateCode = (data) => {
+      setProjectStatus(data?.message || "AI is fetching old code...");
+    };
+
+    const onFetchedUpdateCode = (data) => {
+      setProjectStatus(data?.message || "AI has fetched old code");
+    };
+
+    const onGeneratingUpdateCode = (data) => {
+      setProjectStatus(data?.message || "AI is generating updated code...");
+    };
+
+    const onGeneratedUpdateCode = (data) => {
+      setProjectStatus(data?.message || "AI has generated updated code");
+    };
+
+    const onDeploymentUpdateCompleted = (data) => {
+      setProjectStatus(data?.message || "Project update deployed successfully");
       setWaitingForBot(false);
-      setFetchGetApi(false);
+      botMessageIndexRef.current = null;
+
+      if (data?.success === false) {
+        errorToast(data?.message || "Deployment failed");
+        return;
+      }
+
+      successToast(data?.message || "Project updated successfully!");
+      setRefreshTrigger((prev) => prev + 1);
+    };
+
+    const onProjectError = (data) => {
+      const message = data?.message || "Something went wrong while updating project";
+      setProjectStatus(message);
+      updateBotMessage(message, "string", "normal");
+      setWaitingForBot(false);
+      botMessageIndexRef.current = null;
+      errorToast(message);
+    };
+
+    socket.off("generating:update:reply", onGeneratingUpdateReply);
+    socket.off("generated:update:reply", onGeneratedUpdateReply);
+    socket.off("fetching:update:code", onFetchingUpdateCode);
+    socket.off("fetched:update:code", onFetchedUpdateCode);
+    socket.off("generating:update:code", onGeneratingUpdateCode);
+    socket.off("generated:update:code", onGeneratedUpdateCode);
+    socket.off("deployment:update:completed", onDeploymentUpdateCompleted);
+    socket.off("project_error", onProjectError);
+
+    socket.on("generating:update:reply", onGeneratingUpdateReply);
+    socket.on("generated:update:reply", onGeneratedUpdateReply);
+    socket.on("fetching:update:code", onFetchingUpdateCode);
+    socket.on("fetched:update:code", onFetchedUpdateCode);
+    socket.on("generating:update:code", onGeneratingUpdateCode);
+    socket.on("generated:update:code", onGeneratedUpdateCode);
+    socket.on("deployment:update:completed", onDeploymentUpdateCompleted);
+    socket.on("project_error", onProjectError);
+
+    return () => {
+      socket.off("generating:update:reply", onGeneratingUpdateReply);
+      socket.off("generated:update:reply", onGeneratedUpdateReply);
+      socket.off("fetching:update:code", onFetchingUpdateCode);
+      socket.off("fetched:update:code", onFetchedUpdateCode);
+      socket.off("generating:update:code", onGeneratingUpdateCode);
+      socket.off("generated:update:code", onGeneratedUpdateCode);
+      socket.off("deployment:update:completed", onDeploymentUpdateCompleted);
+      socket.off("project_error", onProjectError);
+    };
+  }, [id, updateBotMessage]);
+
+  const handleSend = () => {
+    if (waitingForBot) return;
+
+    const prompt = input.trim();
+    if (!prompt) return;
+
+    const userId =
+      pingDetails?.id ||
+      selectedProject?.data?.user?.id ||
+      selectedProject?.data?.user_id;
+
+    if (!userId) {
+      errorToast("Unable to find user details. Please refresh and try again.");
       return;
     }
-    setWaitingForBot(false);
-    setFetchGetApi(false);
-    // setRefreshTrigger((p) => p + 1);
-    window.location.reload();
-    return data;
-  };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const newMsg = { sender: "user", message: input };
-    setFinalMessages((p) => [...p, newMsg]);
+    if (!id) {
+      errorToast("Project not found. Please refresh and try again.");
+      return;
+    }
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    setFinalMessages((prev) => {
+      const updated = [
+        ...prev,
+        { sender: "user", message: prompt, type: "string" },
+        {
+          sender: "bot",
+          message: "AI is thinking...",
+          type: "string",
+          textType: "shimmer",
+        },
+      ];
+      botMessageIndexRef.current = updated.length - 1;
+      return updated;
+    });
+
     setInput("");
+    setProjectStatus("Queued update request");
     setWaitingForBot(true);
-    setFetchGetApi(true);
-    await ChatApi({ project_id: id, prompt: input });
+
+    socket.emit("final_update", {
+      prompt,
+      user_id: userId,
+      project_id: id,
+    });
   };
 
 
@@ -473,13 +629,17 @@ const ChatTemp = () => {
                                   </span>
                                 </div>
                                 <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
+                                  className={`p-3 rounded-lg text-sm shadow max-w-[80%] prose prose-sm ${
+                                    text?.textType === "shimmer"
+                                      ? "bg-gray-50 text-gray-600 animate-pulse"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
                                   // dangerouslySetInnerHTML={{
                                   //   __html: text?.message,
                                   // }}
                                 >
                                   {
-                                    text?.type == "string"? text?.message : <MarkdownRenderer>{text?.message}</MarkdownRenderer>
+                                    text?.type === "string" ? text?.message : <MarkdownRenderer>{text?.message}</MarkdownRenderer>
                                   }
                                   </div>
                               </div>
@@ -525,7 +685,7 @@ const ChatTemp = () => {
                 />
                 <Button
                   onClick={handleSend}
-                  disabled={waitingForBot}
+                  disabled={waitingForBot || !input.trim()}
                   className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
                     } text-white`}
                 >
@@ -627,11 +787,15 @@ const ChatTemp = () => {
               </div>
 
               <div className="absolute inset-0 flex items-start justify-center pt-16">
+                {waitingForBot && (
+                  <UpdatingLobbyOverlay
+                    visible={waitingForBot}
+                    statusMessage={projectStatus}
+                  />
+                )}
+
                 {viewMode === "output" ? (
                   <>
-                    {fetchGetApi && (
-                      <UpdatingLobbyOverlay visible={fetchGetApi} />
-                    )}
                     <iframe
                       key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                       src={
@@ -773,13 +937,17 @@ const ChatTemp = () => {
                                   </span>
                                 </div>
                                 <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
+                                  className={`p-3 rounded-lg text-sm shadow max-w-[80%] prose prose-sm ${
+                                    text?.textType === "shimmer"
+                                      ? "bg-gray-50 text-gray-600 animate-pulse"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
                                   // dangerouslySetInnerHTML={{
                                   //   __html: text?.message,
                                   // }}
                                 >
                                   {
-                                    text?.type == "string"? text?.message : <MarkdownRenderer>{text?.message}</MarkdownRenderer>
+                                    text?.type === "string" ? text?.message : <MarkdownRenderer>{text?.message}</MarkdownRenderer>
                                   }
                                   </div>
                               </div>
@@ -825,7 +993,7 @@ const ChatTemp = () => {
                 />
                 <Button
                   onClick={handleSend}
-                  disabled={waitingForBot}
+                  disabled={waitingForBot || !input.trim()}
                   className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
                     } text-white`}
                 >
@@ -846,12 +1014,15 @@ const ChatTemp = () => {
             >
               {/* Content */}
               <div className="absolute inset-0 pt-16 flex justify-center items-start bg-white">
+                {waitingForBot && (
+                  <UpdatingLobbyOverlay
+                    visible={waitingForBot}
+                    statusMessage={projectStatus}
+                  />
+                )}
+
                 {viewMode === "output" ? (
                   <>
-                    {fetchGetApi && (
-                      <UpdatingLobbyOverlay visible={fetchGetApi} />
-                    )}
-
                     <iframe
                       key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                       src={
@@ -870,7 +1041,6 @@ const ChatTemp = () => {
                             : "none",
                       }}
                       title="Live Preview"
-                      onLoad={() => setFetchGetApi(false)}
                     />
                   </>
                 ) : (
