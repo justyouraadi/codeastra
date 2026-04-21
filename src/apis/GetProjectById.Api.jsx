@@ -15,7 +15,6 @@ export const getProjectByIdAPI = async (id) => {
       requestOptions
     );
     const data = await response.json();
-    console.log("Data DDDDDDDDDDDDDDDDDDDD : ",data);
     
     if (!response.ok) throw new Error(data.message || "Failed to fetch project");
     return data;
