@@ -597,7 +597,7 @@ const ProjectPlayground = () => {
                                         onValueChange={setSelectedVersion}
                                         className=" sm:block"
                                     >
-                                        <SelectTrigger className="   !w-[90px] text-sm border-none shadow-none focus-visible:ring-0 ">
+                                        <SelectTrigger className="   w-[90px]! text-sm border-none shadow-none focus-visible:ring-0 ">
                                             <SelectValue placeholder="Version" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -611,7 +611,7 @@ const ProjectPlayground = () => {
                                     {/* <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" /> */}
                                     {selectedProject?.data?.assigned_domain && (
                                         <a
-                                            href={`https://${selectedProject.data.assigned_domain}`}
+                                            href={selectedProject.data.assigned_domain}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
@@ -633,8 +633,8 @@ const ProjectPlayground = () => {
                                             key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                                             src={
                                                 selectedProject?.data?.assigned_domain
-                                                    ? `https://${selectedProject.data.assigned_domain}`
-                                                    : ""
+                                                    ? selectedProject.data.assigned_domain
+                                                    : null
                                             }
                                             className="border-0"
                                             style={{
@@ -770,7 +770,7 @@ const ProjectPlayground = () => {
                                                                     </span>
                                                                 </div>
                                                                 <div
-                                                                    className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
+                                                                    className="rounded-lg bg-gray-100 p-5 text-sm text-gray-800 shadow prose prose-sm max-w-[80%]"
                                                                     dangerouslySetInnerHTML={{
                                                                         __html: text?.message,
                                                                     }}
@@ -780,7 +780,7 @@ const ProjectPlayground = () => {
                                                     ) : (
                                                         <>
                                                             <div className="flex items-start gap-2 justify-end">
-                                                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white p-3">
+                                                                <div className="rounded-lg bg-black p-3 text-sm text-white shadow max-w-[80%]">
                                                                     {text?.message}
                                                                 </div>
                                                                 <div className="flex flex-col items-center">
@@ -849,8 +849,8 @@ const ProjectPlayground = () => {
                                             key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
                                             src={
                                                 selectedProject?.data?.assigned_domain
-                                                    ? `https://${selectedProject.data.assigned_domain}`
-                                                    : ""
+                                                    ? selectedProject.data.assigned_domain
+                                                    : null
                                             }
                                             className="border-0"
                                             style={{
@@ -1009,7 +1009,7 @@ const ProjectPlayground = () => {
                                         {/* View button - always visible if domain exists */}
                                         {selectedProject?.data?.assigned_domain && (
                                             <a
-                                                href={`https://${selectedProject.data.assigned_domain}`}
+                                                href={selectedProject.data.assigned_domain}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >

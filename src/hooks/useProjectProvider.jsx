@@ -8,6 +8,7 @@ import {
 } from "../apis/GetProjects.Api";
 import { getProjectByIdAPI } from "../apis/GetProjectById.Api";
 import { createChatAPI } from "@/apis/Chat.Api";
+import { FetchProjectEnv, UpdateProjectEnv } from "@/apis/Env.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
@@ -19,6 +20,7 @@ export const useProjectProvider = () => {
     files: [],
   });
   const [fileContent, setFileContent] = useState("");
+  const [projectEnv, setProjectEnv] = useState({});
 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -117,7 +119,6 @@ export const useProjectProvider = () => {
       console.error("❌ Fetch Project file content Error:", err.message);
       throw err;
     } finally {
-      
     }
   };
 
@@ -211,6 +212,42 @@ export const useProjectProvider = () => {
   };
 
   // ----------------------------------------------------------
+  // 🔹 get project environment variables
+  // ----------------------------------------------------------
+
+  const getProjectEnv = async (project_id) => {
+    try {
+      setLoading(true);
+      const data = await FetchProjectEnv(project_id);
+      setProjectEnv(data?.data || data);
+      return data;
+    } catch (err) {
+      console.error("❌ Fetch Project Environment Error:", err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProjectEnv = async (project_id, payload) => {
+    try {
+      setLoading(true);
+      const data = await UpdateProjectEnv(project_id, payload);
+      setProjectEnv((prev) => ({
+        ...(prev || {}),
+        [payload?.key]: payload?.value,
+      }));
+      return data;
+    } catch (err) {
+      console.error("❌ Update Project Environment Error:", err.message);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ----------------------------------------------------------
   // 🔹 Returned Values for Components
   // ----------------------------------------------------------
   return {
@@ -231,6 +268,9 @@ export const useProjectProvider = () => {
     fetchProjectFiles,
     projectFiles,
     fetchProjectFileContent,
-    fileContent
+    fileContent,
+    getProjectEnv,
+    updateProjectEnv,
+    projectEnv,
   };
 };

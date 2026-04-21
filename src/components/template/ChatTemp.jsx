@@ -1,14 +1,16 @@
-// ChatTemp.jsx (final)
-import React, { useState, useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Monitor,
   Smartphone,
-  Share2,
   Send,
   RefreshCw,
-  Code,
   Eye,
   ChevronRight,
   ChevronDown,
@@ -16,29 +18,25 @@ import {
   File,
   User,
   ArrowLeft,
+  Container,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProjectProvider } from "../../hooks/useProjectProvider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Item, ItemContent, ItemMedia, ItemTitle } from "../ui/item";
 import { Spinner } from "../ui/spinner";
 import Editor from "@monaco-editor/react";
-
-// <-- shadcn resizable imports -->
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useMemo } from "react";
 import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
-import { use } from "react";
+import MarkdownRenderer from "../ui/markdown-renderer";
+import { useAuth } from "@/context/ContextProvider";
+import { socket } from "@/socket/socket";
+import { errorToast, successToast } from "@/components/atoms/Toast.Atom";
+import EnvSection from "../organisms/EnvSection";
+
+const MOBILE_BREAKPOINT = 768;
 
 const buildFileTree = (files) => {
   const root = {};
@@ -61,9 +59,6 @@ const buildFileTree = (files) => {
   return root;
 };
 
-/* -------------------------------
-   Recursive Tree Node
--------------------------------- */
 const TreeNode = ({
   nodeName,
   node,
@@ -72,38 +67,39 @@ const TreeNode = ({
   selectedFile,
   fullPath,
 }) => {
-  const [open, setOpen] = useState(false); // ⬅️ important change
+  const [open, setOpen] = useState(false);
   const isFile = node.__isFile;
   const isActive = selectedFile === fullPath;
 
   return (
     <div>
       <div
-        className={`flex items-center gap-2 py-1 px-2 rounded cursor-pointer
-          ${isActive ? "bg-gray-700" : "hover:bg-gray-700"}`}
+        className={`flex cursor-pointer items-center gap-2 rounded px-2 py-1 ${
+          isActive ? "bg-gray-700" : "hover:bg-gray-700"
+        }`}
         style={{ paddingLeft: depth * 14 }}
         onClick={() => {
           if (isFile) {
             onSelectFile(fullPath);
           } else {
-            setOpen((p) => !p);
+            setOpen((prev) => !prev);
           }
         }}
       >
         {!isFile &&
           (open ? (
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="h-4 w-4" />
           ) : (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="h-4 w-4" />
           ))}
 
         {isFile ? (
-          <File className="w-4 h-4 text-blue-400" />
+          <File className="h-4 w-4 text-blue-400" />
         ) : (
-          <Folder className="w-4 h-4 text-yellow-500" />
+          <Folder className="h-4 w-4 text-yellow-500" />
         )}
 
-        <span className="text-sm truncate">{nodeName}</span>
+        <span className="truncate text-sm">{nodeName}</span>
       </div>
 
       {!isFile && open && (
@@ -117,7 +113,7 @@ const TreeNode = ({
             })
             .map(([childName, childNode]) => (
               <TreeNode
-                key={childName}
+                key={`${fullPath}/${childName}`}
                 nodeName={childName}
                 node={childNode}
                 depth={depth + 1}
@@ -136,7 +132,7 @@ const FolderTree = ({ files, selectedFile, onSelectFile }) => {
   const tree = useMemo(() => buildFileTree(files || []), [files]);
 
   return (
-    <div className="h-full overflow-auto bg-black text-white font-mono text-sm p-3">
+    <div className="h-full overflow-auto bg-black p-3 font-mono text-sm text-white">
       {Object.entries(tree)
         .sort(([nameA, a], [nameB, b]) => {
           if (a.__isFile !== b.__isFile) {
@@ -181,8 +177,6 @@ const getLanguageFromFile = (path = "") => {
   return "plaintext";
 };
 
-
-
 const CodeViewer = ({ filePath, fileContent }) => {
   return (
     <Editor
@@ -205,119 +199,417 @@ const CodeViewer = ({ filePath, fileContent }) => {
   );
 };
 
+const ChatMessages = ({
+  finalMessage,
+  selectedProject,
+  chatContainerRef,
+  chatEndRef,
+}) => {
+  return (
+    <div
+      ref={chatContainerRef}
+      className="flex-1 space-y-5 overflow-y-auto p-6"
+    >
+      {finalMessage.map((text, index) => {
+        const isBot = text?.sender === "bot";
+
+        if (isBot) {
+          return (
+            <div
+              key={`bot-${index}`}
+              className="flex items-start justify-start gap-2"
+            >
+              <div className="flex flex-col items-center">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold">
+                  CA
+                </div>
+                <span className="mt-1 text-[10px] text-gray-500">
+                  CodeAstra
+                </span>
+              </div>
+
+              <div
+                className={`prose prose-sm max-w-[80%] rounded-lg p-3 text-sm shadow ${
+                  text?.textType === "shimmer"
+                    ? "animate-pulse bg-gray-50 text-gray-600"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {text?.type === "string" ? (
+                  text?.message
+                ) : (
+                  <MarkdownRenderer>{text?.message}</MarkdownRenderer>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div
+            key={`user-${index}`}
+            className="flex items-start justify-end gap-2"
+          >
+            <div className="max-w-[80%] rounded-lg bg-black p-3 text-sm text-white shadow">
+              {text?.message}
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
+                <User className="h-4 w-4" />
+              </div>
+              <span className="mt-1 text-[10px] text-gray-500">
+                {selectedProject?.data?.user?.full_name || "You"}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+      <div ref={chatEndRef} />
+    </div>
+  );
+};
+
+const ChatPanel = ({
+  selectedProject,
+  waitingForBot,
+  input,
+  setInput,
+  handleKeyDown,
+  handleSend,
+  finalMessage,
+  chatContainerRef,
+  chatEndRef,
+  onNavigateHome,
+  showPreviewButton,
+  onShowPreview,
+}) => {
+  return (
+    <div className="flex h-screen flex-col border-r border-gray-200 bg-white">
+      <div className="flex items-center justify-between border-b border-gray-200 p-4">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            onClick={onNavigateHome}
+            className="cursor-pointer rounded-md p-2 text-xl transition-all hover:bg-gray-200"
+          >
+            <ArrowLeft />
+          </Button>
+          <h1 className="text-lg font-semibold text-gray-800">
+            {selectedProject?.data?.name || "Project Chat"}
+          </h1>
+        </div>
+
+        {showPreviewButton ? (
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={onShowPreview}
+          >
+            <Eye className="h-4 w-4" /> Preview
+          </Button>
+        ) : null}
+      </div>
+
+      <ChatMessages
+        finalMessage={finalMessage}
+        selectedProject={selectedProject}
+        chatContainerRef={chatContainerRef}
+        chatEndRef={chatEndRef}
+      />
+
+      <div className="flex items-center gap-2 border-t border-gray-200 bg-white p-3">
+        <textarea
+          placeholder={
+            waitingForBot ? "Please wait..." : "Type your message..."
+          }
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={waitingForBot}
+          rows={2}
+          className="flex-1 resize-none rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm"
+        />
+        <Button
+          onClick={handleSend}
+          disabled={waitingForBot || !input.trim()}
+          className={`${
+            waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
+          } text-white`}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const CodeWorkspace = ({
+  projectFiles,
+  id,
+  fetchProjectFiles,
+  selectedFile,
+  onSelectFile,
+  fileContent,
+}) => {
+  return (
+    <div className="flex h-full w-full">
+      <div className="h-full w-1/3 border-r border-gray-200 bg-black">
+        {projectFiles.loading ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-gray-400">
+            <Spinner />
+            <span className="text-sm">Loading project files...</span>
+          </div>
+        ) : projectFiles.error ? (
+          <div className="flex h-full flex-col items-center justify-center px-4 text-center text-red-400">
+            <p className="text-sm font-medium">Failed to load files</p>
+            <p className="mt-1 text-xs opacity-80">{projectFiles.error}</p>
+            <Button
+              size="sm"
+              className="mt-3 bg-gray-800 text-white hover:bg-gray-700"
+              onClick={() => fetchProjectFiles("v1", id)}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : projectFiles.files.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-gray-500">
+            No files found
+          </div>
+        ) : (
+          <FolderTree
+            files={projectFiles.files}
+            onSelectFile={onSelectFile}
+            selectedFile={selectedFile}
+          />
+        )}
+      </div>
+
+      <div className="h-full flex-1">
+        <CodeViewer filePath={selectedFile} fileContent={fileContent} />
+      </div>
+    </div>
+  );
+};
+
+const PreviewPanel = ({
+  isMobile,
+  onBackToChat,
+  viewMode,
+  setViewMode,
+  deviceView,
+  setDeviceView,
+  refreshTrigger,
+  setRefreshTrigger,
+  selectedVersion,
+  selectedProject,
+  waitingForBot,
+  projectStatus,
+  projectFiles,
+  selectedFile,
+  onSelectFile,
+  fetchProjectFiles,
+  id,
+  fileContent,
+}) => {
+  const previewUrl = selectedProject?.data?.assigned_domain || null;
+  const mobileFrame = !isMobile && deviceView === "mobile";
+
+  return (
+    <div className="relative h-screen flex-1 overflow-hidden bg-white">
+      <div className="absolute left-0 top-0 z-20 flex w-full flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white/90 px-4 py-3">
+        <div className="flex items-center gap-2">
+          {isMobile ? (
+            <Button variant="ghost" onClick={onBackToChat} className="p-2">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          ) : null}
+
+          <Button
+            variant="ghost"
+            onClick={() => setViewMode("output")}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${
+              viewMode === "output"
+                ? "border-b-2 border-black font-semibold"
+                : ""
+            }`}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="hidden sm:inline">Preview</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => setViewMode("env")}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${
+              viewMode === "env" ? "border-b-2 border-black font-semibold" : ""
+            }`}
+          >
+            <Container className="h-4 w-4" />
+            <span className="hidden sm:inline">Env's</span>
+          </Button>
+
+          <RefreshCw
+            className="h-5 w-5 cursor-pointer text-gray-600 hover:text-black"
+            onClick={() => setRefreshTrigger((prev) => prev + 1)}
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          {!isMobile ? (
+            <>
+              <Monitor
+                className={`h-5 w-5 cursor-pointer ${
+                  deviceView === "desktop"
+                    ? "text-black"
+                    : "text-gray-600 hover:text-black"
+                }`}
+                onClick={() => setDeviceView("desktop")}
+              />
+              <Smartphone
+                className={`h-5 w-5 cursor-pointer ${
+                  deviceView === "mobile"
+                    ? "text-black"
+                    : "text-gray-600 hover:text-black"
+                }`}
+                onClick={() => setDeviceView("mobile")}
+              />
+            </>
+          ) : null}
+
+          {previewUrl ? (
+            <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+              <Button className="bg-black px-3 py-2 text-xs text-white hover:bg-gray-900 md:text-sm">
+                View
+              </Button>
+            </a>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="absolute inset-0 flex items-start justify-center bg-white pt-16">
+        {waitingForBot ? (
+          <UpdatingLobbyOverlay
+            visible={waitingForBot}
+            statusMessage={projectStatus}
+          />
+        ) : null}
+
+        {viewMode === "output" ? (
+          previewUrl ? (
+            <iframe
+              key={`${refreshTrigger}-${selectedVersion}-${previewUrl}`}
+              src={previewUrl}
+              className="border-0"
+              style={{
+                width: mobileFrame ? "375px" : "100%",
+                height: mobileFrame ? "667px" : "100%",
+                maxWidth: "100%",
+                borderRadius: mobileFrame ? "16px" : "0",
+                boxShadow: mobileFrame ? "0 0 10px rgba(0,0,0,0.2)" : "none",
+              }}
+              title="Live Preview"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center p-6 text-sm text-gray-500">
+              Preview URL is not available yet.
+            </div>
+          )
+        ) : null}
+
+        {viewMode === "code" ? (
+          <CodeWorkspace
+            projectFiles={projectFiles}
+            id={id}
+            fetchProjectFiles={fetchProjectFiles}
+            selectedFile={selectedFile}
+            onSelectFile={onSelectFile}
+            fileContent={fileContent}
+          />
+        ) : null}
+
+        {viewMode === "env" ? (
+          <div className="h-full w-full p-6 overflow-y-auto">
+            {/* <div className="flex h-full items-center justify-center rounded-md border border-dashed border-gray-300 text-sm text-gray-500">
+              Environment panel coming soon.
+            </div> */}
+            <EnvSection project_id={id} />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+};
 
 const ChatTemp = () => {
   const navigate = useNavigate();
-  const [selectedFile, setSelectedFile] = useState("");
   const { id } = useParams();
+  const { pingDetails } = useAuth();
+
   const {
     fetchProjectById,
     selectedProject,
-    createChat,
     fetchProjectFiles,
     projectFiles,
     fetchProjectFileContent,
-    fileContent
+    fileContent,
   } = useProjectProvider();
 
-  const handleSelectFile = async (filePath) => {
-    try {
-      setSelectedFile(filePath);
-
-      await fetchProjectFileContent("v1", id, filePath);
-    }
-    catch (err) {
-      // setFileError("Failed to load file content");
-      console.error("❌ Fetch Project file content Error:", err.message);
-    }
-    // finally {
-    //   setFileLoading(false);
-    // }
-  };
-
-
-  // Divider initial: read from localStorage or default to 35 for desktop
-  const computeInitialDivider = () => {
-    const width = window.innerWidth;
-    if (width < 768) return 100; // mobile stacked
-    // prefer persisted value if available
-    const stored = localStorage.getItem("dividerX");
-    return stored ? parseFloat(stored) : 35;
-  };
-
-  const [dividerX, setDividerX] = useState(computeInitialDivider);
-  const [messages, setMessages] = useState([]);
+  const [selectedFile, setSelectedFile] = useState("");
   const [input, setInput] = useState("");
-  const [viewMode, setViewMode] = useState("output"); // "output" or "code"
+  const [viewMode, setViewMode] = useState("output");
   const [waitingForBot, setWaitingForBot] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [deviceView, setDeviceView] = useState("desktop");
   const [selectedVersion, setSelectedVersion] = useState("");
-
-  const [botTexts, setBotTexts] = useState([]);
-  const [userTexts, setUserTexts] = useState([]);
-
-  const [mobileView, setMobileView] = useState("chat"); // "chat" or "preview"
-
-  // refs
-  const chatContainerRef = useRef(null);
-  const leftPanelRef = useRef(null);
-  const chatEndRef = useRef(null);
-  const resizableGroupRef = useRef(null);
   const [finalMessage, setFinalMessages] = useState([]);
+  const [projectStatus, setProjectStatus] = useState(
+    "Working on your update...",
+  );
+  const [isMobile, setIsMobile] = useState(
+    window.innerWidth < MOBILE_BREAKPOINT,
+  );
+  const [mobileView, setMobileView] = useState("chat");
 
-  const [fetchGetApi, setFetchGetApi] = useState(false);
+  const chatContainerRef = useRef(null);
+  const chatEndRef = useRef(null);
+  const botMessageIndexRef = useRef(null);
 
-  // persist divider on changes (desktop only)
+  const handleSelectFile = async (filePath) => {
+    try {
+      setSelectedFile(filePath);
+      await fetchProjectFileContent("v1", id, filePath);
+    } catch (err) {
+      console.error("Fetch project file content error:", err.message);
+    }
+  };
+
   useEffect(() => {
-    const width = window.innerWidth;
-    if (width >= 768) localStorage.setItem("dividerX", dividerX);
-  }, [dividerX]);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
 
-  // fetch project when id changes
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setMobileView("chat");
+    }
+  }, [isMobile]);
+
   useEffect(() => {
     if (!id) return;
+
     (async () => {
       const data = await fetchProjectById(id);
       if (!data?.success) return;
 
       await fetchProjectFiles("v1", id);
-      let messages = [];
-      if (data.data.chats.length > 0) {
-        messages.push({
-          sender: "user",
-          message: data.data.chats[0].message,
-        });
-      }
 
-      if (data.data.description) {
-        messages.push({
-          sender: "bot",
-          message: data.data.description,
-        });
-      }
-
-      if (data.data.chats.length > 1) {
-        const remainingChats = data.data.chats.slice(1).map((chat) => chat);
-        messages.push(...remainingChats);
-      }
-
-      setFinalMessages(messages);
-
-      const botArray = [];
-      const userArray = [];
-
-      if (data.data.description) botArray.push(data.data.description);
-
-      const list = Array.isArray(data.data.chats) ? data.data.chats : [];
-
-      list.forEach((item) => {
-        if (item.sender === "user") userArray.push(item.message);
-        else if (item.sender === "bot") botArray.push(item.message);
-      });
-
-      setBotTexts(botArray);
-      setUserTexts(userArray);
+      setFinalMessages(Array.isArray(data?.data?.chats) ? data.data.chats : []);
+      botMessageIndexRef.current = null;
 
       if (data.data.versions?.length > 0) {
         setSelectedVersion(data.data.versions[data.data.versions.length - 1]);
@@ -327,699 +619,262 @@ const ChatTemp = () => {
 
   useEffect(() => {
     if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
+      chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [finalMessage]);
 
-  const ChatApi = async (params) => {
-    const data = await createChat(params);
-    if (!data?.success) {
+  const updateBotMessage = useCallback(
+    (content, type = "string", textType = "normal") => {
+      setFinalMessages((prev) => {
+        const updated = [...prev];
+
+        if (
+          botMessageIndexRef.current !== null &&
+          updated[botMessageIndexRef.current]?.sender === "bot"
+        ) {
+          updated[botMessageIndexRef.current] = {
+            sender: "bot",
+            message: content,
+            type,
+            textType,
+          };
+        } else {
+          updated.push({
+            sender: "bot",
+            message: content,
+            type,
+            textType,
+          });
+          botMessageIndexRef.current = updated.length - 1;
+        }
+
+        return updated;
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!id) return;
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const onGeneratingUpdateReply = (data) => {
+      setWaitingForBot(true);
+      setProjectStatus(data?.message || "AI is thinking...");
+      updateBotMessage(
+        data?.message || "AI is thinking...",
+        "string",
+        "shimmer",
+      );
+    };
+
+    const onGeneratedUpdateReply = (data) => {
+      const reply =
+        data?.data?.reply || data?.message || "AI has generated a response";
+      const type = data?.data?.type || "string";
+
+      updateBotMessage(reply, type, "normal");
+      setProjectStatus(data?.message || "AI has generated a response");
+
+      if (!data?.success) {
+        setWaitingForBot(false);
+        botMessageIndexRef.current = null;
+        errorToast(data?.message || "Failed to generate response");
+      }
+    };
+
+    const onFetchingUpdateCode = (data) => {
+      setProjectStatus(data?.message || "AI is fetching old code...");
+    };
+
+    const onFetchedUpdateCode = (data) => {
+      setProjectStatus(data?.message || "AI has fetched old code");
+    };
+
+    const onGeneratingUpdateCode = (data) => {
+      setProjectStatus(data?.message || "AI is generating updated code...");
+    };
+
+    const onGeneratedUpdateCode = (data) => {
+      setProjectStatus(data?.message || "AI has generated updated code");
+    };
+
+    const onDeploymentUpdateCompleted = (data) => {
+      setProjectStatus(data?.message || "Project update deployed successfully");
       setWaitingForBot(false);
-      setFetchGetApi(false);
+      botMessageIndexRef.current = null;
+
+      if (data?.success === false) {
+        errorToast(data?.message || "Deployment failed");
+        return;
+      }
+
+      successToast(data?.message || "Project updated successfully!");
+      setRefreshTrigger((prev) => prev + 1);
+    };
+
+    const onProjectError = (data) => {
+      const message =
+        data?.message || "Something went wrong while updating project";
+      setProjectStatus(message);
+      updateBotMessage(message, "string", "normal");
+      setWaitingForBot(false);
+      botMessageIndexRef.current = null;
+      errorToast(message);
+    };
+
+    socket.off("generating:update:reply", onGeneratingUpdateReply);
+    socket.off("generated:update:reply", onGeneratedUpdateReply);
+    socket.off("fetching:update:code", onFetchingUpdateCode);
+    socket.off("fetched:update:code", onFetchedUpdateCode);
+    socket.off("generating:update:code", onGeneratingUpdateCode);
+    socket.off("generated:update:code", onGeneratedUpdateCode);
+    socket.off("deployment:update:completed", onDeploymentUpdateCompleted);
+    socket.off("project_error", onProjectError);
+
+    socket.on("generating:update:reply", onGeneratingUpdateReply);
+    socket.on("generated:update:reply", onGeneratedUpdateReply);
+    socket.on("fetching:update:code", onFetchingUpdateCode);
+    socket.on("fetched:update:code", onFetchedUpdateCode);
+    socket.on("generating:update:code", onGeneratingUpdateCode);
+    socket.on("generated:update:code", onGeneratedUpdateCode);
+    socket.on("deployment:update:completed", onDeploymentUpdateCompleted);
+    socket.on("project_error", onProjectError);
+
+    return () => {
+      socket.off("generating:update:reply", onGeneratingUpdateReply);
+      socket.off("generated:update:reply", onGeneratedUpdateReply);
+      socket.off("fetching:update:code", onFetchingUpdateCode);
+      socket.off("fetched:update:code", onFetchedUpdateCode);
+      socket.off("generating:update:code", onGeneratingUpdateCode);
+      socket.off("generated:update:code", onGeneratedUpdateCode);
+      socket.off("deployment:update:completed", onDeploymentUpdateCompleted);
+      socket.off("project_error", onProjectError);
+    };
+  }, [id, updateBotMessage]);
+
+  const handleSend = () => {
+    if (waitingForBot) return;
+
+    const prompt = input.trim();
+    if (!prompt) return;
+
+    const userId =
+      pingDetails?.id ||
+      selectedProject?.data?.user?.id ||
+      selectedProject?.data?.user_id;
+
+    if (!userId) {
+      errorToast("Unable to find user details. Please refresh and try again.");
       return;
     }
-    setWaitingForBot(false);
-    setFetchGetApi(false);
-    // setRefreshTrigger((p) => p + 1);
-    window.location.reload();
-    return data;
-  };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const newMsg = { sender: "user", message: input };
-    setFinalMessages((p) => [...p, newMsg]);
+    if (!id) {
+      errorToast("Project not found. Please refresh and try again.");
+      return;
+    }
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    setFinalMessages((prev) => {
+      const updated = [
+        ...prev,
+        { sender: "user", message: prompt, type: "string" },
+        {
+          sender: "bot",
+          message: "AI is thinking...",
+          type: "string",
+          textType: "shimmer",
+        },
+      ];
+      botMessageIndexRef.current = updated.length - 1;
+      return updated;
+    });
+
     setInput("");
+    setProjectStatus("Queued update request");
     setWaitingForBot(true);
-    setFetchGetApi(true);
-    await ChatApi({ project_id: id, prompt: input });
+
+    socket.emit("final_update", {
+      prompt,
+      user_id: userId,
+      project_id: id,
+    });
   };
 
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       handleSend();
     }
   };
 
-  // Responsive handling for switching to mobile layout
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      setIsMobile(width < 768);
-      if (width < 768) setDividerX(100);
-      else setDividerX(parseFloat(localStorage.getItem("dividerX")) || 35);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const openMobilePreview = () => {
+    setViewMode("output");
+    setMobileView("preview");
+  };
 
-  // Monitor left panel changes to update dividerX (keeps value updated when user resizes)
-  useEffect(() => {
-    const el = leftPanelRef.current;
-    if (!el) return;
-    let ro = null;
-    try {
-      ro = new ResizeObserver((entries) => {
-        for (let entry of entries) {
-          const parentWidth = entry.target.parentElement
-            ? entry.target.parentElement.clientWidth
-            : window.innerWidth;
-          if (!parentWidth || parentWidth === 0) continue;
-          const newPercent = (entry.contentRect.width / parentWidth) * 100;
-          // Only update when not mobile
-          if (!isMobile) {
-            const clamped = Math.max(20, Math.min(80, newPercent));
-            setDividerX(clamped);
-            localStorage.setItem("dividerX", clamped);
-          }
-        }
-      });
-      ro.observe(el);
-    } catch (err) {
-      // ResizeObserver not supported - ignore
-    }
-    return () => {
-      if (ro && el) ro.unobserve(el);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leftPanelRef.current, isMobile]);
+  const chatPanel = (
+    <ChatPanel
+      selectedProject={selectedProject}
+      waitingForBot={waitingForBot}
+      input={input}
+      setInput={setInput}
+      handleKeyDown={handleKeyDown}
+      handleSend={handleSend}
+      finalMessage={finalMessage}
+      chatContainerRef={chatContainerRef}
+      chatEndRef={chatEndRef}
+      onNavigateHome={() => navigate("/mainpagescreen")}
+      showPreviewButton={isMobile}
+      onShowPreview={openMobilePreview}
+    />
+  );
 
-  // Code view file selection
-
+  const previewPanel = (
+    <PreviewPanel
+      isMobile={isMobile}
+      onBackToChat={() => setMobileView("chat")}
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      deviceView={deviceView}
+      setDeviceView={setDeviceView}
+      refreshTrigger={refreshTrigger}
+      setRefreshTrigger={setRefreshTrigger}
+      selectedVersion={selectedVersion}
+      selectedProject={selectedProject}
+      waitingForBot={waitingForBot}
+      projectStatus={projectStatus}
+      projectFiles={projectFiles}
+      selectedFile={selectedFile}
+      onSelectFile={handleSelectFile}
+      fetchProjectFiles={fetchProjectFiles}
+      id={id}
+      fileContent={fileContent}
+    />
+  );
 
   return (
-    <div className="min-h-screen flex bg-white text-gray-900 overflow-hidden flex-col md:flex-row">
+    <div className="min-h-screen overflow-hidden bg-white text-gray-900">
       {isMobile ? (
-        <>
-          {/* MOBILE: stacked layout (chat or preview) */}
-          {mobileView === "chat" && (
-            <div
-              className="flex flex-col border-r border-gray-200 bg-white w-full h-[100vh]"
-              style={{ height: "100vh" }}
-            >
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate("/mainpagescreen")}
-                    className="p-2 text-xl cursor-pointer hover:bg-gray-200 rounded-md transition-all"
-                  >
-                    <ArrowLeft />
-                  </Button>
-                  <h1 className="font-semibold text-lg text-gray-800">
-                    {selectedProject?.data?.name || "Project Chat"}
-                  </h1>
-                </div>
-
-                <div>
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 md:hidden"
-                    onClick={() => setMobileView("preview")}
-                  >
-                    <Eye className="w-4 h-4" /> Preview
-                  </Button>
-                </div>
-              </div>
-
-              <div
-                ref={chatContainerRef}
-                className="flex-1 overflow-y-auto p-6 space-y-5"
-              >
-                {finalMessage.length > 0 ? (
-                  <>
-                    {finalMessage.map((text, index) => {
-                      return (
-                        <>
-                          {text?.sender === "bot" ? (
-                            <>
-                              <div
-                                key={index}
-                                className="flex items-start gap-2 justify-start"
-                              >
-                                <div className="flex flex-col items-center">
-                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                                    CA
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 mt-1">
-                                    CodeAstra
-                                  </span>
-                                </div>
-                                <div
-                                  className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm"
-                                  dangerouslySetInnerHTML={{
-                                    __html: text?.message,
-                                  }}
-                                />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex items-start gap-2 justify-end">
-                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                                  {text?.message}
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                                    <User className="w-4 h-4" />
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 mt-1">
-                                    {selectedProject?.data?.user?.full_name}
-                                  </span>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </>
-                      );
-                    })}
-                    <div ref={chatEndRef}></div>
-                  </>
-                ) : (
-                  <></>
-                )}
-              </div>
-
-              <div className="p-3 border-t border-gray-200 bg-white flex items-center gap-2">
-                <textarea
-                  placeholder={
-                    waitingForBot ? "Please wait..." : "Type your message..."
-                  }
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  disabled={waitingForBot}
-                  rows={2}
-                  className="flex-1 resize-none bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-sm"
-                />
-                <Button
-                  onClick={handleSend}
-                  disabled={waitingForBot}
-                  className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
-                    } text-white`}
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {mobileView === "preview" && (
-            <div className="relative flex-1 overflow-hidden bg-white h-[100vh]">
-              {/* top controls */}
-              {/* top controls */}
-              <div className="absolute top-0 left-0 w-full flex items-center justify-between gap-3 px-3 py-3 bg-white/90 z-20 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setMobileView("chat");
-                      setViewMode("code");
-                    }}
-                  >
-                    <ArrowLeft />
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      onClick={() => setViewMode("output")}
-                      className={
-                        viewMode === "output"
-                          ? "font-semibold border-b-2 border-black"
-                          : ""
-                      }
-                    >
-                      <Eye className="w-4 h-4" />{" "}
-                      <span className="hidden sm:inline">Preview</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setViewMode("code")}
-                      className={
-                        viewMode === "code"
-                          ? "font-semibold border-b-2 border-black"
-                          : ""
-                      }
-                    >
-                      <Code className="w-4 h-4" />{" "}
-                      <span className="hidden sm:inline">Code</span>
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Monitor
-                    className={`w-5 h-5 cursor-pointer hidden  sm:hidden  ${deviceView === "desktop" ? "text-black" : "text-gray-600"
-                      }`}
-                    onClick={() => setDeviceView("desktop")}
-                  />
-                  <Smartphone
-                    className={`w-5 h-5 cursor-pointer hidden  sm:hidden  ${deviceView === "mobile" ? "text-black" : "text-gray-600"
-                      }`}
-                    onClick={() => setDeviceView("mobile")}
-                  />
-                  <RefreshCw
-                    className="w-5 h-5 cursor-pointer text-gray-600 hidden  sm:hidden "
-                    onClick={() => setRefreshTrigger((p) => p + 1)}
-                  />
-
-                  {/* View button - added for mobile */}
-                  <Select
-                    value={selectedVersion}
-                    onValueChange={setSelectedVersion}
-                    className=" sm:block"
-                  >
-                    <SelectTrigger className="   !w-[90px] text-sm border-none shadow-none focus-visible:ring-0 ">
-                      <SelectValue placeholder="Version" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedProject?.data?.versions?.map((v) => (
-                        <SelectItem key={v} value={v}>
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {/* <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" /> */}
-                  {selectedProject?.data?.assigned_domain && (
-                    <a
-                      href={`https://${selectedProject.data.assigned_domain}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button className="bg-black hover:bg-gray-900 text-white text-xs px-3 py-2">
-                        View
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              <div className="absolute inset-0 flex items-start justify-center pt-16">
-                {viewMode === "output" ? (
-                  <>
-                    {fetchGetApi && (
-                      <UpdatingLobbyOverlay visible={fetchGetApi} />
-                    )}
-                    <iframe
-                      key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
-                      src={
-                        selectedProject?.data?.assigned_domain
-                          ? `https://${selectedProject.data.assigned_domain}`
-                          : ""
-                      }
-                      className="border-0"
-                      style={{
-                        width: deviceView === "mobile" ? "375px" : "100%",
-                        height: deviceView === "mobile" ? "667px" : "100%",
-                        borderRadius: deviceView === "mobile" ? "16px" : "0",
-                        boxShadow:
-                          deviceView === "mobile"
-                            ? "0 0 10px rgba(0,0,0,0.2)"
-                            : "none",
-                      }}
-                      title="Live Preview"
-                    />
-                  </>
-                ) : (
-                  <div className="w-full h-full flex">
-                    <div className="w-1/3 border-r border-gray-200 h-full bg-black">
-                      {projectFiles.loading ? (
-                        // 🔄 Loading state
-                        <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
-                          <Spinner />
-                          <span className="text-sm">
-                            Loading project files…
-                          </span>
-                        </div>
-                      ) : projectFiles.error ? (
-                        // ❌ Error state
-                        <div className="h-full flex flex-col items-center justify-center text-red-400 px-4 text-center">
-                          <p className="text-sm font-medium">
-                            Failed to load files
-                          </p>
-                          <p className="text-xs mt-1 opacity-80">
-                            {projectFiles.error}
-                          </p>
-
-                          <Button
-                            size="sm"
-                            className="mt-3 bg-gray-800 hover:bg-gray-700 text-white"
-                            onClick={() => fetchProjectFiles("v1", id)}
-                          >
-                            Retry
-                          </Button>
-                        </div>
-                      ) : projectFiles.files.length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-                          No files found
-                        </div>
-                      ) : (
-                        // ✅ Success state
-                        <FolderTree
-                          files={projectFiles.files}
-                          onSelectFile={handleSelectFile}
-                          selectedFile={selectedFile}
-                        />
-                      )}
-                    </div>
-
-                    <div className="flex-1 h-full">
-                      <CodeViewer
-                        filePath={selectedFile}
-                        fileContent={fileContent}
-                      />
-
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </>
+        mobileView === "chat" ? (
+          chatPanel
+        ) : (
+          previewPanel
+        )
       ) : (
-        // DESKTOP/TABLET: two-column resizable group
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="flex-1 h-screen"
-          ref={resizableGroupRef}
-        >
-          {/* LEFT CHAT PANEL */}
-          <ResizablePanel defaultSize={30}>
-            <div
-              ref={leftPanelRef}
-              className="flex flex-col border-r border-gray-200 bg-white"
-              style={{ height: "100vh", minHeight: "100vh" }}
-            >
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate("/mainpagescreen")}
-                    className="p-2 text-xl cursor-pointer hover:bg-gray-200 rounded-md transition-all"
-                  >
-                    <ArrowLeft />
-                  </Button>
-
-                  <h1 className="font-semibold text-lg text-gray-800">
-                    {selectedProject?.data?.name || "Project Chat"}
-                  </h1>
-                </div>
-
-                <div>
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 md:hidden"
-                    onClick={() => setViewMode("output")}
-                  >
-                    <Eye className="w-4 h-4" /> Preview
-                  </Button>
-                </div>
-              </div>
-
-              {/* Chat messages area — only this scrolls */}
-              <div
-                ref={chatContainerRef}
-                className="flex-1 overflow-y-auto p-6 space-y-5"
-              >
-                {finalMessage.length > 0 ? (
-                  <>
-                    {finalMessage.map((text, index) => {
-                      return (
-                        <>
-                          {text?.sender === "bot" ? (
-                            <>
-                              <div
-                                key={index}
-                                className="flex items-start gap-2 justify-start"
-                              >
-                                <div className="flex flex-col items-center">
-                                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
-                                    CA
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 mt-1">
-                                    CodeAstra
-                                  </span>
-                                </div>
-                                <div
-                                  className="rounded-lg text-sm shadow max-w-[80%] bg-gray-100 text-gray-800 prose prose-sm p-5"
-                                  dangerouslySetInnerHTML={{
-                                    __html: text?.message,
-                                  }}
-                                />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex items-start gap-2 justify-end">
-                                <div className="p-3 rounded-lg text-sm shadow max-w-[80%] bg-black text-white">
-                                  {text?.message}
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-                                    <User className="w-4 h-4" />
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 mt-1">
-                                    {selectedProject?.data?.user?.full_name}
-                                  </span>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </>
-                      );
-                    })}
-                    <div ref={chatEndRef}></div>
-                  </>
-                ) : (
-                  <></>
-                )}
-              </div>
-
-              <div className="p-3 border-t border-gray-200 bg-white flex items-center gap-2">
-                <textarea
-                  placeholder={
-                    waitingForBot ? "Please wait..." : "Type your message..."
-                  }
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  disabled={waitingForBot}
-                  rows={2}
-                  className="flex-1 resize-none bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-sm"
-                />
-                <Button
-                  onClick={handleSend}
-                  disabled={waitingForBot}
-                  className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
-                    } text-white`}
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+        <ResizablePanelGroup direction="horizontal" className="h-screen">
+          <ResizablePanel defaultSize={32} minSize={24}>
+            {chatPanel}
           </ResizablePanel>
-
-          {/* divider */}
-          <ResizableHandle className="bg-gray-200 hover:bg-gray-400 cursor-col-resize" />
-
-          {/* RIGHT PREVIEW/CODE PANEL */}
-          <ResizablePanel defaultSize={70}>
-            <div
-              className="relative flex-1 overflow-hidden bg-white"
-              style={{ height: "100vh" }}
-            >
-              {/* Content */}
-              <div className="absolute inset-0 pt-16 flex justify-center items-start bg-white">
-                {viewMode === "output" ? (
-                  <>
-                    {fetchGetApi && (
-                      <UpdatingLobbyOverlay visible={fetchGetApi} />
-                    )}
-
-                    <iframe
-                      key={`${refreshTrigger}-${selectedVersion}-${selectedProject?.data?.assigned_domain}`}
-                      src={
-                        selectedProject?.data?.assigned_domain
-                          ? `https://${selectedProject.data.assigned_domain}`
-                          : ""
-                      }
-                      className="border-0"
-                      style={{
-                        width: deviceView === "mobile" ? "375px" : "100%",
-                        height: deviceView === "mobile" ? "667px" : "100%",
-                        borderRadius: deviceView === "mobile" ? "16px" : "0",
-                        boxShadow:
-                          deviceView === "mobile"
-                            ? "0 0 10px rgba(0,0,0,0.2)"
-                            : "none",
-                      }}
-                      title="Live Preview"
-                      onLoad={() => setFetchGetApi(false)}
-                    />
-                  </>
-                ) : (
-                  // CODE VIEW: File tree (left) + Code viewer (right)
-                  <div className="w-full h-full flex">
-                    <div className="w-1/3 border-r border-gray-200 h-full bg-black">
-                      {projectFiles.loading ? (
-                        <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
-                          <Spinner />
-                          <span className="text-sm">
-                            Loading project files…
-                          </span>
-                        </div>
-                      ) : projectFiles.error ? (
-                        <div className="h-full flex flex-col items-center justify-center text-red-400 px-4 text-center">
-                          <p className="text-sm font-medium">
-                            Failed to load files
-                          </p>
-                          <p className="text-xs mt-1 opacity-80">
-                            {projectFiles.error}
-                          </p>
-
-                          <Button
-                            size="sm"
-                            className="mt-3 bg-gray-800 hover:bg-gray-700 text-white"
-                            onClick={() => fetchProjectFiles("v1", id)}
-                          >
-                            Retry
-                          </Button>
-                        </div>
-                      ) : projectFiles.files.length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-                          No files found
-                        </div>
-                      ) : (
-                        <FolderTree
-                          files={projectFiles.files}
-                          onSelectFile={handleSelectFile}
-                          selectedFile={selectedFile}
-                        />
-                      )}
-                    </div>
-
-                    <div className="flex-1 h-full">
-                      <CodeViewer
-                        filePath={selectedFile}
-                        fileContent={fileContent}
-                      />
-
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* TOP CONTROLS */}
-              <div className="absolute top-0 left-0 w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-3 px-4 py-3 bg-white/90 z-20 border-b border-gray-200">
-                {/* Left Section */}
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                  {/* Back button - mobile only */}
-                  <Button
-                    variant="ghost"
-                    onClick={() => setViewMode("code")}
-                    className="flex items-center gap-2 text-sm md:hidden"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline">Back</span>
-                  </Button>
-
-                  {/* Preview button */}
-                  <Button
-                    variant="ghost"
-                    onClick={() => setViewMode("output")}
-                    className={`flex items-center gap-2 text-sm ${viewMode === "output"
-                      ? "font-semibold border-b-2 border-black"
-                      : ""
-                      }`}
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span className="hidden sm:inline">Preview</span>
-                  </Button>
-
-                  {/* Code button */}
-                  <Button
-                    variant="ghost"
-                    onClick={() => setViewMode("code")}
-                    className={`flex items-center gap-2 text-sm ${viewMode === "code"
-                      ? "font-semibold border-b-2 border-black"
-                      : ""
-                      }`}
-                  >
-                    <Code className="w-4 h-4" />
-                    <span className="hidden sm:inline">Code</span>
-                  </Button>
-
-                  {/* Refresh */}
-                  <RefreshCw
-                    className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer"
-                    onClick={() => setRefreshTrigger((p) => p + 1)}
-                  />
-                </div>
-
-                {/* Right Section */}
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                  {/* Version selector - always visible */}
-                  <Select
-                    value={selectedVersion}
-                    onValueChange={setSelectedVersion}
-                    className=" sm:block"
-                  >
-                    <SelectTrigger className="   !w-[160px] text-sm border-none shadow-none focus-visible:ring-0 ">
-                      <SelectValue placeholder="Version" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedProject?.data?.versions?.map((v) => (
-                        <SelectItem key={v} value={v}>
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Icons */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {/* Monitor + Smartphone - only md+ */}
-                    <Monitor
-                      className={`hidden md:inline-block w-5 h-5 cursor-pointer sm:hidden  ${deviceView === "desktop"
-                        ? "text-black"
-                        : "text-gray-600 hover:text-black"
-                        }`}
-                      onClick={() => setDeviceView("desktop")}
-                    />
-                    <Smartphone
-                      className={`hidden md:inline-block w-5 h-5 cursor-pointer ${deviceView === "mobile"
-                        ? "text-black"
-                        : "text-gray-600 hover:text-black"
-                        }`}
-                      onClick={() => setDeviceView("mobile")}
-                    />
-
-                    {/* Share - always visible */}
-                    {/* <Share2 className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" /> */}
-
-                    {/* View button - always visible if domain exists */}
-                    {selectedProject?.data?.assigned_domain && (
-                      <a
-                        href={`https://${selectedProject.data.assigned_domain}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button className="bg-black hover:bg-gray-900 text-white  text-xs md:text-sm px-3 py-2">
-                          View
-                        </Button>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+          <ResizableHandle className="cursor-col-resize bg-gray-200 hover:bg-gray-400" />
+          <ResizablePanel defaultSize={68} minSize={32}>
+            {previewPanel}
           </ResizablePanel>
         </ResizablePanelGroup>
       )}
