@@ -23,6 +23,7 @@ import ForgotPassword from "./components/template/ForgotPassword";
 import VerifyForgotOtp from "./components/template/VerifyForgotOtp";
 import ResetPassword from "./components/template/ResetPassword";
 import Project from "./pages/Project";
+import Supportpage from "./pages/Supportpage";
 // import ProjectPlayground from "./components/template/ProjectPlayground";
 
 // Helper component to redirect based on token
@@ -74,6 +75,9 @@ const RoutesFile = () => {
               element={<TeamManagementPages />}
             />
             <Route path="/preferencespages" element={<PreferencesPages />} />
+             {/* ✅ New Support Route */}
+  <Route path="/support" element={<Supportpage />} />
+
           </Route>
         </Route>
 

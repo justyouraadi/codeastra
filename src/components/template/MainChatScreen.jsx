@@ -53,6 +53,7 @@ import {
   loadingToast,
   dismissToast,
 } from "@/components/atoms/Toast.Atom";
+import { HelpCircle } from "lucide-react";
 
 const MainChatScreen = () => {
   const navigate = useNavigate();
@@ -291,6 +292,16 @@ const MainChatScreen = () => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
 
+        <DropdownMenuItem 
+  onClick={() => { 
+    navigate("/support");
+     setSidebarOpen(false);
+  }}
+>
+  <HelpCircle className="w-4 h-4 mr-2" /> Support
+</DropdownMenuItem> 
+
+
               {/* <DropdownMenuItem
                 onClick={() => {
                   navigate("/profilepage");
@@ -310,7 +321,7 @@ const MainChatScreen = () => {
               >
                 <CiLogout className="w-4 h-4 mr-2" /> Log Out
               </DropdownMenuItem>
-
+             
               {/* <DropdownMenuItem
                 onClick={() => {
                   navigate("/billingpages");
