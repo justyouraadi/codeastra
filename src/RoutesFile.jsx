@@ -75,8 +75,7 @@ const RoutesFile = () => {
               element={<TeamManagementPages />}
             />
             <Route path="/preferencespages" element={<PreferencesPages />} />
-             {/* ✅ New Support Route */}
-  <Route path="/support" element={<Supportpage />} />
+            <Route path="/support" element={<Supportpage />} />
 
           </Route>
         </Route>

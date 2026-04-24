@@ -12,7 +12,7 @@ export default function Sidebar() {
       <h2 className="text-lg font-semibold mb-6">Settings</h2>
 
       <nav className="space-y-1 text-[15px] font-medium flex-1">
-        <Link to="/profilepage" className="flex items-center px-3 py-2 rounded-md bg-gray-100 text-black cursor-pointer">
+        <Link to="/profilepage" className="flex items-center px-3 py-2 rounded-md hover:bg-gray-50 text-black cursor-pointer">
           <User className="w-4 h-4 mr-3" /> Profile
         </Link>
         <Link to="/securitypage" className="flex items-center px-3 py-2 rounded-md hover:bg-gray-50 cursor-pointer">

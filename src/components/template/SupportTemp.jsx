@@ -415,7 +415,7 @@ export default function SupportTemp() {
                 </div>
               </div>
             );
-          })}
+          })}  
         </div>
     
         {/* Input */}
