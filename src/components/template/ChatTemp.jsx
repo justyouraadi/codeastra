@@ -606,7 +606,7 @@ const ChatTemp = () => {
       const data = await fetchProjectById(id);
       if (!data?.success) return;
 
-      await fetchProjectFiles("v1", id);
+      // await fetchProjectFiles("v1", id);
 
       setFinalMessages(Array.isArray(data?.data?.chats) ? data.data.chats : []);
       botMessageIndexRef.current = null;
