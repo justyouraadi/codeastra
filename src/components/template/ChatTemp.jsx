@@ -35,6 +35,7 @@ import { useAuth } from "@/context/ContextProvider";
 import { socket } from "@/socket/socket";
 import { errorToast, successToast } from "@/components/atoms/Toast.Atom";
 import EnvSection from "../organisms/EnvSection";
+import DatabaseSection from "../organisms/DatabaseSection";
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -439,6 +440,17 @@ const PreviewPanel = ({
 
           <Button
             variant="ghost"
+            onClick={() => setViewMode("database")}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${
+              viewMode === "database" ? "border-b-2 border-black font-semibold" : ""
+            }`}
+          >
+            <Container className="h-4 w-4" />
+            <span className="hidden sm:inline">Database</span>
+          </Button>
+
+          <Button
+            variant="ghost"
             onClick={() => setViewMode("env")}
             className={`flex cursor-pointer items-center gap-2 text-sm ${
               viewMode === "env" ? "border-b-2 border-black font-semibold" : ""
@@ -535,6 +547,12 @@ const PreviewPanel = ({
             <EnvSection project_id={id} />
           </div>
         ) : null}
+
+        {viewMode === "database" ? <>
+        <div className="h-full w-full p-6 overflow-y-auto">
+            <DatabaseSection project_id={id} />
+        </div>
+        </> : null}
       </div>
     </div>
   );
@@ -761,6 +779,7 @@ const ChatTemp = () => {
 
     const prompt = input.trim();
     if (!prompt) return;
+    setViewMode("output");
 
     const userId =
       pingDetails?.id ||
