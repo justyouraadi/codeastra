@@ -9,7 +9,7 @@ import {
 import { getProjectByIdAPI } from "../apis/GetProjectById.Api";
 import { createChatAPI } from "@/apis/Chat.Api";
 import { FetchProjectEnv, UpdateProjectEnv } from "@/apis/Env.Api";
-import { FetchContainers } from "@/apis/Database.Api";
+import { FetchContainers, FetchItems } from "@/apis/Database.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
@@ -248,7 +248,7 @@ export const useProjectProvider = () => {
     }
   };
 
-  const fetchProjectContainers = async (project_id) =>{
+  const fetchProjectContainers = async (project_id) => {
     try {
       const data = await FetchContainers(project_id);
       return data;
@@ -257,7 +257,25 @@ export const useProjectProvider = () => {
       setError(error.message);
       throw error;
     }
-  }
+  };
+  const fetchProjectItems = async (
+    project_id,
+    container_id,
+    continuationToken = null,
+  ) => {
+    try {
+      const data = await FetchItems(
+        project_id,
+        container_id,
+        continuationToken,
+      );
+      return data;
+    } catch (error) {
+      console.error("❌ Fetch Project Items Error:", error.message);
+      setError(error.message);
+      throw error;
+    }
+  };
 
   // ----------------------------------------------------------
   // 🔹 Returned Values for Components
@@ -284,6 +302,7 @@ export const useProjectProvider = () => {
     getProjectEnv,
     updateProjectEnv,
     projectEnv,
-    fetchProjectContainers
+    fetchProjectContainers,
+    fetchProjectItems,
   };
 };
