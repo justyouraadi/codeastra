@@ -10,6 +10,8 @@ import { getProjectByIdAPI } from "../apis/GetProjectById.Api";
 import { createChatAPI } from "@/apis/Chat.Api";
 import { FetchProjectEnv, UpdateProjectEnv } from "@/apis/Env.Api";
 import { FetchContainers, FetchItems } from "@/apis/Database.Api";
+import { AddCustomDomain, FetchCustomDomainInfo } from "@/apis/Domain.Api";
+import { errorToast } from "@/components/atoms/Toast.Atom";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
@@ -32,6 +34,10 @@ export const useProjectProvider = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
   const [hasMore, setHasMore] = useState(true);
+  const [domainLoading, setDomainLoading] = useState(true);
+  const [addDomainLoading, setAddDomainLoading] = useState(true);
+  
+
 
   // ----------------------------------------------------------
   // 🔹 Create New Project
@@ -277,6 +283,49 @@ export const useProjectProvider = () => {
     }
   };
 
+  const FetchCustomDomain = async (
+    project_id,
+  ) => {
+    try {
+      // setDomainLoading(true);
+      const data = await FetchCustomDomainInfo(
+        project_id,
+      );
+      setDomainLoading(false);
+      return data;
+    } catch (error) {
+      setDomainLoading(false);
+      console.error("❌ Fetch Custom Domain Error:", error.message);
+      setError(error.message);
+      throw error;
+    } finally {
+      setDomainLoading(false);
+    }
+  };
+
+  const AddCustomDomainToProject = async (
+    project_id,
+    domainName
+  ) => {
+    try {
+      // setDomainLoading(true);
+      const data = await AddCustomDomain(
+        project_id,
+        domainName
+      );
+      setAddDomainLoading(false);
+      return data;
+    } catch (error) {
+      errorToast(error.message || "Failed to add custom domain");
+      setAddDomainLoading(false);
+      console.error("❌ Add Custom Domain Error:", error.message);
+      setError(error.message);
+      throw error;
+    } finally {
+      setAddDomainLoading(false);
+    }
+  };
+
   // ----------------------------------------------------------
   // 🔹 Returned Values for Components
   // ----------------------------------------------------------
@@ -304,5 +353,9 @@ export const useProjectProvider = () => {
     projectEnv,
     fetchProjectContainers,
     fetchProjectItems,
+    FetchCustomDomain,
+    domainLoading,
+    AddCustomDomainToProject,
+    addDomainLoading,
   };
 };
