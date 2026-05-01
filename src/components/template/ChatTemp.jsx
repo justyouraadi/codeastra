@@ -35,6 +35,10 @@ import { useAuth } from "@/context/ContextProvider";
 import { socket } from "@/socket/socket";
 import { errorToast, successToast } from "@/components/atoms/Toast.Atom";
 import EnvSection from "../organisms/EnvSection";
+import DatabaseSection from "../organisms/DatabaseSection";
+import { Database } from "lucide-react";
+import { Link } from "lucide-react";
+import DomainSection from "../organisms/DomainSection";
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -410,6 +414,7 @@ const PreviewPanel = ({
   fetchProjectFiles,
   id,
   fileContent,
+  current_domain: currentDomain,
 }) => {
   const previewUrl = selectedProject?.data?.assigned_domain || null;
   const mobileFrame = !isMobile && deviceView === "mobile";
@@ -439,6 +444,17 @@ const PreviewPanel = ({
 
           <Button
             variant="ghost"
+            onClick={() => setViewMode("database")}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${
+              viewMode === "database" ? "border-b-2 border-black font-semibold" : ""
+            }`}
+          >
+            <Database className="h-4 w-4" />
+            <span className="hidden sm:inline">Database</span>
+          </Button>
+
+          <Button
+            variant="ghost"
             onClick={() => setViewMode("env")}
             className={`flex cursor-pointer items-center gap-2 text-sm ${
               viewMode === "env" ? "border-b-2 border-black font-semibold" : ""
@@ -446,6 +462,16 @@ const PreviewPanel = ({
           >
             <Container className="h-4 w-4" />
             <span className="hidden sm:inline">Env's</span>
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setViewMode("domain")}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${
+              viewMode === "domain" ? "border-b-2 border-black font-semibold" : ""
+            }`}
+          >
+            <Link className="h-4 w-4" />
+            <span className="hidden sm:inline">Custom Domain</span>
           </Button>
 
           <RefreshCw
@@ -535,6 +561,18 @@ const PreviewPanel = ({
             <EnvSection project_id={id} />
           </div>
         ) : null}
+
+        {viewMode === "database" ? <>
+        <div className="h-full w-full p-6 overflow-y-auto">
+            <DatabaseSection project_id={id} />
+        </div>
+        </> : null}
+
+        {viewMode === "domain" ? <>
+        <div className="h-full w-full p-6 overflow-y-auto">
+            <DomainSection project_id={id} current_domain={currentDomain} />
+        </div>
+        </> : null}
       </div>
     </div>
   );
@@ -562,6 +600,7 @@ const ChatTemp = () => {
   const [deviceView, setDeviceView] = useState("desktop");
   const [selectedVersion, setSelectedVersion] = useState("");
   const [finalMessage, setFinalMessages] = useState([]);
+  const [currentDomain,setCurrentDomain] = useState(null);
   const [projectStatus, setProjectStatus] = useState(
     "Working on your update...",
   );
@@ -605,8 +644,11 @@ const ChatTemp = () => {
     (async () => {
       const data = await fetchProjectById(id);
       if (!data?.success) return;
+      setCurrentDomain(data?.data?.assigned_domain
+  ? data.data.assigned_domain.replace(/^https?:\/\//, '')
+  : null);
 
-      await fetchProjectFiles("v1", id);
+      // await fetchProjectFiles("v1", id);
 
       setFinalMessages(Array.isArray(data?.data?.chats) ? data.data.chats : []);
       botMessageIndexRef.current = null;
@@ -761,6 +803,7 @@ const ChatTemp = () => {
 
     const prompt = input.trim();
     if (!prompt) return;
+    setViewMode("output");
 
     const userId =
       pingDetails?.id ||
@@ -856,6 +899,7 @@ const ChatTemp = () => {
       fetchProjectFiles={fetchProjectFiles}
       id={id}
       fileContent={fileContent}
+      current_domain={currentDomain}
     />
   );
 
