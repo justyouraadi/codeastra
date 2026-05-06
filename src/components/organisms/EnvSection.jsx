@@ -1,35 +1,56 @@
 import { useProjectProvider } from "@/hooks/useProjectProvider";
 import { useState, useEffect } from "react";
-import { Copy, Check, Edit2 } from "lucide-react";
+import { Copy, Check, Edit2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Field, FieldGroup } from "../ui/field";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { errorToast, successToast } from "../atoms/Toast.Atom";
 
 export default function EnvSection({ project_id }) {
-  const { getProjectEnv, updateProjectEnv } = useProjectProvider();
+  const { getProjectEnv, updateProjectEnv, addEnv, deleteEnv } =
+    useProjectProvider();
 
   const [variables, setVariables] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editedValues, setEditedValues] = useState({});
   const [savingId, setSavingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [addLoading, setAddLoading] = useState(false);
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [variableToDelete, setVariableToDelete] = useState(null);
+
+  const fetchEnv = async () => {
+    const data = await getProjectEnv(project_id);
+    if (!data?.success) return;
+
+    const formattedEnv = Object.entries(data?.data || {}).map(
+      ([key, value]) => ({
+        id: key,
+        key,
+        value,
+      }),
+    );
+
+    setVariables(formattedEnv);
+  };
 
   useEffect(() => {
     if (!project_id) return;
-
-    const fetchEnv = async () => {
-      const data = await getProjectEnv(project_id);
-      if (!data?.success) return;
-
-      const formattedEnv = Object.entries(data?.data || {}).map(
-        ([key, value]) => ({
-          id: key,
-          key,
-          value,
-        }),
-      );
-
-      setVariables(formattedEnv);
-    };
-
     fetchEnv();
   }, [project_id]);
 
@@ -75,11 +96,54 @@ export default function EnvSection({ project_id }) {
         delete copy[id];
         return copy;
       });
+      successToast("Environment variable updated");
     } catch (err) {
       console.error("Failed to update environment variable:", err);
+      errorToast("Failed to update environment variable");
     } finally {
       setSavingId(null);
     }
+  };
+
+  const handleAdd = async (key, value) => {
+    if (!project_id) return;
+    if (!key || !value) return;
+    try {
+      setAddLoading(true);
+      await addEnv(project_id, key, value);
+      await fetchEnv();
+      successToast("Environment variable added successfully");
+      setNewKey("");
+      setNewValue("");
+    } catch (error) {
+      console.error("Failed to add environment variable:", error);
+      errorToast("Failed to add environment variable");
+    } finally {
+      setAddLoading(false);
+      setIsAddDialogOpen(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!project_id || !variableToDelete) return;
+    try {
+      setDeletingId(variableToDelete.id);
+      await deleteEnv(project_id, variableToDelete.key);
+      setVariables((prev) => prev.filter((v) => v.id !== variableToDelete.id));
+      successToast("Environment variable deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete environment variable:", error);
+      errorToast("Failed to delete environment variable");
+    } finally {
+      setDeletingId(null);
+      setIsDeleteDialogOpen(false);
+      setVariableToDelete(null);
+    }
+  };
+
+  const openDeleteDialog = (variable) => {
+    setVariableToDelete(variable);
+    setIsDeleteDialogOpen(true);
   };
 
   const cancelEdit = () => {
@@ -89,11 +153,113 @@ export default function EnvSection({ project_id }) {
 
   return (
     <>
-      <h2>Environment Variables</h2>
-      <p className="text-xs text-gray-500 pb-8">
-        View and manage your application environment variables
-      </p>
+      <div className="flex flex-col pb-8 space-y-3 sm:flex-row sm:space-y-0 sm:items-center sm:justify-between">
+        <div>
+          <h2>Environment Variables</h2>
+          <p className="text-xs text-gray-500">
+            View and manage your application environment variables
+          </p>
+        </div>
+        <div>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                className="cursor-pointer"
+                onClick={() => setIsAddDialogOpen(true)}
+              >
+                + Add Variable
+              </Button>
+            </DialogTrigger>
+            <DialogContent className={"sm:max-w-sm"}>
+              <DialogHeader>
+                <DialogTitle>Add Environment Variable</DialogTitle>
+                <DialogDescription>
+                  Add a new environment variable to your project. This variable
+                  will be available to your application at runtime.
+                </DialogDescription>
+              </DialogHeader>
 
+              <FieldGroup>
+                <Field>
+                  <Label htmlFor="key">Key</Label>
+                  <Input
+                    id="key"
+                    name="key"
+                    value={newKey}
+                    onChange={(e) => setNewKey(e.target.value.toUpperCase())}
+                  />
+                </Field>
+
+                <Field>
+                  <Label htmlFor="value">Value</Label>
+                  <Input
+                    id="value"
+                    name="value"
+                    value={newValue}
+                    onChange={(e) => setNewValue(e.target.value)}
+                  />
+                </Field>
+              </FieldGroup>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer"
+                    onClick={() => setIsAddDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button
+                  className={"cursor-pointer"}
+                  onClick={() => handleAdd(newKey, newValue)}
+                  disabled={addLoading}
+                >
+                  {addLoading ? "Adding..." : "Save"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogContent className={"sm:max-w-sm"}>
+              <DialogHeader>
+                <DialogTitle>Delete Variable</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete the environment variable{" "}
+                  <span className="font-semibold text-foreground">
+                    {variableToDelete?.key}
+                  </span>
+                  ? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setIsDeleteDialogOpen(false);
+                      setVariableToDelete(null);
+                    }}
+                    disabled={deletingId !== null}
+                  >
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button
+                  className="cursor-pointer bg-red-500 hover:bg-red-600 text-white"
+                  onClick={handleDelete}
+                  disabled={deletingId !== null}
+                >
+                  {deletingId !== null ? "Deleting..." : "Delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+      
       {variables.map((variable) => (
         <div
           key={variable.id}
@@ -151,6 +317,17 @@ export default function EnvSection({ project_id }) {
                 className={"cursor-pointer"}
               >
                 <Edit2 className="h-4 w-4" />
+              </Button>
+
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => openDeleteDialog(variable)}
+                aria-label="Delete variable"
+                className={"cursor-pointer text-red-500"}
+              >
+                <Trash2 className="h-4 w-4" />
               </Button>
 
               <Button
