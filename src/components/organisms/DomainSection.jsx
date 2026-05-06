@@ -1,26 +1,38 @@
-import { Link } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, Globe, AlertTriangleIcon, Network, Dot, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
-import { Globe } from "lucide-react";
-import { useEffect } from "react";
 import { useProjectProvider } from "@/hooks/useProjectProvider";
-import { useState } from "react";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { AlertTriangleIcon } from "lucide-react";
 import { Spinner } from "../ui/spinner";
-import { Network } from "lucide-react";
 import { Badge } from "../ui/badge";
-import { Dot } from "lucide-react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 
 export default function DomainSection({ project_id, current_domain }) {
-  const { domainLoading, FetchCustomDomain, AddCustomDomainToProject } =
-    useProjectProvider();
+  const { 
+    domainLoading, 
+    FetchCustomDomain, 
+    AddCustomDomainToProject, 
+    DeleteCustomDomainFromProject 
+  } = useProjectProvider();
+  
   const [domain, setDomain] = useState({});
   const [disableAdd, setDisableAdd] = useState(true);
   const [newDomain, setNewDomain] = useState("");
   const [step, setStep] = useState(1);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const isValidDomain = (value) => {
     const domainRegex = /^(?!-)(?:[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/;
@@ -46,6 +58,19 @@ export default function DomainSection({ project_id, current_domain }) {
       setDomain(data?.data || {});
     }
     await fetchDomain();
+  };
+
+  const handleDeleteDomain = async () => {
+    setIsDeleting(true);
+    const data = await DeleteCustomDomainFromProject(project_id, domain.domainName);
+    setIsDeleting(false);
+    setIsDeleteDialogOpen(false);
+    
+    if (data?.success) {
+      setDomain({});
+      setStep(1);
+      setNewDomain("");
+    }
   };
 
   const fetchDomain = async () => {
@@ -177,13 +202,60 @@ export default function DomainSection({ project_id, current_domain }) {
               </CardHeader>
 
               <CardContent>
-                <Alert className="border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-50 flex items-center">
-                  <Globe />
-                  <AlertTitle>{domain?.domainName}</AlertTitle>
-                  <Badge variant={"outline"} className={"ml-auto text-xs"}>
-                    <Dot /> {domain?.status}
-                  </Badge>
-                </Alert>
+                <div className="flex gap-2 items-stretch">
+                  <Alert className="flex-1 border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-50 flex items-center">
+                    <Globe />
+                    <AlertTitle className="mb-0 ml-2">{domain?.domainName}</AlertTitle>
+                    <Badge variant={"outline"} className={"ml-auto text-xs"}>
+                      <Dot /> {domain?.status}
+                    </Badge>
+                  </Alert>
+
+                  <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="cursor-pointer text-red-500 h-auto"
+                        aria-label="Delete custom domain"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className={"sm:max-w-sm"}>
+                      <DialogHeader>
+                        <DialogTitle>Delete Custom Domain</DialogTitle>
+                        <DialogDescription>
+                          Are you sure you want to delete the domain{" "}
+                          <span className="font-semibold text-foreground">
+                            {domain?.domainName}
+                          </span>
+                          ? This action cannot be undone.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button
+                            variant="outline"
+                            className="cursor-pointer"
+                            disabled={isDeleting}
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </DialogClose>
+                        <Button
+                          className="cursor-pointer bg-red-500 hover:bg-red-600 text-white"
+                          onClick={handleDeleteDomain}
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? "Deleting..." : "Delete"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardContent>
             </Card>
           )}
