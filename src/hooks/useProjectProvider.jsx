@@ -8,9 +8,14 @@ import {
 } from "../apis/GetProjects.Api";
 import { getProjectByIdAPI } from "../apis/GetProjectById.Api";
 import { createChatAPI } from "@/apis/Chat.Api";
-import { FetchProjectEnv, UpdateProjectEnv } from "@/apis/Env.Api";
+import {
+  AddProjectEnv,
+  DeleteProjectEnv,
+  FetchProjectEnv,
+  UpdateProjectEnv,
+} from "@/apis/Env.Api";
 import { FetchContainers, FetchItems } from "@/apis/Database.Api";
-import { AddCustomDomain, FetchCustomDomainInfo } from "@/apis/Domain.Api";
+import { AddCustomDomain, DeleteCustomDomain, FetchCustomDomainInfo } from "@/apis/Domain.Api";
 import { errorToast } from "@/components/atoms/Toast.Atom";
 
 export const useProjectProvider = () => {
@@ -36,8 +41,7 @@ export const useProjectProvider = () => {
   const [hasMore, setHasMore] = useState(true);
   const [domainLoading, setDomainLoading] = useState(true);
   const [addDomainLoading, setAddDomainLoading] = useState(true);
-  
-
+  const [deleteDomainLoading, setDeleteDomainLoading] = useState(true);
 
   // ----------------------------------------------------------
   // 🔹 Create New Project
@@ -283,14 +287,10 @@ export const useProjectProvider = () => {
     }
   };
 
-  const FetchCustomDomain = async (
-    project_id,
-  ) => {
+  const FetchCustomDomain = async (project_id) => {
     try {
       // setDomainLoading(true);
-      const data = await FetchCustomDomainInfo(
-        project_id,
-      );
+      const data = await FetchCustomDomainInfo(project_id);
       setDomainLoading(false);
       return data;
     } catch (error) {
@@ -303,16 +303,10 @@ export const useProjectProvider = () => {
     }
   };
 
-  const AddCustomDomainToProject = async (
-    project_id,
-    domainName
-  ) => {
+  const AddCustomDomainToProject = async (project_id, domainName) => {
     try {
       // setDomainLoading(true);
-      const data = await AddCustomDomain(
-        project_id,
-        domainName
-      );
+      const data = await AddCustomDomain(project_id, domainName);
       setAddDomainLoading(false);
       return data;
     } catch (error) {
@@ -323,6 +317,56 @@ export const useProjectProvider = () => {
       throw error;
     } finally {
       setAddDomainLoading(false);
+    }
+  };
+
+  const addEnv = async (project_id, key, value) => {
+    try {
+      const data = await AddProjectEnv(project_id, key, value);
+      setProjectEnv((prev) => ({
+        ...(prev || {}),
+        [key]: value,
+      }));
+      return data;
+    } catch (error) {
+      errorToast(
+        error.message,
+      );
+      console.error("❌ Add Project Environment Error:", error.message);
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  const deleteEnv = async (project_id, key) => {
+    try {
+      const data = await DeleteProjectEnv(project_id, key);
+      setProjectEnv((prev) => {
+        const newEnv = { ...prev };
+        delete newEnv[key];
+        return newEnv;
+      });
+      return data;
+    } catch (error) {
+      errorToast(
+        error.message,
+      );
+      console.error("❌ Delete Project Environment Error:", error.message);
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  const DeleteCustomDomainFromProject = async (project_id) => {
+    try {
+      const data = await DeleteCustomDomain(project_id);
+      setDeleteDomainLoading(false);
+      return data;
+    } catch (error) {
+      errorToast(error.message || "Failed to delete custom domain");
+      console.error("❌ Delete Custom Domain Error:", error.message);
+      setError(error.message);
+      throw error;
     }
   };
 
@@ -357,5 +401,8 @@ export const useProjectProvider = () => {
     domainLoading,
     AddCustomDomainToProject,
     addDomainLoading,
+    addEnv,
+    deleteEnv,
+    DeleteCustomDomainFromProject,
   };
 };

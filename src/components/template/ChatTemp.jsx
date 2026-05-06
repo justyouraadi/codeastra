@@ -29,6 +29,21 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
 import MarkdownRenderer from "../ui/markdown-renderer";
 import { useAuth } from "@/context/ContextProvider";
@@ -39,6 +54,8 @@ import DatabaseSection from "../organisms/DatabaseSection";
 import { Database } from "lucide-react";
 import { Link } from "lucide-react";
 import DomainSection from "../organisms/DomainSection";
+import { FaBars } from "react-icons/fa";
+
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -78,9 +95,8 @@ const TreeNode = ({
   return (
     <div>
       <div
-        className={`flex cursor-pointer items-center gap-2 rounded px-2 py-1 ${
-          isActive ? "bg-gray-700" : "hover:bg-gray-700"
-        }`}
+        className={`flex cursor-pointer items-center gap-2 rounded px-2 py-1 ${isActive ? "bg-gray-700" : "hover:bg-gray-700"
+          }`}
         style={{ paddingLeft: depth * 14 }}
         onClick={() => {
           if (isFile) {
@@ -233,11 +249,10 @@ const ChatMessages = ({
               </div>
 
               <div
-                className={`prose prose-sm max-w-[80%] rounded-lg p-3 text-sm shadow ${
-                  text?.textType === "shimmer"
-                    ? "animate-pulse bg-gray-50 text-gray-600"
-                    : "bg-gray-100 text-gray-800"
-                }`}
+                className={`prose prose-sm max-w-[80%] rounded-lg p-3 text-sm shadow ${text?.textType === "shimmer"
+                  ? "animate-pulse bg-gray-50 text-gray-600"
+                  : "bg-gray-100 text-gray-800"
+                  }`}
               >
                 {text?.type === "string" ? (
                   text?.message
@@ -286,6 +301,8 @@ const ChatPanel = ({
   onNavigateHome,
   showPreviewButton,
   onShowPreview,
+  setViewMode   ,
+  setMobileView
 }) => {
   return (
     <div className="flex h-screen flex-col border-r border-gray-200 bg-white">
@@ -304,15 +321,74 @@ const ChatPanel = ({
         </div>
 
         {showPreviewButton ? (
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-            onClick={onShowPreview}
-          >
-            <Eye className="h-4 w-4" /> Preview
-          </Button>
+          // <Button
+          //   variant="outline"
+          //   className="flex items-center gap-2"
+          //   onClick={onShowPreview}
+          // >
+          //   <Eye className="h-4 w-4" /> Preview
+          // </Button>
+          <DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="outline">
+      <FaBars />
+    </Button>
+  </DropdownMenuTrigger>
+
+  <DropdownMenuContent className="w-44" align="start">
+    <DropdownMenuGroup>
+
+      {/* ✅ PREVIEW */}
+      <DropdownMenuItem
+        onClick={() => {
+          onShowPreview(); // ye theek hai
+        }}
+      >
+        <Eye className="h-4 w-4 mr-2" />
+        <span>Preview</span>
+      </DropdownMenuItem>
+
+      {/* ✅ DATABASE */}
+      <DropdownMenuItem
+        onClick={() => {
+          setViewMode("database");
+          setMobileView("preview"); // 👈 IMPORTANT
+        }}
+      >
+        <Database className="h-4 w-4 mr-2" />
+        <span>Database</span>
+      </DropdownMenuItem>
+
+      {/* ✅ ENV */}
+      <DropdownMenuItem
+        onClick={() => {
+          setViewMode("env");
+          setMobileView("preview"); // 👈 IMPORTANT
+        }}
+      >
+        <Container className="h-4 w-4 mr-2" />
+        <span>Env's</span>
+      </DropdownMenuItem>
+
+      {/* ✅ DOMAIN */}
+      <DropdownMenuItem
+        onClick={() => {
+          setViewMode("domain");
+          setMobileView("preview"); // 👈 IMPORTANT
+        }}
+      >
+        <Link className="h-4 w-4 mr-2" />
+        <span>Custom Domain</span>
+      </DropdownMenuItem>
+
+    </DropdownMenuGroup>
+  </DropdownMenuContent>
+</DropdownMenu>
         ) : null}
       </div>
+
+
+
 
       <ChatMessages
         finalMessage={finalMessage}
@@ -336,9 +412,8 @@ const ChatPanel = ({
         <Button
           onClick={handleSend}
           disabled={waitingForBot || !input.trim()}
-          className={`${
-            waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
-          } text-white`}
+          className={`${waitingForBot ? "bg-gray-400" : "bg-black hover:bg-gray-900"
+            } text-white`}
         >
           <Send className="h-4 w-4" />
         </Button>
@@ -432,11 +507,10 @@ const PreviewPanel = ({
           <Button
             variant="ghost"
             onClick={() => setViewMode("output")}
-            className={`flex cursor-pointer items-center gap-2 text-sm ${
-              viewMode === "output"
-                ? "border-b-2 border-black font-semibold"
-                : ""
-            }`}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "output"
+              ? "border-b-2 border-black font-semibold"
+              : ""
+              }`}
           >
             <Eye className="h-4 w-4" />
             <span className="hidden sm:inline">Preview</span>
@@ -445,9 +519,8 @@ const PreviewPanel = ({
           <Button
             variant="ghost"
             onClick={() => setViewMode("database")}
-            className={`flex cursor-pointer items-center gap-2 text-sm ${
-              viewMode === "database" ? "border-b-2 border-black font-semibold" : ""
-            }`}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "database" ? "border-b-2 border-black font-semibold" : ""
+              }`}
           >
             <Database className="h-4 w-4" />
             <span className="hidden sm:inline">Database</span>
@@ -456,9 +529,8 @@ const PreviewPanel = ({
           <Button
             variant="ghost"
             onClick={() => setViewMode("env")}
-            className={`flex cursor-pointer items-center gap-2 text-sm ${
-              viewMode === "env" ? "border-b-2 border-black font-semibold" : ""
-            }`}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "env" ? "border-b-2 border-black font-semibold" : ""
+              }`}
           >
             <Container className="h-4 w-4" />
             <span className="hidden sm:inline">Env's</span>
@@ -466,9 +538,8 @@ const PreviewPanel = ({
           <Button
             variant="ghost"
             onClick={() => setViewMode("domain")}
-            className={`flex cursor-pointer items-center gap-2 text-sm ${
-              viewMode === "domain" ? "border-b-2 border-black font-semibold" : ""
-            }`}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "domain" ? "border-b-2 border-black font-semibold" : ""
+              }`}
           >
             <Link className="h-4 w-4" />
             <span className="hidden sm:inline">Custom Domain</span>
@@ -484,19 +555,17 @@ const PreviewPanel = ({
           {!isMobile ? (
             <>
               <Monitor
-                className={`h-5 w-5 cursor-pointer ${
-                  deviceView === "desktop"
-                    ? "text-black"
-                    : "text-gray-600 hover:text-black"
-                }`}
+                className={`h-5 w-5 cursor-pointer ${deviceView === "desktop"
+                  ? "text-black"
+                  : "text-gray-600 hover:text-black"
+                  }`}
                 onClick={() => setDeviceView("desktop")}
               />
               <Smartphone
-                className={`h-5 w-5 cursor-pointer ${
-                  deviceView === "mobile"
-                    ? "text-black"
-                    : "text-gray-600 hover:text-black"
-                }`}
+                className={`h-5 w-5 cursor-pointer ${deviceView === "mobile"
+                  ? "text-black"
+                  : "text-gray-600 hover:text-black"
+                  }`}
                 onClick={() => setDeviceView("mobile")}
               />
             </>
@@ -563,15 +632,15 @@ const PreviewPanel = ({
         ) : null}
 
         {viewMode === "database" ? <>
-        <div className="h-full w-full p-6 overflow-y-auto">
+          <div className="h-full w-full p-6 overflow-y-auto">
             <DatabaseSection project_id={id} />
-        </div>
+          </div>
         </> : null}
 
         {viewMode === "domain" ? <>
-        <div className="h-full w-full p-6 overflow-y-auto">
+          <div className="h-full w-full p-6 overflow-y-auto">
             <DomainSection project_id={id} current_domain={currentDomain} />
-        </div>
+          </div>
         </> : null}
       </div>
     </div>
@@ -600,7 +669,7 @@ const ChatTemp = () => {
   const [deviceView, setDeviceView] = useState("desktop");
   const [selectedVersion, setSelectedVersion] = useState("");
   const [finalMessage, setFinalMessages] = useState([]);
-  const [currentDomain,setCurrentDomain] = useState(null);
+  const [currentDomain, setCurrentDomain] = useState(null);
   const [projectStatus, setProjectStatus] = useState(
     "Working on your update...",
   );
@@ -645,8 +714,8 @@ const ChatTemp = () => {
       const data = await fetchProjectById(id);
       if (!data?.success) return;
       setCurrentDomain(data?.data?.assigned_domain
-  ? data.data.assigned_domain.replace(/^https?:\/\//, '')
-  : null);
+        ? data.data.assigned_domain.replace(/^https?:\/\//, '')
+        : null);
 
       // await fetchProjectFiles("v1", id);
 
@@ -876,6 +945,8 @@ const ChatTemp = () => {
       onNavigateHome={() => navigate("/mainpagescreen")}
       showPreviewButton={isMobile}
       onShowPreview={openMobilePreview}
+       setViewMode={setViewMode} 
+       setMobileView={setMobileView} 
     />
   );
 
