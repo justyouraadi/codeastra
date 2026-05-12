@@ -100,7 +100,7 @@ export default function Project() {
         return false;
       }
 
-      if (words.length > 70) {
+      if (words.length > 800) {
         errorToast("Prompt is too long!");
         return false;
       }

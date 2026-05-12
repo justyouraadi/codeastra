@@ -127,7 +127,7 @@ const MainChatScreen = () => {
       return;
     }
 
-    if (wordCount > 70) {
+    if (wordCount > 800) {
       errorToast("Prompt is too long!");
       return;
     }
