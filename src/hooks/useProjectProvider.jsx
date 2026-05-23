@@ -17,11 +17,13 @@ import {
 import { FetchContainers, FetchItems } from "@/apis/Database.Api";
 import { AddCustomDomain, DeleteCustomDomain, FetchCustomDomainInfo } from "@/apis/Domain.Api";
 import { errorToast } from "@/components/atoms/Toast.Atom";
+import { updateProjectMetadataAPI } from "@/apis/Settings.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
   const [sidebarProjects, setSidebarProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+  
   const [projectFiles, setProjectFiles] = useState({
     loading: false,
     error: null,
@@ -370,6 +372,39 @@ export const useProjectProvider = () => {
     }
   };
 
+
+  const updateProjectMetadata = async (
+  project_id,
+  payload
+) => {
+  try {
+    setLoading(true);
+
+    const data = await updateProjectMetadataAPI(
+      project_id,
+      payload
+    );
+
+    setSelectedProject((prev) => ({
+      ...prev,
+      ...payload,
+    }));
+
+    return data;
+  } catch (err) {
+    console.error(
+      "❌ Update Project Metadata Error:",
+      err.message
+    );
+
+    setError(err.message);
+
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
   // ----------------------------------------------------------
   // 🔹 Returned Values for Components
   // ----------------------------------------------------------
@@ -404,5 +439,6 @@ export const useProjectProvider = () => {
     addEnv,
     deleteEnv,
     DeleteCustomDomainFromProject,
+    updateProjectMetadata,
   };
 };
