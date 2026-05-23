@@ -44,6 +44,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
 import MarkdownRenderer from "../ui/markdown-renderer";
 import { useAuth } from "@/context/ContextProvider";
@@ -503,7 +510,7 @@ const PreviewPanel = ({
   return (
     <div className="relative h-screen flex-1 overflow-hidden bg-white">
       <div className="absolute left-0 top-0 z-20 flex w-full flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white/90 px-4 py-3">
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           {isMobile ? (
             <Button variant="ghost" onClick={onBackToChat} className="p-2">
               <ArrowLeft className="h-4 w-4" />
@@ -568,7 +575,131 @@ const PreviewPanel = ({
             className="h-5 w-5 cursor-pointer text-gray-600 hover:text-black"
             onClick={() => setRefreshTrigger((prev) => prev + 1)}
           />
-        </div>
+        </div> */}
+      
+
+        <TooltipProvider>
+  <div className="flex items-center gap-4 ">
+    {isMobile ? (
+      <Button variant="ghost" onClick={onBackToChat} className="p-2">
+        <ArrowLeft className="h-4 w-4" />
+      </Button>
+    ) : null}
+
+    {/* Preview */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          onClick={() => setViewMode("output")}
+          className={`flex cursor-pointer items-center gap-2 text-sm ${
+            viewMode === "output"
+              ? "border-b-2 border-black font-semibold"
+              : ""
+          }`}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Preview</p>
+      </TooltipContent>
+    </Tooltip>
+
+    {/* Database */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          onClick={() => setViewMode("database")}
+          className={`flex cursor-pointer items-center gap-2 text-sm ${
+            viewMode === "database"
+              ? "border-b-2 border-black font-semibold"
+              : ""
+          }`}
+        >
+          <Database className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Database</p>
+      </TooltipContent>
+    </Tooltip>
+
+    {/* Env */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          onClick={() => setViewMode("env")}
+          className={`flex cursor-pointer items-center gap-2 text-sm ${
+            viewMode === "env"
+              ? "border-b-2 border-black font-semibold"
+              : ""
+          }`}
+        >
+          <Container className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Env's</p>
+      </TooltipContent>
+    </Tooltip>
+
+    {/* Domain */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          onClick={() => setViewMode("domain")}
+          className={`flex cursor-pointer items-center gap-2 text-sm ${
+            viewMode === "domain"
+              ? "border-b-2 border-black font-semibold"
+              : ""
+          }`}
+        >
+          <Link className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Custom Domain</p>
+      </TooltipContent>
+    </Tooltip>
+
+    {/* Settings */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          onClick={() => setViewMode("settings")}
+          className={`flex cursor-pointer items-center gap-2 text-sm ${
+            viewMode === "settings"
+              ? "border-b-2 border-black font-semibold"
+              : ""
+          }`}
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Settings</p>
+      </TooltipContent>
+    </Tooltip>
+
+    {/* Refresh */}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <RefreshCw
+          className="h-5 w-5 cursor-pointer text-gray-600 hover:text-black"
+          onClick={() => setRefreshTrigger((prev) => prev + 1)}
+        />
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Refresh</p>
+      </TooltipContent>
+    </Tooltip>
+  </div>
+</TooltipProvider>
 
         <div className="flex items-center gap-3">
           {!isMobile ? (
