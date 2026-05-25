@@ -415,7 +415,13 @@ const fetchSnippets = async (project_id) => {
 
     const data = await fetchSnippetsAPI(project_id);
 
-setSnippets(data?.data?.snippets || data?.data || []);
+    if(Array.isArray(data?.data)) {
+      setSnippets(data.data);
+    } else{
+      setSnippets([])
+    }
+
+// setSnippets(data?.data?.snippets || data?.data || []);
     return data;
   } catch (error) {
     console.error(
