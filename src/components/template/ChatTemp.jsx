@@ -44,6 +44,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 import UpdatingLobbyOverlay from "@/utils/UpdatingLobbyOverlay";
 import MarkdownRenderer from "../ui/markdown-renderer";
 import { useAuth } from "@/context/ContextProvider";
@@ -55,6 +62,10 @@ import { Database } from "lucide-react";
 import { Link } from "lucide-react";
 import DomainSection from "../organisms/DomainSection";
 import { FaBars } from "react-icons/fa";
+import { Settings } from "lucide-react";
+import SettingsSection from "../organisms/SettingsSection";
+import { SquareDashedBottomCode } from "lucide-react";
+import SnippetSection from "../organisms/SnippetSection";
 
 
 const MOBILE_BREAKPOINT = 768;
@@ -301,7 +312,7 @@ const ChatPanel = ({
   onNavigateHome,
   showPreviewButton,
   onShowPreview,
-  setViewMode   ,
+  setViewMode,
   setMobileView
 }) => {
   return (
@@ -329,61 +340,84 @@ const ChatPanel = ({
           //   <Eye className="h-4 w-4" /> Preview
           // </Button>
           <DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button variant="outline">
-      <FaBars />
-    </Button>
-  </DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <FaBars />
+              </Button>
+            </DropdownMenuTrigger>
 
-  <DropdownMenuContent className="w-44" align="start">
-    <DropdownMenuGroup>
+            <DropdownMenuContent className="w-44" align="start">
+              <DropdownMenuGroup>
 
-      {/* ✅ PREVIEW */}
-      <DropdownMenuItem
-        onClick={() => {
-          onShowPreview(); // ye theek hai
-        }}
-      >
-        <Eye className="h-4 w-4 mr-2" />
-        <span>Preview</span>
-      </DropdownMenuItem>
+                {/* ✅ PREVIEW */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    onShowPreview(); // ye theek hai
+                  }}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  <span>Preview</span>
+                </DropdownMenuItem>
 
-      {/* ✅ DATABASE */}
-      <DropdownMenuItem
-        onClick={() => {
-          setViewMode("database");
-          setMobileView("preview"); // 👈 IMPORTANT
-        }}
-      >
-        <Database className="h-4 w-4 mr-2" />
-        <span>Database</span>
-      </DropdownMenuItem>
+                {/* ✅ DATABASE */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setViewMode("database");
+                    setMobileView("preview"); // 👈 IMPORTANT
+                  }}
+                >
+                  <Database className="h-4 w-4 mr-2" />
+                  <span>Database</span>
+                </DropdownMenuItem>
 
-      {/* ✅ ENV */}
-      <DropdownMenuItem
-        onClick={() => {
-          setViewMode("env");
-          setMobileView("preview"); // 👈 IMPORTANT
-        }}
-      >
-        <Container className="h-4 w-4 mr-2" />
-        <span>Env's</span>
-      </DropdownMenuItem>
+                {/* ✅ ENV */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setViewMode("env");
+                    setMobileView("preview"); // 👈 IMPORTANT
+                  }}
+                >
+                  <Container className="h-4 w-4 mr-2" />
+                  <span>Env's</span>
+                </DropdownMenuItem>
 
-      {/* ✅ DOMAIN */}
-      <DropdownMenuItem
-        onClick={() => {
-          setViewMode("domain");
-          setMobileView("preview"); // 👈 IMPORTANT
-        }}
-      >
-        <Link className="h-4 w-4 mr-2" />
-        <span>Custom Domain</span>
-      </DropdownMenuItem>
+                {/* ✅ DOMAIN */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setViewMode("domain");
+                    setMobileView("preview"); // 👈 IMPORTANT
+                  }}
+                >
+                  <Link className="h-4 w-4 mr-2" />
+                  <span>Custom Domain</span>
+                </DropdownMenuItem>
 
-    </DropdownMenuGroup>
-  </DropdownMenuContent>
-</DropdownMenu>
+
+                {/* SETTINGS */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setViewMode("settings");
+                    setMobileView("preview");
+                  }}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+
+                {/* SNIPPET */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setViewMode("snippet");
+                    setMobileView("preview");
+                  }}
+                >
+                  <SquareDashedBottomCode className="h-4 w-4 mr-2" />
+                  <span>Snippet</span>
+                </DropdownMenuItem>
+
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
       </div>
 
@@ -490,6 +524,10 @@ const PreviewPanel = ({
   id,
   fileContent,
   current_domain: currentDomain,
+  updateProjectMetadata,
+  fetchProjectById,
+
+
 }) => {
   const previewUrl = selectedProject?.data?.assigned_domain || null;
   const mobileFrame = !isMobile && deviceView === "mobile";
@@ -497,7 +535,7 @@ const PreviewPanel = ({
   return (
     <div className="relative h-screen flex-1 overflow-hidden bg-white">
       <div className="absolute left-0 top-0 z-20 flex w-full flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white/90 px-4 py-3">
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           {isMobile ? (
             <Button variant="ghost" onClick={onBackToChat} className="p-2">
               <ArrowLeft className="h-4 w-4" />
@@ -545,11 +583,173 @@ const PreviewPanel = ({
             <span className="hidden sm:inline">Custom Domain</span>
           </Button>
 
+
+
+          <Button
+            variant="ghost"
+            onClick={() => setViewMode("settings")}
+            className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "settings" ? "border-b-2 border-black font-semibold" : ""
+              }`}
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Settings</span>
+          </Button>
+
+
           <RefreshCw
             className="h-5 w-5 cursor-pointer text-gray-600 hover:text-black"
             onClick={() => setRefreshTrigger((prev) => prev + 1)}
           />
-        </div>
+        </div> */}
+
+
+        <TooltipProvider>
+          <div className="flex items-center gap-4 ">
+            {isMobile ? (
+              <Button variant="ghost" onClick={onBackToChat} className="p-2">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            ) : null}
+
+            {/* Preview */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("output")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "output"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Preview</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Database */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("database")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "database"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Database className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Database</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Env */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("env")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "env"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Container className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Env's</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Domain */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("domain")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "domain"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Link className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Custom Domain</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Settings */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("settings")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "settings"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Settings</p>
+              </TooltipContent>
+            </Tooltip>
+
+
+            {/* Snippet */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("snippet")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "snippet"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <SquareDashedBottomCode className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+
+              <TooltipContent>
+                <p>Snippet</p>
+              </TooltipContent>
+            </Tooltip>
+
+
+
+
+
+            {/* Refresh */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <RefreshCw
+                  className="h-5 w-5 cursor-pointer text-gray-600 hover:text-black"
+                  onClick={() => setRefreshTrigger((prev) => prev + 1)}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Refresh</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+
+
+
+
+
 
         <div className="flex items-center gap-3">
           {!isMobile ? (
@@ -625,8 +825,8 @@ const PreviewPanel = ({
         {viewMode === "env" ? (
           <div className="h-full w-full p-6 overflow-y-auto">
             {/* <div className="flex h-full items-center justify-center rounded-md border border-dashed border-gray-300 text-sm text-gray-500">
-              Environment panel coming soon.
-            </div> */}
+                Environment panel coming soon.
+              </div> */}
             <EnvSection project_id={id} />
           </div>
         ) : null}
@@ -642,6 +842,29 @@ const PreviewPanel = ({
             <DomainSection project_id={id} current_domain={currentDomain} />
           </div>
         </> : null}
+
+
+        {viewMode === "settings" ? (
+          <div className="h-full w-full p-6 overflow-y-auto">
+            {/* <SettingsSection
+              project={selectedProject?.data}     
+            /> */}
+            <SettingsSection
+              project={selectedProject?.data}
+              updateProjectMetadata={updateProjectMetadata}
+              fetchProjectById={fetchProjectById}
+
+            />
+          </div>
+        ) : null}
+
+
+        {viewMode === "snippet" ? (
+          <div className="h-full w-full p-6 overflow-y-auto">
+            <SnippetSection project_id={id} />
+          </div>
+        ) : null}
+
       </div>
     </div>
   );
@@ -659,6 +882,7 @@ const ChatTemp = () => {
     projectFiles,
     fetchProjectFileContent,
     fileContent,
+    updateProjectMetadata,
   } = useProjectProvider();
 
   const [selectedFile, setSelectedFile] = useState("");
@@ -677,6 +901,8 @@ const ChatTemp = () => {
     window.innerWidth < MOBILE_BREAKPOINT,
   );
   const [mobileView, setMobileView] = useState("chat");
+
+
 
   const chatContainerRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -945,8 +1171,8 @@ const ChatTemp = () => {
       onNavigateHome={() => navigate("/mainpagescreen")}
       showPreviewButton={isMobile}
       onShowPreview={openMobilePreview}
-       setViewMode={setViewMode} 
-       setMobileView={setMobileView} 
+      setViewMode={setViewMode}
+      setMobileView={setMobileView}
     />
   );
 
@@ -971,6 +1197,10 @@ const ChatTemp = () => {
       id={id}
       fileContent={fileContent}
       current_domain={currentDomain}
+      updateProjectMetadata={updateProjectMetadata}
+      fetchProjectById={fetchProjectById}
+
+
     />
   );
 
