@@ -18,11 +18,14 @@ import { FetchContainers, FetchItems } from "@/apis/Database.Api";
 import { AddCustomDomain, DeleteCustomDomain, FetchCustomDomainInfo } from "@/apis/Domain.Api";
 import { errorToast } from "@/components/atoms/Toast.Atom";
 import { updateProjectMetadataAPI } from "@/apis/Settings.Api";
+import { createSnippetAPI, fetchSnippetsAPI } from "@/apis/Snippet.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
   const [sidebarProjects, setSidebarProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+
+  const [snippets, setSnippets] = useState([]);
   
   const [projectFiles, setProjectFiles] = useState({
     loading: false,
@@ -405,6 +408,61 @@ export const useProjectProvider = () => {
   }
 };
 
+
+const fetchSnippets = async (project_id) => {
+  try {
+    setLoading(true);
+
+    const data = await fetchSnippetsAPI(project_id);
+
+setSnippets(data?.data?.snippets || data?.data || []);
+    return data;
+  } catch (error) {
+    console.error(
+      "❌ Fetch Snippets Error:",
+      error.message
+    );
+
+    setError(error.message);
+
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+const createSnippet = async (
+  project_id,
+  payload
+) => {
+  try {
+    setLoading(true);
+
+    const data = await createSnippetAPI(
+      project_id,
+      payload
+    );
+
+await fetchSnippets(project_id);
+
+    return data;
+  } catch (error) {
+    console.error(
+      "❌ Create Snippet Error:",
+      error.message
+    );
+
+    setError(error.message);
+
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
   // ----------------------------------------------------------
   // 🔹 Returned Values for Components
   // ----------------------------------------------------------
@@ -440,5 +498,8 @@ export const useProjectProvider = () => {
     deleteEnv,
     DeleteCustomDomainFromProject,
     updateProjectMetadata,
+    snippets,
+fetchSnippets,
+createSnippet,
   };
 };

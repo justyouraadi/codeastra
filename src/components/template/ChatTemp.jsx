@@ -64,6 +64,8 @@ import DomainSection from "../organisms/DomainSection";
 import { FaBars } from "react-icons/fa";
 import { Settings } from "lucide-react";
 import SettingsSection from "../organisms/SettingsSection";
+import { SquareDashedBottomCode } from "lucide-react";
+import SnippetSection from "../organisms/SnippetSection";
 
 
 const MOBILE_BREAKPOINT = 768;
@@ -390,6 +392,29 @@ const ChatPanel = ({
                   <span>Custom Domain</span>
                 </DropdownMenuItem>
 
+
+                {/* SETTINGS */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setViewMode("settings");
+                    setMobileView("preview");
+                  }}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+
+                {/* SNIPPET */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setViewMode("snippet");
+                    setMobileView("preview");
+                  }}
+                >
+                  <SquareDashedBottomCode className="h-4 w-4 mr-2" />
+                  <span>Snippet</span>
+                </DropdownMenuItem>
+
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -499,8 +524,8 @@ const PreviewPanel = ({
   id,
   fileContent,
   current_domain: currentDomain,
-    updateProjectMetadata, 
-      fetchProjectById,
+  updateProjectMetadata,
+  fetchProjectById,
 
 
 }) => {
@@ -576,130 +601,155 @@ const PreviewPanel = ({
             onClick={() => setRefreshTrigger((prev) => prev + 1)}
           />
         </div> */}
-      
+
 
         <TooltipProvider>
-  <div className="flex items-center gap-4 ">
-    {isMobile ? (
-      <Button variant="ghost" onClick={onBackToChat} className="p-2">
-        <ArrowLeft className="h-4 w-4" />
-      </Button>
-    ) : null}
+          <div className="flex items-center gap-4 ">
+            {isMobile ? (
+              <Button variant="ghost" onClick={onBackToChat} className="p-2">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            ) : null}
 
-    {/* Preview */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          onClick={() => setViewMode("output")}
-          className={`flex cursor-pointer items-center gap-2 text-sm ${
-            viewMode === "output"
-              ? "border-b-2 border-black font-semibold"
-              : ""
-          }`}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Preview</p>
-      </TooltipContent>
-    </Tooltip>
+            {/* Preview */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("output")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "output"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Preview</p>
+              </TooltipContent>
+            </Tooltip>
 
-    {/* Database */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          onClick={() => setViewMode("database")}
-          className={`flex cursor-pointer items-center gap-2 text-sm ${
-            viewMode === "database"
-              ? "border-b-2 border-black font-semibold"
-              : ""
-          }`}
-        >
-          <Database className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Database</p>
-      </TooltipContent>
-    </Tooltip>
+            {/* Database */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("database")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "database"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Database className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Database</p>
+              </TooltipContent>
+            </Tooltip>
 
-    {/* Env */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          onClick={() => setViewMode("env")}
-          className={`flex cursor-pointer items-center gap-2 text-sm ${
-            viewMode === "env"
-              ? "border-b-2 border-black font-semibold"
-              : ""
-          }`}
-        >
-          <Container className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Env's</p>
-      </TooltipContent>
-    </Tooltip>
+            {/* Env */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("env")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "env"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Container className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Env's</p>
+              </TooltipContent>
+            </Tooltip>
 
-    {/* Domain */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          onClick={() => setViewMode("domain")}
-          className={`flex cursor-pointer items-center gap-2 text-sm ${
-            viewMode === "domain"
-              ? "border-b-2 border-black font-semibold"
-              : ""
-          }`}
-        >
-          <Link className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Custom Domain</p>
-      </TooltipContent>
-    </Tooltip>
+            {/* Domain */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("domain")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "domain"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Link className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Custom Domain</p>
+              </TooltipContent>
+            </Tooltip>
 
-    {/* Settings */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          onClick={() => setViewMode("settings")}
-          className={`flex cursor-pointer items-center gap-2 text-sm ${
-            viewMode === "settings"
-              ? "border-b-2 border-black font-semibold"
-              : ""
-          }`}
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Settings</p>
-      </TooltipContent>
-    </Tooltip>
+            {/* Settings */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("settings")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "settings"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Settings</p>
+              </TooltipContent>
+            </Tooltip>
 
-    {/* Refresh */}
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <RefreshCw
-          className="h-5 w-5 cursor-pointer text-gray-600 hover:text-black"
-          onClick={() => setRefreshTrigger((prev) => prev + 1)}
-        />
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Refresh</p>
-      </TooltipContent>
-    </Tooltip>
-  </div>
-</TooltipProvider>
+
+            {/* Snippet */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("snippet")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "snippet"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <SquareDashedBottomCode className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+
+              <TooltipContent>
+                <p>Snippet</p>
+              </TooltipContent>
+            </Tooltip>
+
+
+
+
+
+            {/* Refresh */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <RefreshCw
+                  className="h-5 w-5 cursor-pointer text-gray-600 hover:text-black"
+                  onClick={() => setRefreshTrigger((prev) => prev + 1)}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Refresh</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+
+
+
+
+
 
         <div className="flex items-center gap-3">
           {!isMobile ? (
@@ -800,13 +850,21 @@ const PreviewPanel = ({
               project={selectedProject?.data}     
             /> */}
             <SettingsSection
-  project={selectedProject?.data}
-  updateProjectMetadata={updateProjectMetadata}
-    fetchProjectById={fetchProjectById}
+              project={selectedProject?.data}
+              updateProjectMetadata={updateProjectMetadata}
+              fetchProjectById={fetchProjectById}
 
-/>
+            />
           </div>
         ) : null}
+
+
+        {viewMode === "snippet" ? (
+          <div className="h-full w-full p-6 overflow-y-auto">
+            <SnippetSection project_id={id} />
+          </div>
+        ) : null}
+
       </div>
     </div>
   );
@@ -824,7 +882,7 @@ const ChatTemp = () => {
     projectFiles,
     fetchProjectFileContent,
     fileContent,
-updateProjectMetadata,
+    updateProjectMetadata,
   } = useProjectProvider();
 
   const [selectedFile, setSelectedFile] = useState("");
@@ -844,7 +902,7 @@ updateProjectMetadata,
   );
   const [mobileView, setMobileView] = useState("chat");
 
-  
+
 
   const chatContainerRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -1139,10 +1197,10 @@ updateProjectMetadata,
       id={id}
       fileContent={fileContent}
       current_domain={currentDomain}
-          updateProjectMetadata={updateProjectMetadata}
-          fetchProjectById={fetchProjectById}
+      updateProjectMetadata={updateProjectMetadata}
+      fetchProjectById={fetchProjectById}
 
-      
+
     />
   );
 
