@@ -18,7 +18,7 @@ import { FetchContainers, FetchItems } from "@/apis/Database.Api";
 import { AddCustomDomain, DeleteCustomDomain, FetchCustomDomainInfo } from "@/apis/Domain.Api";
 import { errorToast } from "@/components/atoms/Toast.Atom";
 import { updateProjectMetadataAPI } from "@/apis/Settings.Api";
-import { createSnippetAPI, fetchSnippetsAPI } from "@/apis/Snippet.Api";
+import { createSnippetAPI, deleteSnippetAPI, fetchSnippetsAPI } from "@/apis/Snippet.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
@@ -26,7 +26,7 @@ export const useProjectProvider = () => {
   const [selectedProject, setSelectedProject] = useState(null);
 
   const [snippets, setSnippets] = useState([]);
-  
+
   const [projectFiles, setProjectFiles] = useState({
     loading: false,
     error: null,
@@ -377,92 +377,131 @@ export const useProjectProvider = () => {
 
 
   const updateProjectMetadata = async (
-  project_id,
-  payload
-) => {
-  try {
-    setLoading(true);
+    project_id,
+    payload
+  ) => {
+    try {
+      setLoading(true);
 
-    const data = await updateProjectMetadataAPI(
-      project_id,
-      payload
-    );
+      const data = await updateProjectMetadataAPI(
+        project_id,
+        payload
+      );
 
-    setSelectedProject((prev) => ({
-      ...prev,
-      ...payload,
-    }));
+      setSelectedProject((prev) => ({
+        ...prev,
+        ...payload,
+      }));
 
-    return data;
-  } catch (err) {
-    console.error(
-      "❌ Update Project Metadata Error:",
-      err.message
-    );
+      return data;
+    } catch (err) {
+      console.error(
+        "❌ Update Project Metadata Error:",
+        err.message
+      );
 
-    setError(err.message);
+      setError(err.message);
 
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-const fetchSnippets = async (project_id) => {
-  try {
-    setLoading(true);
-
-    const data = await fetchSnippetsAPI(project_id);
-
-    if(Array.isArray(data?.data)) {
-      setSnippets(data.data);
-    } else{
-      setSnippets([])
+      throw err;
+    } finally {
+      setLoading(false);
     }
-
-// setSnippets(data?.data?.snippets || data?.data || []);
-    return data;
-  } catch (error) {
-    console.error(
-      "❌ Fetch Snippets Error:",
-      error.message
-    );
-
-    setError(error.message);
-
-    throw error;
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
-const createSnippet = async (
+  const fetchSnippets = async (project_id) => {
+    try {
+      setLoading(true);
+
+      const data = await fetchSnippetsAPI(project_id);
+
+      if (Array.isArray(data?.data)) {
+        setSnippets(data.data);
+      } else {
+        setSnippets([])
+      }
+
+      // setSnippets(data?.data?.snippets || data?.data || []);
+      return data;
+    } catch (error) {
+      console.error(
+        "❌ Fetch Snippets Error:",
+        error.message
+      );
+
+      setError(error.message);
+
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const createSnippet = async (
+    project_id,
+    payload
+  ) => {
+    try {
+      setLoading(true);
+
+      const data = await createSnippetAPI(
+        project_id,
+        payload
+      );
+
+      await fetchSnippets(project_id);
+
+      return data;
+    } catch (error) {
+      console.error(
+        "❌ Create Snippet Error:",
+        error.message
+      );
+
+      setError(error.message);
+
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+ // ===============================================
+// Delete Snippet
+// ===============================================
+
+const deleteSnippet = async (
   project_id,
   payload
 ) => {
   try {
     setLoading(true);
 
-    const data = await createSnippetAPI(
+    const data = await deleteSnippetAPI(
       project_id,
       payload
     );
 
-await fetchSnippets(project_id);
+    await fetchSnippets(project_id);
 
     return data;
+
   } catch (error) {
+
     console.error(
-      "❌ Create Snippet Error:",
+      "❌ Delete Snippet Error:",
       error.message
     );
 
     setError(error.message);
 
     throw error;
+
   } finally {
+
     setLoading(false);
   }
 };
@@ -505,7 +544,8 @@ await fetchSnippets(project_id);
     DeleteCustomDomainFromProject,
     updateProjectMetadata,
     snippets,
-fetchSnippets,
-createSnippet,
+    fetchSnippets,
+    createSnippet,
+    deleteSnippet,
   };
 };
