@@ -18,7 +18,7 @@ import { FetchContainers, FetchItems } from "@/apis/Database.Api";
 import { AddCustomDomain, DeleteCustomDomain, FetchCustomDomainInfo } from "@/apis/Domain.Api";
 import { errorToast } from "@/components/atoms/Toast.Atom";
 import { updateProjectMetadataAPI } from "@/apis/Settings.Api";
-import { createSnippetAPI, deleteSnippetAPI, fetchSnippetsAPI } from "@/apis/Snippet.Api";
+import { createSnippetAPI, deleteSnippetAPI, fetchSnippetsAPI, updateSnippetAPI } from "@/apis/Snippet.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
@@ -508,6 +508,46 @@ const deleteSnippet = async (
 
 
 
+// ===============================================
+// Update Snippet
+// ===============================================
+
+const updateSnippet = async (
+  project_id,
+  payload
+) => {
+
+  try {
+
+    setLoading(true);
+
+    const data = await updateSnippetAPI(
+      project_id,
+      payload
+    );
+
+    await fetchSnippets(project_id);
+
+    return data;
+
+  } catch (error) {
+
+    console.error(
+      "❌ Update Snippet Error:",
+      error.message
+    );
+
+    setError(error.message);
+
+    throw error;
+
+  } finally {
+
+    setLoading(false);
+  }
+};
+
+
   // ----------------------------------------------------------
   // 🔹 Returned Values for Components
   // ----------------------------------------------------------
@@ -547,5 +587,6 @@ const deleteSnippet = async (
     fetchSnippets,
     createSnippet,
     deleteSnippet,
+    updateSnippet,
   };
 };

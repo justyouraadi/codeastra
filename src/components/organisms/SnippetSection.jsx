@@ -16,6 +16,24 @@ const SnippetSection = ({ project_id }) => {
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
+
+    const [openEditModal, setOpenEditModal] = useState(false);
+    const [editName, setEditName] = useState("");
+    const [editContent, setEditContent] = useState("");
+    const [editItem, setEditItem] = useState(null);
+    const [updating, setUpdating] = useState(false);
+
+
+    const handleOpenEdit = (item) => {
+        setEditItem(item);
+        setEditName(item.name);
+        setEditContent(decodeBase64(item.content || ""));
+        setOpenEditModal(true);
+    };
+
+
+
+
     const [openModal, setOpenModal] =
         useState(false);
 
@@ -49,6 +67,7 @@ const SnippetSection = ({ project_id }) => {
         fetchSnippets,
         createSnippet,
         deleteSnippet,
+        updateSnippet,
     } = useProjectProvider();
 
 
@@ -100,7 +119,7 @@ const SnippetSection = ({ project_id }) => {
         } catch (error) {
             console.error(error);
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
@@ -197,26 +216,43 @@ const SnippetSection = ({ project_id }) => {
                 </div>
 
 
+                <div>
 
-                <button
-                    onClick={() => {
+                    <button
+                        onClick={() => {
 
-                        if (snippets?.length >= 10) {
+                            if (snippets?.length >= 10) {
 
-                            errorToast(
-                                "Only 10 snippets allowed"
-                            );
+                                errorToast(
+                                    "Only 10 snippets allowed"
+                                );
 
-                            return;
-                        }
+                                return;
+                            }
 
-                        setOpenModal(true);
-                    }}
-                    className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-[#111] transition-all"
-                >
-                    + Add Snippet
-                </button>
+                            setOpenModal(true);
+                        }}
+                        className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-[#111] transition-all"
+                    >
+                        + Add Snippet
+                    </button>
+
+
+                    <button
+                        onClick={() => {
+                            if (!snippets?.length) return;
+
+                            handleOpenEdit(snippets[0]);
+                        }}
+                        className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white  transition-all ml-3"
+                    >
+                        Edit Snippet
+                    </button>
+                </div>
+
             </div>
+
+
 
 
 
@@ -426,6 +462,7 @@ const SnippetSection = ({ project_id }) => {
                                 >
                                     View Details
                                 </button>
+
                             </div>
                         </div>
                     ))
@@ -516,6 +553,97 @@ const SnippetSection = ({ project_id }) => {
                 </div>
             )}
 
+
+            {openEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b px-6 py-4">
+                            <h2 className="text-lg font-semibold">Edit Snippet</h2>
+
+                            <button onClick={() => setOpenEditModal(false)}>
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-4">
+
+
+
+                            <div>
+                                <label className="text-sm font-medium text-gray-700">
+                                    Content
+                                </label>
+
+                                <textarea
+                                    rows={6}
+                                    value={editContent}
+                                    onChange={(e) => setEditContent(e.target.value)}
+                                    className="mt-2 w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-black"
+                                    placeholder="Edit content"
+                                />
+                            </div>
+
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex justify-end gap-3 border-t px-6 py-4">
+
+                            <button
+                                onClick={() => setOpenEditModal(false)}
+                                className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={async () => {
+
+                                    try {
+
+                                        setUpdating(true);
+
+                                        const payload = {
+                                            name: editItem?.name,
+                                            content: editContent,
+                                        };
+
+                                        await updateSnippet(
+                                            project_id,
+                                            payload
+                                        );
+
+                                        await fetchSnippets(project_id);
+
+                                        setOpenEditModal(false);
+
+                                    } catch (error) {
+
+                                        console.error(error);
+
+                                    } finally {
+
+                                        setUpdating(false);
+                                    }
+                                }}
+
+                                disabled={updating}
+
+                                className={`rounded-xl px-5 py-2 text-sm font-medium text-white transition-all
+    ${updating
+                                        ? "bg-gray-500 cursor-not-allowed"
+                                        : "bg-black hover:bg-[#111]"
+                                    }`}
+                            >
+                                {updating ? "Updating..." : "Update"}
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
 
