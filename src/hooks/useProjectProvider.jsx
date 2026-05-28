@@ -17,7 +17,7 @@ import {
 import { FetchContainers, FetchItems } from "@/apis/Database.Api";
 import { AddCustomDomain, DeleteCustomDomain, FetchCustomDomainInfo } from "@/apis/Domain.Api";
 import { errorToast } from "@/components/atoms/Toast.Atom";
-import { updateProjectMetadataAPI } from "@/apis/Settings.Api";
+import { updateProjectMetadataAPI, uploadProjectLogoAPI } from "@/apis/Settings.Api";
 import { createSnippetAPI, deleteSnippetAPI, fetchSnippetsAPI, updateSnippetAPI } from "@/apis/Snippet.Api";
 
 export const useProjectProvider = () => {
@@ -548,6 +548,34 @@ const updateSnippet = async (
 };
 
 
+const uploadProjectLogo =
+  async (project_id, file) => {
+
+    try {
+
+      setLoading(true);
+
+      const data =
+        await uploadProjectLogoAPI(
+          project_id,
+          file
+        );
+
+      return data;
+
+    } catch (error) {
+
+      console.error(error);
+
+      throw error;
+
+    } finally {
+
+      setLoading(false);
+    }
+};
+
+
   // ----------------------------------------------------------
   // 🔹 Returned Values for Components
   // ----------------------------------------------------------
@@ -588,5 +616,6 @@ const updateSnippet = async (
     createSnippet,
     deleteSnippet,
     updateSnippet,
+    uploadProjectLogo,  
   };
 };

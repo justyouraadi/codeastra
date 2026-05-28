@@ -48,3 +48,53 @@ export const updateProjectMetadataAPI = async (
     throw err;
   }
 };
+
+
+export const uploadProjectLogoAPI =
+  async (project_id, file) => {
+
+    const token =
+      localStorage.getItem(
+        "signin_token"
+      );
+
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    try {
+
+      const res = await fetch(
+        `https://gateway.codeastra.ai/projects/api/v1/projects/upload-logo/${project_id}`,
+        {
+          method: "POST",
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.message ||
+          "Upload failed"
+        );
+      }
+
+      return data;
+
+    } catch (error) {
+
+      console.error(
+        "Logo Upload Error:",
+        error
+      );
+
+      throw error;
+    }
+};

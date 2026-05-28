@@ -14,6 +14,8 @@ import '../../../src/App.css';
 
 import { useSupportContext } from "@/context/SupportProvider";
 import { errorToast } from "../atoms/Toast.Atom";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 const statusChip = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -28,7 +30,7 @@ const statusChip = {
 export default function SupportTemp() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("all");
-
+const navigate = useNavigate();
 
   const [message, setMessage] = useState("");
 
@@ -162,13 +164,25 @@ export default function SupportTemp() {
     <div className="p-6 w-full h-screen bg-gray-50 flex flex-col">
 
       <div className="flex justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold">Queue Overview</h1>
-          <p className="text-sm text-gray-500">
-            {filteredTickets.length} tickets
-          </p>
-        </div>
+        
+    <div className="flex items-center gap-3">
+  
+  <button
+    onClick={() => navigate(-1)}
+    className="p-2 rounded-full hover:bg-gray-200 transition"
+  >
+    <ArrowLeft className="w-5 h-5 text-gray-700" />
+  </button>
 
+  <div>
+    <h1 className="text-xl font-semibold">Queue Overview</h1>
+
+    <p className="text-sm text-gray-500">
+      {filteredTickets.length} tickets
+    </p>
+  </div>
+
+</div>
         <div className="flex gap-2">
           <Select
             onValueChange={(val) => {

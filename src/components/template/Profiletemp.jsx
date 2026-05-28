@@ -248,8 +248,10 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useProfile } from "@/context/ProfileProvider";
+import { useNavigate } from "react-router-dom";
 
 const Profiletemp = () => {
+  const navigate = useNavigate();
   const { profile, fetchProfile } = useProfile();
 
   useEffect(() => {
@@ -271,7 +273,10 @@ const Profiletemp = () => {
           {/* RIGHT SIDE (Heading + Text) */}
           <div>
             <div className="flex items-center">
-              <ArrowLeft className="w-5 h-5 text-gray-500 mr-2 cursor-pointer" />
+            <ArrowLeft
+  onClick={() => navigate(-1)}
+  className="w-5 h-5 text-gray-500 mr-2 cursor-pointer"
+/>
               <h1 className="text-2xl font-semibold">Profile Settings</h1>
             </div>
 
