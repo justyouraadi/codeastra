@@ -3,6 +3,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { useRef } from "react";
 
 import {
   FiEdit,
@@ -24,14 +25,20 @@ const SettingsSection = ({
   const [description, setDescription] =
     useState("");
 
-  // ✅ ORIGINAL DATA
+const [saving, setSaving] =
+  useState(false);
+  
+    const fileInputRef = useRef(null);
+
+const [logoPreview, setLogoPreview] =
+  useState("");
+
   const [originalData, setOriginalData] =
     useState({
       name: "",
       description: "",
     });
 
-  // ✅ INITIAL DATA LOAD
   useEffect(() => {
     const initialName =
       project?.name || "";
@@ -42,14 +49,27 @@ const SettingsSection = ({
     setName(initialName);
 
     setDescription(initialDescription);
+     setLogoPreview(project?.logo_url || "");
 
     setOriginalData({
       name: initialName,
       description: initialDescription,
+      
     });
   }, [project]);
 
-  // ✅ CHECK IF ANY FIELD CHANGED
+
+  const handleLogoChange = (e) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  const imageUrl =
+    URL.createObjectURL(file);
+
+  setLogoPreview(imageUrl);
+};
+
   const hasChanges = useMemo(() => {
     return (
       name.trim() !==
@@ -65,7 +85,6 @@ const SettingsSection = ({
     const trimmedDescription =
       description.trim();
 
-    // ✅ EMPTY VALIDATION
     if (
       !trimmedName ||
       !trimmedDescription
@@ -73,13 +92,14 @@ const SettingsSection = ({
       return;
     }
 
-    // ✅ NO CHANGE → NO API CALL
     if (!hasChanges) {
       setIsEditing(false);
       return;
     }
 
     try {
+      setSaving(true);
+
       await updateProjectMetadata(
         project?.id,
         {
@@ -91,14 +111,12 @@ const SettingsSection = ({
 
         await fetchProjectById(project?.id);
 
-      // ✅ UPDATE UI
       setName(trimmedName);
 
       setDescription(
         trimmedDescription
       );
 
-      // ✅ UPDATE ORIGINAL DATA
       setOriginalData({
         name: trimmedName,
         description:
@@ -109,11 +127,14 @@ const SettingsSection = ({
     } catch (error) {
       console.error(error);
     }
+    finally {
+
+    setSaving(false);
+  }
   };
 
   return (
     <div className="w-full min-h-screen p-4 sm:p-6 md:p-8">
-      {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="sm:text-3xl text-black">
@@ -126,7 +147,6 @@ const SettingsSection = ({
           </p>
         </div>
 
-        {/* Edit / Save Button */}
         {!isEditing ? (
           <button
             onClick={() =>
@@ -138,37 +158,28 @@ const SettingsSection = ({
             Edit
           </button>
         ) : (
-          // <button
-          //   onClick={handleUpdate}
-          //   disabled={
-          //     !name.trim() ||
-          //     !description.trim() ||
-          //     !hasChanges
-          //   }
-          //   className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50"
-          // >
-          //   <FiCheck size={16} />
-          //   Save
-          // </button>
+      
 
-          
+
   <div className="flex items-center gap-3">
    
 
+<button
+  onClick={handleUpdate}
+  disabled={
+    saving ||
+    !name.trim() ||
+    !description.trim() ||
+    !hasChanges
+  }
+  className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50"
+>
+  <FiCheck size={16} />
 
-    {/* Save Button */}
-    <button
-      onClick={handleUpdate}
-      disabled={
-        !name.trim() ||
-        !description.trim() ||
-        !hasChanges
-      }
-      className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50"
-    >
-      <FiCheck size={16} />
-      Save
-    </button>
+  {saving
+    ? "Saving..."
+    : "Save"}
+</button>
 
 
         <button
@@ -188,8 +199,7 @@ const SettingsSection = ({
       </div>
 
       <div className="mt-8 space-y-6 w-full">
-        {/* Logo */}
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-black mb-3">
             Logo
           </label>
@@ -208,7 +218,49 @@ const SettingsSection = ({
               />
             )}
           </div>
-        </div>
+        </div> */}
+
+        <div>
+  <label className="block text-sm font-medium text-black mb-3">
+    Logo
+  </label>
+
+  <div
+    onClick={() => {
+      if (isEditing) {
+        fileInputRef.current?.click();
+      }
+    }}
+    className={`w-20 h-20 border border-dashed border-gray-300 rounded-xl bg-[#f3f3f3] flex items-center justify-center overflow-hidden ${
+      isEditing
+        ? "cursor-pointer hover:opacity-80"
+        : ""
+    }`}
+  >
+    {logoPreview ? (
+      <img
+        src={logoPreview}
+        alt="logo"
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      <FiBriefcase
+        className="text-gray-500"
+        size={32}
+      />
+    )}
+  </div>
+
+  {isEditing && (
+    <input
+      type="file"
+      accept="image/*"
+      ref={fileInputRef}
+      onChange={handleLogoChange}
+      className="hidden"
+    />
+  )}
+</div>
 
         {/* Name */}
         <div className="w-full">
@@ -232,7 +284,6 @@ const SettingsSection = ({
           )}
         </div>
 
-        {/* Description */}
         <div className="w-full">
           <label className="block text-sm font-medium text-black mb-2">
             Description
@@ -261,3 +312,5 @@ const SettingsSection = ({
 };
 
 export default SettingsSection;
+
+

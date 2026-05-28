@@ -10,8 +10,8 @@ const Navbar = () => {
         <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
           <span className="text-white text-sm font-bold">AI</span>
         </div>
-        <h1 className="text-base font-semibold text-gray-800">AI Platform</h1>
-      </div>
+        <h1 className="text-base font-semibold text-gray-800"> AI Platform</h1>
+              </div>
 
       {/* Right: Notification + Profile */}
       <div className="flex items-center space-x-5">

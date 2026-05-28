@@ -22,6 +22,7 @@ export const updateProjectMetadataAPI = async (
         },
 
         body: JSON.stringify(payload),
+
       }
     );
 
