@@ -4,11 +4,35 @@ import React, {
 } from "react";
 
 import { useProjectProvider } from "@/hooks/useProjectProvider";
+import { errorToast } from "../atoms/Toast.Atom";
+import { Trash2 } from "lucide-react";
 
 
 const SnippetSection = ({ project_id }) => {
 
     const [loading, setLoading] = useState(false);
+
+    const [loadingSnippets, setLoadingSnippets] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+
+    const [openEditModal, setOpenEditModal] = useState(false);
+    const [editName, setEditName] = useState("");
+    const [editContent, setEditContent] = useState("");
+    const [editItem, setEditItem] = useState(null);
+    const [updating, setUpdating] = useState(false);
+
+
+    const handleOpenEdit = (item) => {
+        setEditItem(item);
+        setEditName(item.name);
+        setEditContent(decodeBase64(item.content || ""));
+        setOpenEditModal(true);
+    };
+
+
+
 
     const [openModal, setOpenModal] =
         useState(false);
@@ -32,18 +56,40 @@ const SnippetSection = ({ project_id }) => {
 
     const [insertBottom, setInsertBottom] = useState(false);
 
+    const [deleteConfirmOpen, setDeleteConfirmOpen] =
+        useState(false);
+
+    const [deleteItem, setDeleteItem] =
+        useState(null);
+
     const {
         snippets,
         fetchSnippets,
         createSnippet,
+        deleteSnippet,
+        updateSnippet,
     } = useProjectProvider();
 
 
 
+
+
     useEffect(() => {
-        if (project_id) {
-            fetchSnippets(project_id);
-        }
+        const loadSnippets = async () => {
+            if (!project_id) return;
+
+            setLoadingSnippets(true);   // ✅ FIX HERE
+
+            try {
+                await fetchSnippets(project_id);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoadingSnippets(false); // ✅ FIX HERE
+            }
+        };
+
+        loadSnippets();
     }, [project_id]);
 
 
@@ -52,8 +98,7 @@ const SnippetSection = ({ project_id }) => {
 
     const handleCreateSnippet = async () => {
         try {
-            setLoading(true);
-
+            setSaving(true);
             const payload = {
                 name,
                 content,
@@ -74,7 +119,7 @@ const SnippetSection = ({ project_id }) => {
         } catch (error) {
             console.error(error);
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
@@ -118,6 +163,41 @@ const SnippetSection = ({ project_id }) => {
     };
 
 
+    const handleDeleteClick = () => {
+        setDeleteConfirmOpen(true);
+    };
+
+
+    const handleDeleteSnippet = async () => {
+        try {
+
+            setDeleting(true);
+            const payload = {
+                name: deleteItem?.name,
+            };
+
+            await deleteSnippet(
+                project_id,
+                payload
+            );
+
+            await fetchSnippets(project_id);
+
+            setDeleteConfirmOpen(false);
+
+            setDeleteItem(null);
+
+        } catch (error) {
+
+            console.error(error);
+
+        } finally {
+
+            setLoading(false);
+        }
+    };
+
+
 
     return (
         <div className="w-full min-h-screen p-3 sm:p-5 md:p-6">
@@ -135,15 +215,44 @@ const SnippetSection = ({ project_id }) => {
                     </p>
                 </div>
 
-                <button
-                    onClick={() =>
-                        setOpenModal(true)
-                    }
-                    className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-[#111] transition-all"
-                >
-                    + Add Snippet
-                </button>
+
+                <div>
+
+                    <button
+                        onClick={() => {
+
+                            if (snippets?.length >= 10) {
+
+                                errorToast(
+                                    "Only 10 snippets allowed"
+                                );
+
+                                return;
+                            }
+
+                            setOpenModal(true);
+                        }}
+                        className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-[#111] transition-all"
+                    >
+                        + Add Snippet
+                    </button>
+
+
+                    <button
+                        onClick={() => {
+                            if (!snippets?.length) return;
+
+                            handleOpenEdit(snippets[0]);
+                        }}
+                        className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white  transition-all ml-3"
+                    >
+                        Edit Snippet
+                    </button>
+                </div>
+
             </div>
+
+
 
 
 
@@ -279,18 +388,13 @@ const SnippetSection = ({ project_id }) => {
                 </div>
             )}
 
-          
+
 
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-              
 
-                <div className="grid grid-cols-[80px_1fr_1fr_auto] items-center border-b border-gray-200 bg-[#fafafa] px-4 py-5">
-                    <div>
-                        <input
-                            type="checkbox"
-                            className="h-5 w-5 rounded border-gray-300 cursor-pointer"
-                        />
-                    </div>
+
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr] items-center border-b border-gray-100 px-6 py-5 gap-4">
+
 
                     <div className="text-sm font-semibold text-gray-800">
                         Name
@@ -300,60 +404,72 @@ const SnippetSection = ({ project_id }) => {
                         Type
                     </div>
 
+                    <div className="text-right text-sm font-semibold text-gray-800">
+                        DeleteSnippet
+                    </div>
+
                     <div className="text-right pr-10 text-sm font-semibold text-gray-800">
                         Action
                     </div>
+
+
+
+
                 </div>
 
-               
 
-                {snippets?.map((item) => (
-                    <div
-                        key={item.id}
-                        className="grid grid-cols-[80px_1fr_1fr_auto] items-center border-b border-gray-100 px-4 py-5 hover:bg-gray-50 transition-all"
-                    >
-                        <div>
-                            <input
-                                type="checkbox"
-                                checked={selectedRows.includes(
-                                    item.id
-                                )}
-                                onChange={() =>
-                                    handleSelect(item.id)
-                                }
-                                className="h-5 w-5 rounded border-gray-300 cursor-pointer"
-                            />
-                        </div>
 
-                        <div>
-                            <p className="text-[#2563eb] text-base font-medium">
-                                {item.name}
-                            </p>
-                        </div>
 
-                        <div>
-                            <p className="text-base text-gray-700">
-                                {item.location}
-                            </p>
-                        </div>
-
-                        <div className="flex justify-end">
-                            <button
-                                onClick={() =>
-                                    handleOpenDialog(
-                                        item
-                                    )
-                                }
-                                className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white hover:bg-[#111]"
-                            >
-                                View Details
-                            </button>
-                        </div>
+                {loadingSnippets ? (
+                    <div className="p-6 text-center text-gray-500">
+                        Loading snippets...
                     </div>
-                ))}
+                ) : (
+                    snippets?.map((item) => (
+                        <div
+                            key={item.id}
+                            className="grid grid-cols-[2fr_1fr_1fr_1fr] items-center border-b border-gray-100 px-6 py-5 gap-4"     >
+                            <div>
+                                <p className="text-[#2563eb] inline text-base font-medium">
+                                    {item.name}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-base text-gray-700">
+                                    {item.location}
+                                </p>
+                            </div>
+
+                            <div className="flex justify-center">
+
+
+                                <button
+                                    onClick={() => {
+                                        setDeleteItem(item);
+                                        setDeleteConfirmOpen(true);
+                                    }}
+                                    className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={() => handleOpenDialog(item)}
+                                    className="rounded-xl bg-black px-2 py-2 ml-15 text-sm font-medium text-white hover:bg-[#111]"
+                                >
+                                    View Details
+                                </button>
+
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
-           
+
 
             {openDialog && (
                 <div className="fixed inset-0 z-50">
@@ -392,9 +508,146 @@ const SnippetSection = ({ project_id }) => {
                             </pre>
                         </div>
                     </div>
+
+
+                </div>
+
+
+            )}
+
+            {deleteConfirmOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+
+                    <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+
+                        <h2 className="text-lg font-semibold text-black">
+                            Confirm Delete
+                        </h2>
+
+                        <p className="mt-3 text-sm text-gray-600">
+                            Are you sure you want to delete this snippet?
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-3">
+
+                            <button
+                                onClick={() => {
+                                    setDeleteConfirmOpen(false);
+
+                                    setDeleteItem(null);
+                                }}
+                                className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteSnippet}
+                                disabled={deleting}
+                                className="rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
+                            >
+                                {deleting ? "Deleting..." : "Delete"}
+                            </button>
+
+                        </div>
+                    </div>
                 </div>
             )}
+
+
+            {openEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b px-6 py-4">
+                            <h2 className="text-lg font-semibold">Edit Snippet</h2>
+
+                            <button onClick={() => setOpenEditModal(false)}>
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-4">
+
+
+
+                            <div>
+                                <label className="text-sm font-medium text-gray-700">
+                                    Content
+                                </label>
+
+                                <textarea
+                                    rows={6}
+                                    value={editContent}
+                                    onChange={(e) => setEditContent(e.target.value)}
+                                    className="mt-2 w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-black"
+                                    placeholder="Edit content"
+                                />
+                            </div>
+
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex justify-end gap-3 border-t px-6 py-4">
+
+                            <button
+                                onClick={() => setOpenEditModal(false)}
+                                className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={async () => {
+
+                                    try {
+
+                                        setUpdating(true);
+
+                                        const payload = {
+                                            name: editItem?.name,
+                                            content: editContent,
+                                        };
+
+                                        await updateSnippet(
+                                            project_id,
+                                            payload
+                                        );
+
+                                        await fetchSnippets(project_id);
+
+                                        setOpenEditModal(false);
+
+                                    } catch (error) {
+
+                                        console.error(error);
+
+                                    } finally {
+
+                                        setUpdating(false);
+                                    }
+                                }}
+
+                                disabled={updating}
+
+                                className={`rounded-xl px-5 py-2 text-sm font-medium text-white transition-all
+    ${updating
+                                        ? "bg-gray-500 cursor-not-allowed"
+                                        : "bg-black hover:bg-[#111]"
+                                    }`}
+                            >
+                                {updating ? "Updating..." : "Update"}
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
+
+
     );
 };
 
