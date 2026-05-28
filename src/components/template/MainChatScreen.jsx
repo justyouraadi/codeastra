@@ -303,7 +303,7 @@ const MainChatScreen = () => {
   <HelpCircle className="w-4 h-4 mr-2" /> Support
 </DropdownMenuItem> 
 
-              {/* <DropdownMenuItem
+              <DropdownMenuItem
                 onClick={() => {
                   navigate("/profilepage");
                   setSidebarOpen(false);
@@ -311,7 +311,7 @@ const MainChatScreen = () => {
                 className="cursor-pointer hover:bg-gray-100 text-gray-800"
               >
                 <User className="w-4 h-4 mr-2 text-gray-500" /> Profile
-              </DropdownMenuItem> */}
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => {

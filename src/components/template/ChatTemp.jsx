@@ -526,6 +526,7 @@ const PreviewPanel = ({
   current_domain: currentDomain,
   updateProjectMetadata,
   fetchProjectById,
+  uploadProjectLogo,
 
 
 }) => {
@@ -853,6 +854,7 @@ const PreviewPanel = ({
               project={selectedProject?.data}
               updateProjectMetadata={updateProjectMetadata}
               fetchProjectById={fetchProjectById}
+              uploadProjectLogo={uploadProjectLogo}
 
             />
           </div>
@@ -883,6 +885,7 @@ const ChatTemp = () => {
     fetchProjectFileContent,
     fileContent,
     updateProjectMetadata,
+    uploadProjectLogo,
   } = useProjectProvider();
 
   const [selectedFile, setSelectedFile] = useState("");
@@ -1199,6 +1202,8 @@ const ChatTemp = () => {
       current_domain={currentDomain}
       updateProjectMetadata={updateProjectMetadata}
       fetchProjectById={fetchProjectById}
+        uploadProjectLogo={uploadProjectLogo} // ✅ ADD THIS
+
 
 
     />
