@@ -12,7 +12,7 @@ const Layout = () => {
       {/* 🧱 Sidebar + Main Content */}
       <div className="flex flex-1 pt-[60px] overflow-hidden">
         {/* Sidebar */}
-        <Sidebar />
+        {/* <Sidebar /> */}
 
         {/* Main Page (Outlet) */}
         <main className="flex-1  h-[calc(100vh-60px)] overflow-y-auto scrollbar-hide">
