@@ -38,10 +38,10 @@ const FormCard = ({
   };
 
   return (
-    <Card
-      className={`p-4 leading-1 rounded-2xl shadow-md transition-transform hover:scale-[1.03] hover:shadow-lg ${bgColor} ${textColor}`}
-      style={style}
-    >
+<Card
+  className={`w-full h-full flex flex-col justify-between p-4 rounded-2xl shadow-md transition-transform hover:scale-[1.03] hover:shadow-lg ${bgColor} ${textColor}`}
+  style={style}
+>
       {/* 🔹 CardHeader: zero padding, larger negative margin-bottom */}
       <CardHeader className="p-0 mb-[-0.9rem]">
         <div className="flex items-center">
@@ -54,7 +54,7 @@ const FormCard = ({
         </div>
       </CardHeader>
       {/* 🔹 CardContent: zero padding */}
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex-1">
         <CardTitle className={`text-xl mb-2  font-semibold text-[#1F2937]`}>
           {title}
         </CardTitle>
