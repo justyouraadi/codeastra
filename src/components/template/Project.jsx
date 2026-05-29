@@ -33,7 +33,11 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui/avatar";
 import { useInView } from "react-intersection-observer";
 import { ArrowLeft } from "lucide-react";
 import { GraduationCap } from "lucide-react";
@@ -282,6 +286,7 @@ const Project = () => {
               <ArrowLeft />
             </span>
           </div>
+          
 
           <div className="md:hidden pe-4">
             <button
@@ -315,8 +320,8 @@ const Project = () => {
         {/* ============================
             PROJECT GRID (FINAL CLEAN UX)
         ============================ */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 pb-10">
-          {projects.map((proj, i) => {
+<section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 pb-10 auto-rows-fr items-stretch">
+            {projects.map((proj, i) => {
             const card = getCardByIndex(i);
             console.log("This is the time :-", proj.createdAt);
             return (
@@ -325,7 +330,7 @@ const Project = () => {
                 onClick={() => navigate(`/chatpage/${proj.id}`)}
                 className="cursor-pointer hover:scale-[1.02] transition flex h-full"
               >
-                <div className="w-full h-full flex">
+                {/* <div className="w-full h-full flex">
                   <FormCard
                     title={proj.name}
                     description={proj.description || "No description"}
@@ -346,7 +351,64 @@ const Project = () => {
                     iconColor="text-white"
                     textColor="text-black"
                   />
-                </div>
+                </div> */}
+   <div
+  key={proj.id || i}
+  onClick={() => navigate(`/chatpage/${proj.id}`)}
+  className="w-full h-full flex"
+>
+  {/* <FormCard
+    title={proj.name}
+    description={proj.description || "No description"}
+    author="User"
+    createdAt={new Date(proj.createdAt).toLocaleString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })}
+    icon={card.icon}
+    style={{
+      background: card.background,
+      border: card.border,
+    }}
+    iconBg={card.iconBg}
+    iconColor="text-white"
+    textColor="text-black"
+  /> */}
+
+<FormCard
+  title={proj.name}
+  description={proj.description || "No description"}
+  author="User"
+  createdAt={new Date(proj.createdAt).toLocaleString("en-US", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })}
+  icon={
+    proj.logo_url ? (
+      <img
+        src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${proj.logo_url}`}
+        alt={proj.name}
+        className="w-10 h-10 rounded-xl object-cover"
+      />
+    ) : (
+      card.icon
+    )
+  }
+  style={{
+    background: card.background,
+    border: card.border,
+  }}
+  iconBg={card.iconBg}
+  iconColor="text-white"
+  textColor="text-black"
+/>
+</div>
               </div>
             );
           })}
