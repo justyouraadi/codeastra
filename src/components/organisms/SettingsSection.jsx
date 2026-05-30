@@ -14,6 +14,7 @@ const SettingsSection = ({
   project,
   updateProjectMetadata,
   fetchProjectById,
+    uploadProjectLogo,
 }) => {
   const [isEditing, setIsEditing] =
     useState(false);
@@ -38,11 +39,14 @@ const SettingsSection = ({
     });
 
 
-    const apiLogoUrl = project?.logo_url
-  ? `https://gateway.codeastra.ai/blob?container=projects&path=${project?.user_id}/${project?.id}/${project?.logo_url}`
+  //   const apiLogoUrl = project?.logo_url
+  // ? `https://gateway.codeastra.ai/blob?container=projects&path=${project?.user_id}/${project?.id}/${project?.logo_url}`
+  // : "";
+  
+const apiLogoUrl = project?.logo_url
+  ? `https://gateway.codeastra.ai/blob?container=projects&path=${project?.user_id}/${project?.id}/${project?.logo_url}&t=${Date.now()}`
   : "";
   
-
   useEffect(() => {
     const initialName =
       project?.name || "";
@@ -91,80 +95,110 @@ const SettingsSection = ({
     logoFile,
   ]);
 
-  const handleUpdate = async () => {
-    const trimmedName = name.trim();
+  // const handleUpdate = async () => {
+  //   const trimmedName = name.trim();
 
-    const trimmedDescription =
-      description.trim();
+  //   const trimmedDescription =
+  //     description.trim();
 
-    if (
-      !trimmedName ||
-      !trimmedDescription
-    ) {
-      return;
+  //   if (
+  //     !trimmedName ||
+  //     !trimmedDescription
+  //   ) {
+  //     return;
+  //   }
+
+
+  //   if (!hasChanges) {
+  //     setIsEditing(false);
+  //     return;
+  //   }
+
+  //   try {
+
+  //     const formData =
+  //       new FormData();
+
+  //     formData.append(
+  //       "name",
+  //       trimmedName
+  //     );
+
+  //     formData.append(
+  //       "description",
+  //       trimmedDescription
+  //     );
+
+
+  //     if (logoFile) {
+  //       formData.append(
+  //         "logo_name",
+  //         logoFile
+  //       );
+  //     }
+
+  //     await updateProjectMetadata(
+  //       project?.id,
+  //       formData
+  //     );
+
+  //     await fetchProjectById(
+  //       project?.id
+  //     );
+
+
+  //     setName(trimmedName);
+
+  //     setDescription(
+  //       trimmedDescription
+  //     );
+
+  //     setOriginalData({
+  //       name: trimmedName,
+  //       description:
+  //         trimmedDescription,
+  //     });
+
+  //     setLogoFile(null);
+
+  //     setIsEditing(false);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
+const handleUpdate = async () => {
+  const trimmedName = name.trim();
+  const trimmedDescription = description.trim();
+
+  if (!trimmedName || !trimmedDescription) return;
+
+  try {
+    const formData = new FormData();
+
+    formData.append("name", trimmedName);
+    formData.append("description", trimmedDescription);
+
+    // ✅ logo same request me
+    if (logoFile) {
+      formData.append("logo", logoFile);
     }
 
+    await updateProjectMetadata(project?.id, formData);
 
-    if (!hasChanges) {
-      setIsEditing(false);
-      return;
-    }
+    await fetchProjectById(project?.id);
 
-    try {
+    setOriginalData({
+      name: trimmedName,
+      description: trimmedDescription,
+    });
 
-      const formData =
-        new FormData();
-
-      formData.append(
-        "name",
-        trimmedName
-      );
-
-      formData.append(
-        "description",
-        trimmedDescription
-      );
-
-
-      if (logoFile) {
-        formData.append(
-          "logo_name",
-          logoFile
-        );
-      }
-
-      await updateProjectMetadata(
-        project?.id,
-        formData
-      );
-
-      await fetchProjectById(
-        project?.id
-      );
-
-
-      setName(trimmedName);
-
-      setDescription(
-        trimmedDescription
-      );
-
-      setOriginalData({
-        name: trimmedName,
-        description:
-          trimmedDescription,
-      });
-
-      setLogoFile(null);
-
-      setIsEditing(false);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-
-  
+    setLogoFile(null);
+    setIsEditing(false);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <div className="w-full min-h-screen p-4 sm:p-6 md:p-8">

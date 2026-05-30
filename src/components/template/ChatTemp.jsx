@@ -854,7 +854,9 @@ const PreviewPanel = ({
               project={selectedProject?.data}
               updateProjectMetadata={updateProjectMetadata}
               fetchProjectById={fetchProjectById}
-              uploadProjectLogo={uploadProjectLogo}
+            uploadProjectLogo={
+    uploadProjectLogo
+  }
 
             />
           </div>
