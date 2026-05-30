@@ -92,7 +92,7 @@ export const useProjectProvider = () => {
     }
   };
 
-  const fetchProjectFiles = async (version = "v1", project_id) => {
+  const fetchProjectFiles = async ( project_id) => {
     try {
       setProjectFiles((prev) => ({
         ...prev,
@@ -100,9 +100,9 @@ export const useProjectProvider = () => {
         error: null,
       }));
 
-      const data = await fetchProjectFilesAPI(version, project_id);
+      const data = await fetchProjectFilesAPI( project_id);
 
-      const items = data?.data?.files || [];
+      const items = data?.data || [];
 
       setProjectFiles((prev) => ({
         ...prev,
