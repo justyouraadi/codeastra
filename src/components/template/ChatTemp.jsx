@@ -66,6 +66,7 @@ import { Settings } from "lucide-react";
 import SettingsSection from "../organisms/SettingsSection";
 import { SquareDashedBottomCode } from "lucide-react";
 import SnippetSection from "../organisms/SnippetSection";
+import { Braces } from "lucide-react";
 
 
 const MOBILE_BREAKPOINT = 768;
@@ -73,8 +74,16 @@ const MOBILE_BREAKPOINT = 768;
 const buildFileTree = (files) => {
   const root = {};
 
-  files.forEach(({ name }) => {
-    const parts = name.split("/");
+  // 1. Add a safety fallback just in case `files` itself is null/undefined
+  (files || []).forEach((fileObj) => {
+    
+    // 2. Safely extract the path string whether the API calls it name, filename, or path
+    const filePath = fileObj?.name || fileObj?.filename || fileObj?.path;
+
+    // 3. If there is still no valid path string, skip this file entirely instead of crashing
+    if (!filePath || typeof filePath !== 'string') return; 
+
+    const parts = filePath.split("/");
     let current = root;
 
     parts.forEach((part, index) => {
@@ -208,7 +217,29 @@ const getLanguageFromFile = (path = "") => {
   return "plaintext";
 };
 
+const isImageFile = (path = "") => {
+  return /\.(png|jpe?g|gif|webp|ico|svg)$/i.test(path);
+};
+
 const CodeViewer = ({ filePath, fileContent }) => {
+  // --- NEW: Render an image tag if the file is an image ---
+  if (isImageFile(filePath)) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-[#1e1e1e] p-6">
+        {fileContent ? (
+          <img
+            src={fileContent} // This will be the data:image/... base64 string from the backend
+            alt={filePath}
+            className="max-h-full max-w-full rounded-md object-contain shadow-lg"
+          />
+        ) : (
+          <span className="text-gray-400">Loading image...</span>
+        )}
+      </div>
+    );
+  }
+
+  // --- ORIGINAL: Render Monaco Editor for code/text files ---
   return (
     <Editor
       height="100%"
@@ -218,12 +249,21 @@ const CodeViewer = ({ filePath, fileContent }) => {
       options={{
         readOnly: true,
         fontSize: 14,
+        fontFamily: "'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace",
         lineHeight: 24,
         lineNumbers: "on",
-        minimap: { enabled: false },
+        lineNumbersMinChars: 3,
+        renderLineHighlight: "all",
+        guides: {
+          indentation: true,
+          bracketPairs: true,
+          bracketPairsHorizontal: true,
+        },
+        renderIndentGuides: true, 
+        renderWhitespace: "selection",
         scrollBeyondLastLine: false,
+        minimap: { enabled: false },
         wordWrap: "on",
-        insertSpaces: true,
         padding: { top: 16, bottom: 16 },
       }}
     />
@@ -359,6 +399,16 @@ const ChatPanel = ({
                   <span>Preview</span>
                 </DropdownMenuItem>
 
+                {/* ✅ PREVIEW */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    setViewMode("code");
+                  }}
+                >
+                  <Braces className="h-4 w-4 mr-2" />
+                  <span>Code</span>
+                </DropdownMenuItem>
+
                 {/* ✅ DATABASE */}
                 <DropdownMenuItem
                   onClick={() => {
@@ -479,7 +529,7 @@ const CodeWorkspace = ({
             <Button
               size="sm"
               className="mt-3 bg-gray-800 text-white hover:bg-gray-700"
-              onClick={() => fetchProjectFiles("v1", id)}
+              onClick={() => fetchProjectFiles(id)}
             >
               Retry
             </Button>
@@ -628,6 +678,25 @@ const PreviewPanel = ({
               </TooltipTrigger>
               <TooltipContent>
                 <p>Preview</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Preview */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("code")}
+                  className={`flex cursor-pointer items-center gap-2 text-sm ${viewMode === "code"
+                      ? "border-b-2 border-black font-semibold"
+                      : ""
+                    }`}
+                >
+                  <Braces className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Code</p>
               </TooltipContent>
             </Tooltip>
 
@@ -884,8 +953,6 @@ const ChatTemp = () => {
     selectedProject,
     fetchProjectFiles,
     projectFiles,
-    fetchProjectFileContent,
-    fileContent,
     updateProjectMetadata,
     uploadProjectLogo,
   } = useProjectProvider();
@@ -913,13 +980,18 @@ const ChatTemp = () => {
   const chatEndRef = useRef(null);
   const botMessageIndexRef = useRef(null);
 
-  const handleSelectFile = async (filePath) => {
-    try {
-      setSelectedFile(filePath);
-      await fetchProjectFileContent("v1", id, filePath);
-    } catch (err) {
-      console.error("Fetch project file content error:", err.message);
-    }
+  const currentFileContent = useMemo(() => {
+    if (!projectFiles?.files || !selectedFile) return "";
+    
+    const fileObj = projectFiles.files.find(
+      (f) => f.name === selectedFile || f.filename === selectedFile || f.path === selectedFile
+    );
+    
+    return fileObj ? fileObj.content : "";
+  }, [projectFiles, selectedFile]);
+
+const handleSelectFile = (filePath) => {
+    setSelectedFile(filePath);
   };
 
   useEffect(() => {
@@ -948,7 +1020,6 @@ const ChatTemp = () => {
         ? data.data.assigned_domain.replace(/^https?:\/\//, '')
         : null);
 
-      // await fetchProjectFiles("v1", id);
 
       setFinalMessages(Array.isArray(data?.data?.chats) ? data.data.chats : []);
       botMessageIndexRef.current = null;
@@ -964,6 +1035,21 @@ const ChatTemp = () => {
       chatEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [finalMessage]);
+
+  // --- NEW: Lazy load project files only when the user opens the Code view ---
+  useEffect(() => {
+    // Only proceed if the user is looking at the code and we have a valid project ID
+    if (viewMode === "code" && id) {
+      
+      // Safety check: Don't fetch if we already have files, or if they are currently loading
+      const hasFiles = projectFiles?.files && projectFiles.files.length > 0;
+      const isLoading = projectFiles?.loading;
+
+      if (!hasFiles && !isLoading) {
+        fetchProjectFiles(id);
+      }
+    }
+  }, [viewMode, id, projectFiles?.loading]);
 
   const updateBotMessage = useCallback(
     (content, type = "string", textType = "normal") => {
@@ -1200,7 +1286,7 @@ const ChatTemp = () => {
       onSelectFile={handleSelectFile}
       fetchProjectFiles={fetchProjectFiles}
       id={id}
-      fileContent={fileContent}
+      fileContent={currentFileContent}
       current_domain={currentDomain}
       updateProjectMetadata={updateProjectMetadata}
       fetchProjectById={fetchProjectById}

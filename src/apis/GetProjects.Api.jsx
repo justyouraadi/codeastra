@@ -66,7 +66,7 @@ export const getProjectsNamesApiForSidebar = async (
     throw error;
   }
 };
-export const fetchProjectFilesAPI = async (version = "v1", project_id) => {
+export const fetchProjectFilesAPI = async ( project_id) => {
   const token = localStorage.getItem("signin_token");
 
   if (!token) {
@@ -82,7 +82,7 @@ export const fetchProjectFilesAPI = async (version = "v1", project_id) => {
     redirect: "follow",
   };
 
-  const url = `https://gateway.codeastra.ai/projects/api/v1/projects/files/${project_id}/${version}`;
+  const url = `https://gateway.codeastra.ai/projects/api/v1/projects/commits/code/${project_id}`;
 
   try {
     const response = await fetch(url, requestOptions);
