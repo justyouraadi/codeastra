@@ -1,3 +1,445 @@
+// import React, { useState, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
+
+// import logo from "../../assets/logo.png";
+// import FormCard from "../organisms/FormCard";
+// import InputAtom from "../atoms/InputAtom";
+// import ButtonAtom from "../atoms/ButtonAtom";
+
+// import { useProjectContext } from "../../context/ProjectProvider";
+
+// import {
+//   Plus,
+//   Folder,
+//   Settings,
+//   User,
+//   Crown,
+//   Menu,
+//   Loader2,
+// } from "lucide-react";
+
+// import { CiLogout } from "react-icons/ci";
+// import { IoIosArrowBack } from "react-icons/io";
+// import { FaCode, FaFilter, FaSearch } from "react-icons/fa";
+
+// import {
+//   DropdownMenu,
+//   DropdownMenuTrigger,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuLabel,
+//   DropdownMenuSeparator,
+// } from "@/components/ui/dropdown-menu";
+
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+// import {
+//   Avatar,
+//   AvatarImage,
+//   AvatarFallback,
+// } from "@/components/ui/avatar";
+// import { useInView } from "react-intersection-observer";
+// import { ArrowLeft } from "lucide-react";
+// import { GraduationCap } from "lucide-react";
+// import { Star } from "lucide-react";
+// import { Zap } from "lucide-react";
+// import { Moon } from "lucide-react";
+// import { Share2 } from "lucide-react";
+
+// const Project = () => {
+//   const cardUtils = [
+//     {
+//       background:
+//         "linear-gradient(45deg, rgba(245, 208, 254, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+//       border: "1px solid rgba(255, 255, 255, 0.18)",
+//       icon: <GraduationCap />,
+//       iconBg: "#E6007E",
+//     },
+//     {
+//       background:
+//         "linear-gradient(45deg, rgba(196, 181, 253, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+//       border: "1px solid rgba(255, 255, 255, 0.18)",
+//       icon: <Star />,
+//       iconBg: "linear-gradient(135deg, #C084FC 0%, #6366F1 70.71%)",
+//     },
+//     {
+//       background:
+//         "linear-gradient(45deg, rgba(167, 243, 208, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+//       border: "1px solid rgba(255, 255, 255, 0.18)",
+//       icon: <Zap />,
+//       iconBg: "linear-gradient(135deg, #4ADE80 0%, #10B981 70.71%)",
+//     },
+//     {
+//       background:
+//         "linear-gradient(45deg, rgba(165, 243, 252, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+//       border: "1px solid rgba(255, 255, 255, 0.18)",
+//       icon: <Moon />,
+//       iconBg: "linear-gradient(135deg, #22D3EE 0%, #3B82F6 70.71%)",
+//     },
+//     {
+//       background:
+//         "linear-gradient(45deg, rgba(254, 215, 170, 0.3) 50%, rgba(255, 255, 255, 0.2) 120.71%)",
+//       border: "1px solid rgba(255, 255, 255, 0.18)",
+//       icon: <Share2 />,
+//       iconBg: "linear-gradient(135deg, #FB923C 0%, #EF4444 70.71%)",
+//     },
+//   ];
+
+//   const navigate = useNavigate();
+
+//   const { fetchProjects, loadMoreProjects, hasMore, projects, loading, fetchProjectNamesForSidebar, sidebarProjects } =
+//     useProjectContext();
+
+//   const [searchText, setSearchText] = useState("");
+//   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+//   // Logout handler
+//   const handleLogout = () => {
+//     localStorage.removeItem("signin_token");
+//     navigate("/");
+//   };
+
+//   // Infinite scroll observer
+//   const { ref, inView } = useInView({ threshold: 0 });
+
+//   useEffect(() => {
+//     fetchProjects();
+//     fetchProjectNamesForSidebar()
+//   }, []);
+
+//   useEffect(() => {
+//     if (inView && hasMore && !loading) {
+//       loadMoreProjects();
+//     }
+//   }, [inView]);
+
+//   // Time ago formatter
+//   const getTimeAgo = (dateString) => {
+//     const now = new Date();
+//     const date = new Date(dateString);
+//     const diff = now - date;
+
+//     const minutes = Math.floor(diff / 60000);
+//     const hours = Math.floor(minutes / 60);
+//     const days = Math.floor(hours / 24);
+
+//     if (days > 0) return `${days}d ago`;
+//     if (hours > 0) return `${hours}h ago`;
+//     if (minutes > 0) return `${minutes}m ago`;
+//     return "just now";
+//   };
+
+//   const getCardByIndex = (index) => {
+//     return cardUtils[index % cardUtils.length];
+//   };
+
+//   return (
+//     <div className="min-h-screen flex bg-gray-100">
+//       {/* ============================
+//           MOBILE BACKDROP
+//       ============================ */}
+//       {sidebarOpen && (
+//         <div
+//           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+//           onClick={() => setSidebarOpen(false)}
+//         ></div>
+//       )}
+
+//       {/* ============================
+//           SIDEBAR
+//       ============================ */}
+//       <aside
+//         className={`
+//           fixed z-40 left-0 top-0 h-full bg-white/90 border-r border-gray-200 shadow-lg backdrop-blur-sm flex flex-col md:flex md:w-64
+//           transform transition-transform duration-300 ease-in-out
+//           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+//           md:translate-x-0
+//         `}
+//       >
+//         <div className="p-5 flex flex-col">
+//           <div className="flex items-center justify-center mb-5">
+//             {logo && (
+//               <img
+//                 src={logo}
+//                 alt="Logo"
+//                 className="w-36 md:w-40 cursor-pointer"
+//               />
+//             )}
+//           </div>
+
+//           <Button
+//             className="w-full bg-black text-white py-2 mb-5 rounded-lg shadow-md flex items-center justify-center hover:bg-gray-900"
+//             onClick={() => {
+//               navigate("/mainpagescreen");
+//               setSidebarOpen(false);
+//             }}
+//           >
+//             <Plus className="w-4 h-4 mr-2" /> New Chat
+//           </Button>
+
+//           <Input
+//             value={searchText}
+//             onChange={(e) => {
+//               setSearchText(e.target.value);
+//               fetchProjectNamesForSidebar(e.target.value);
+//             }}
+//             placeholder="Search chats..."
+//             className="mb-5 bg-gray-100 border-gray-200 placeholder:text-gray-500"
+//           />
+
+//           <nav className="space-y-1 text-[14px] font-medium mb-5">
+//             <div
+//               onClick={() => {
+//                 navigate("/projectpages");
+//                 setSidebarOpen(false);
+//               }}
+//               className="flex items-center px-2 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-gray-700"
+//             >
+//               <Folder className="w-4 h-4 mr-2" /> Projects
+//             </div>
+//           </nav>
+//         </div>
+
+//         {/* Recent Projects */}
+//         <div className="flex-1 px-5 overflow-y-auto">
+//           <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2">
+//             Recent
+//           </h3>
+
+//           <ul className="space-y-3 text-[13px]">
+//             {sidebarProjects.length === 0
+//               ? "Project Not Found"
+//               : sidebarProjects.map((project) => (
+//                 <li
+//                   key={project.id}
+//                   onClick={() => {
+//                     navigate(`/chatpage/${project.id}`);
+//                     setSidebarOpen(false);
+//                   }}
+//                   className="text-gray-700 hover:text-black cursor-pointer"
+//                 >
+//                   {project.name}
+//                   <span className="text-gray-400 text-xs ml-1">
+//                     • {getTimeAgo(project.updatedAt || project.createdAt)}
+//                   </span>
+//                 </li>
+//               ))}
+//           </ul>
+//         </div>
+
+//         {/* Bottom Settings */}
+//         <div className="p-4 border-t border-gray-200">
+//           <DropdownMenu>
+//             <DropdownMenuTrigger asChild>
+//               <Button className="flex w-full justify-start bg-black text-white">
+//                 <Settings className="w-4 h-4 mr-2" /> Settings
+//               </Button>
+//             </DropdownMenuTrigger>
+
+//             <DropdownMenuContent className="w-56">
+//               <DropdownMenuLabel>Account</DropdownMenuLabel>
+//               <DropdownMenuSeparator />
+
+//               {/* <DropdownMenuItem
+//                 onClick={() => {
+//                   navigate("/profilepage");
+//                   setSidebarOpen(false);
+//                 }}
+//               >
+//                 <User className="w-4 h-4 mr-2" /> Profile
+//               </DropdownMenuItem> */}
+
+//               <DropdownMenuItem
+//                 onClick={() => {
+//                   handleLogout();
+//                   setSidebarOpen(false);
+//                 }}
+//                 className="text-red-600"
+//               >
+//                 <CiLogout className="w-4 h-4 mr-2" /> Logout
+//               </DropdownMenuItem>
+
+//               {/* <DropdownMenuItem
+//                 onClick={() => {
+//                   navigate("/billingpages");
+//                   setSidebarOpen(false);
+//                 }}
+//               >
+//                 <Crown className="w-4 h-4 mr-2 text-yellow-500" /> Upgrade
+//               </DropdownMenuItem> */}
+//             </DropdownMenuContent>
+//           </DropdownMenu>
+//         </div>
+//       </aside>
+
+//       {/* ============================
+//           MAIN CONTENT
+//       ============================ */}
+//       <div className="flex-1 md:ml-64 flex flex-col">
+//         {/* Top Navbar */}
+//         <nav className="flex items-center justify-between border-b shadow-sm">
+//           <div className="flex items-center px-4 py-3">
+//             <span
+//               onClick={() => navigate(-1)}
+//               className="p-2 text-xl cursor-pointer hover:bg-gray-200 rounded-md transition-all"
+//             >
+//               <ArrowLeft />
+//             </span>
+//           </div>
+          
+
+//           <div className="md:hidden pe-4">
+//             <button
+//               onClick={() => setSidebarOpen(true)}
+//               className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center"
+//             >
+//               <Menu className="w-5 h-5" />
+//             </button>
+//           </div>
+//         </nav>
+
+//         {/* Search Section */}
+//         <section className="px-4 py-6 flex gap-3">
+//           <div className="relative flex-1">
+//             <FaSearch className="absolute left-3 top-3 text-gray-400" />
+//             <InputAtom
+//               className="pl-10 w-full"
+//               placeholder="Search apps..."
+//               onChange={(e) => {
+//                 fetchProjects(e.target.value);
+//               }}
+//               type="search"
+//             />
+//           </div>
+
+//           <ButtonAtom className="flex items-center gap-2 bg-black text-white">
+//             <FaFilter /> All Apps
+//           </ButtonAtom>
+//         </section>
+
+//         {/* ============================
+//             PROJECT GRID (FINAL CLEAN UX)
+//         ============================ */}
+// <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 pb-10 auto-rows-fr items-stretch">
+//             {projects.map((proj, i) => {
+//             const card = getCardByIndex(i);
+//             console.log("This is the time :-", proj.createdAt);
+//             return (
+//               <div
+//                 key={proj.id || i}
+//                 onClick={() => navigate(`/chatpage/${proj.id}`)}
+//                 className="cursor-pointer hover:scale-[1.02] transition flex h-full"
+//               >
+//                 {/* <div className="w-full h-full flex">
+//                   <FormCard
+//                     title={proj.name}
+//                     description={proj.description || "No description"}
+//                     author="User"
+//                     createdAt={new Date(proj.createdAt).toLocaleString("en-US", {
+//                       day: "2-digit",
+//                       month: "short",
+//                       year: "numeric",
+//                       hour: "2-digit",
+//                       minute: "2-digit",
+//                     })}
+//                     icon={card.icon}
+//                     style={{
+//                       background: card.background,
+//                       border: card.border,
+//                     }}
+//                     iconBg={card.iconBg}
+//                     iconColor="text-white"
+//                     textColor="text-black"
+//                   />
+//                 </div> */}
+//    <div
+//   key={proj.id || i}
+//   onClick={() => navigate(`/chatpage/${proj.id}`)}
+//   className="w-full h-full flex"
+// >
+//   {/* <FormCard
+//     title={proj.name}
+//     description={proj.description || "No description"}
+//     author="User"
+//     createdAt={new Date(proj.createdAt).toLocaleString("en-US", {
+//       day: "2-digit",
+//       month: "short",
+//       year: "numeric",
+//       hour: "2-digit",
+//       minute: "2-digit",
+//     })}
+//     icon={card.icon}
+//     style={{
+//       background: card.background,
+//       border: card.border,
+//     }}
+//     iconBg={card.iconBg}
+//     iconColor="text-white"
+//     textColor="text-black"
+//   /> */}
+
+// <FormCard
+//   title={proj.name}
+//   description={proj.description || "No description"}
+//   author="User"
+//   createdAt={new Date(proj.createdAt).toLocaleString("en-US", {
+//     day: "2-digit",
+//     month: "short",
+//     year: "numeric",
+//     hour: "2-digit",
+//     minute: "2-digit",
+//   })}
+// icon={
+//   proj.logo_url ? (
+//     <div className="w-12 h-12 overflow-hidden rounded-xl bg-white flex items-center justify-center">
+//       <img
+//         src={`https://gateway.codeastra.ai/uploads/${proj.logo_url}`}
+//         alt={proj.name}
+//         className="w-full h-full object-cover"
+//         onError={(e) => {
+//           console.log("IMAGE FAILED");
+//           console.log(e.target.src);
+//         }}
+//       />
+//     </div>
+//   ) : (
+//     card.icon
+//   )
+// }
+//   style={{
+//     background: card.background,
+//     border: card.border,
+//   }}
+//   iconBg={card.iconBg}
+//   iconColor="text-white"
+//   textColor="text-black"
+// />
+// </div>
+//               </div>
+//             );
+//           })}
+
+//           {/* Infinite Scroll */}
+//           <div ref={ref} className="col-span-full flex justify-center py-4">
+//             {hasMore && !loading && (
+//               <p className="text-gray-500 text-sm">Loading more...</p>
+//             )}
+//           </div>
+
+//           {loading && (
+//             <div className="col-span-full flex justify-center">
+//               <Loader2 className="animate-spin w-8 h-8 text-purple-500" />
+//             </div>
+//           )}
+//         </section>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Project;
+
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -392,7 +834,7 @@ const Project = () => {
   icon={
     proj.logo_url ? (
       <img
-        src={`${import.meta.env.VITE_API_BASE_URL}/uploads/${proj.logo_url}`}
+        src={`https://gateway.codeastra.ai/blob?container=projects&path=${proj?.user_id}/${proj?.id}/${proj?.logo_url}`}
         alt={proj.name}
         className="w-10 h-10 rounded-xl object-cover"
       />
@@ -401,10 +843,10 @@ const Project = () => {
     )
   }
   style={{
-    background: card.background,
-    border: card.border,
+    background: proj.logo_url ? 'transparent' : card.background,
+    border: proj.logo_url ? 'transparent' : card.border,
   }}
-  iconBg={card.iconBg}
+  iconBg={ proj.logo_url ? 'transparent' : card.iconBg}
   iconColor="text-white"
   textColor="text-black"
 />
