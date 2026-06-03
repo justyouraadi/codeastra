@@ -353,7 +353,9 @@ const ChatPanel = ({
   showPreviewButton,
   onShowPreview,
   setViewMode,
-  setMobileView
+  setMobileView,
+    links,
+  setLinks,
 }) => {
   return (
     <div className="flex h-screen flex-col border-r border-gray-200 bg-white">
@@ -481,7 +483,33 @@ const ChatPanel = ({
         chatEndRef={chatEndRef}
       />
 
-      <div className="flex items-center gap-2 border-t border-gray-200 bg-white p-3">
+      {/* <div className="flex items-center gap-2 border-t border-gray-200 bg-white p-3">
+
+{links.length > 0 && (
+  <div className="flex flex-wrap gap-2 mb-2">
+    {links.map((link, index) => (
+      <div
+        key={index}
+        className="flex items-center gap-2 rounded-full bg-gray-200 px-3 py-1 text-xs"
+      >
+        <span className="max-w-[180px] truncate">
+          {link}
+        </span>
+
+        <button
+          onClick={() =>
+            setLinks((prev) =>
+              prev.filter((_, i) => i !== index)
+            )
+          }
+        >
+          ×
+        </button>
+      </div>
+    ))}
+  </div>
+)}
+
         <textarea
           placeholder={
             waitingForBot ? "Please wait..." : "Type your message..."
@@ -501,7 +529,66 @@ const ChatPanel = ({
         >
           <Send className="h-4 w-4" />
         </Button>
+      </div> */}
+
+      <div className="flex items-center gap-2 border-t border-gray-200 bg-white p-3">
+
+  <div className="flex-1 rounded-md border border-gray-200 bg-gray-100 px-3 py-2">
+
+    {links.length > 0 && (
+      <div className="mb-2 flex flex-wrap gap-2">
+        {links.map((link, index) => (
+          <div
+            key={index}
+            className="flex items-center gap-2 rounded-full bg-white border px-3 py-1 text-xs"
+          >
+            <span className="max-w-[180px] truncate">
+              {link}
+            </span>
+
+            <button
+              onClick={() =>
+                setLinks(prev =>
+                  prev.filter((_, i) => i !== index)
+                )
+              }
+            >
+              ×
+            </button>
+          </div>
+        ))}
       </div>
+    )}
+
+    <textarea
+      placeholder={
+        waitingForBot
+          ? "Please wait..."
+          : "Type your message..."
+      }
+      value={input}
+      onChange={(event) => setInput(event.target.value)}
+      onKeyDown={handleKeyDown}
+      disabled={waitingForBot}
+      rows={2}
+      className="w-full  resize-none bg-transparent outline-none text-sm"
+    />
+
+  </div>
+
+  <Button
+    onClick={handleSend}
+    disabled={waitingForBot}
+    className={`${
+      waitingForBot
+        ? "bg-gray-400"
+        : "bg-black hover:bg-gray-900"
+    } text-white`}
+  >
+    <Send className="h-4 w-4" />
+  </Button>
+
+</div>
     </div>
   );
 };
@@ -959,6 +1046,11 @@ const ChatTemp = () => {
 
   const [selectedFile, setSelectedFile] = useState("");
   const [input, setInput] = useState("");
+  // const [links, setLinks] = useState([]);
+  const [links, setLinks] = useState(() => {
+  const savedLinks = localStorage.getItem(`chat_links_${id}`);
+  return savedLinks ? JSON.parse(savedLinks) : [];
+});
   const [viewMode, setViewMode] = useState("output");
   const [waitingForBot, setWaitingForBot] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -1003,6 +1095,14 @@ const handleSelectFile = (filePath) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+  localStorage.setItem(
+    `chat_links_${id}`,
+    JSON.stringify(links)
+  );
+}, [links, id]);
+
 
   useEffect(() => {
     if (!isMobile) {
@@ -1236,13 +1336,70 @@ const handleSelectFile = (filePath) => {
     });
   };
 
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      handleSend();
-    }
-  };
+  // const handleKeyDown = (event) => {
+  //   if (event.key === "Enter" && !event.shiftKey) {
+  //     event.preventDefault();
+  //     handleSend();
+  //   }
+  // };
 
+  const isValidUrl = (text) => {
+  try {
+    new URL(text);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// const handleKeyDown = (event) => {
+//   if (event.key === "Enter" && !event.shiftKey) {
+//     event.preventDefault();
+
+//     const value = input.trim();
+
+//     // URL enter hua
+//     if (isValidUrl(value)) {
+
+//       if (links.length >= 3) {
+//         errorToast("Maximum 3 links allowed");
+//         return;
+//       }
+
+//       setLinks((prev) => [...prev, value]);
+//       // setInput("");
+//       return; // message send nahi hoga
+//     }
+
+//     // normal text
+//     handleSend();
+//   }
+// };
+
+
+const handleKeyDown = (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+
+    const value = input.trim();
+
+    const urls = value.match(/https?:\/\/[^\s]+/g);
+
+    if (urls && urls.length > 0) {
+      const lastUrl = urls[urls.length - 1]; // sirf last link
+
+      if (links.length >= 3) {
+        errorToast("Maximum 3 links allowed");
+        return;
+      }
+
+      setLinks((prev) => [...prev, lastUrl]);
+      return;
+    }
+
+    handleSend();
+  }
+};
   const openMobilePreview = () => {
     setViewMode("output");
     setMobileView("preview");
@@ -1264,6 +1421,8 @@ const handleSelectFile = (filePath) => {
       onShowPreview={openMobilePreview}
       setViewMode={setViewMode}
       setMobileView={setMobileView}
+        links={links}
+  setLinks={setLinks}
     />
   );
 

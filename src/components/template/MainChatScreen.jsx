@@ -59,13 +59,34 @@ const MainChatScreen = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [prompt, setPrompt] = useState("");
+  // const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(
+  localStorage.getItem("chat_prompt") || ""
+);
+
+useEffect(() => {
+  localStorage.setItem("chat_prompt", prompt);
+}, [prompt]);
+
+
   const [isLoadingFullScreen, setIsLoadingFullScreen] = useState(false);
   const [searchText, setSearchText] = useState("");
   // const { createProject, loading } = useProjectProvider();
   // const { fetchProjects, projects } = useProjectContext();
 
-const [links, setLinks] = useState([]);
+// const [links, setLinks] = useState([]);
+const [links, setLinks] = useState(() => {
+  const savedLinks = localStorage.getItem("chat_links");
+  return savedLinks ? JSON.parse(savedLinks) : [];
+}); 
+
+
+useEffect(() => {
+  localStorage.setItem(
+    "chat_links",
+    JSON.stringify(links)
+  );
+}, [links]);
 
   const {
     fetchProjects,
@@ -164,6 +185,9 @@ const [links, setLinks] = useState([]);
 
       setPrompt("");
       setLinks([]);
+      localStorage.removeItem("chat_links");
+      localStorage.removeItem("chat_prompt");
+
 
     } catch (err) {
       console.log(err.message);
