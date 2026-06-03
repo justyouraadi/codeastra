@@ -65,6 +65,8 @@ const MainChatScreen = () => {
   // const { createProject, loading } = useProjectProvider();
   // const { fetchProjects, projects } = useProjectContext();
 
+const [links, setLinks] = useState([]);
+
   const {
     fetchProjects,
     loadMoreProjects,
@@ -155,11 +157,13 @@ const MainChatScreen = () => {
 
       navigate(`/project/${tempId}`, {
         state: {
-          initialPrompt: text
+          initialPrompt: text,
+              links: links
         }
       });
 
       setPrompt("");
+      setLinks([]);
 
     } catch (err) {
       console.log(err.message);
@@ -294,14 +298,14 @@ const MainChatScreen = () => {
 
 
 
-        <DropdownMenuItem 
-  onClick={() => { 
-    navigate("/support");
-     setSidebarOpen(false);
-  }}
->
-  <HelpCircle className="w-4 h-4 mr-2" /> Support
-</DropdownMenuItem> 
+              <DropdownMenuItem
+                onClick={() => {
+                  navigate("/support");
+                  setSidebarOpen(false);
+                }}
+              >
+                <HelpCircle className="w-4 h-4 mr-2" /> Support
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => {
@@ -373,49 +377,23 @@ const MainChatScreen = () => {
           </div>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{/* 
           <ChatInput
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onSend={handleSend}
-          />
+          /> */}
+
+          <ChatInput
+  value={prompt}
+  links={links}
+  setLinks={setLinks}
+  onChange={(e) => setPrompt(e.target.value)}
+  onSend={handleSend}
+/>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          {/* Cards Section */}
+ {/* Cards Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
             {[
               {
