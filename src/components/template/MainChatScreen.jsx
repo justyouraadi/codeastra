@@ -59,11 +59,34 @@ const MainChatScreen = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [prompt, setPrompt] = useState("");
+  // const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(
+  localStorage.getItem("chat_prompt") || ""
+);
+
+useEffect(() => {
+  localStorage.setItem("chat_prompt", prompt);
+}, [prompt]);
+
+
   const [isLoadingFullScreen, setIsLoadingFullScreen] = useState(false);
   const [searchText, setSearchText] = useState("");
   // const { createProject, loading } = useProjectProvider();
   // const { fetchProjects, projects } = useProjectContext();
+
+// const [links, setLinks] = useState([]);
+const [links, setLinks] = useState(() => {
+  const savedLinks = localStorage.getItem("chat_links");
+  return savedLinks ? JSON.parse(savedLinks) : [];
+}); 
+
+
+useEffect(() => {
+  localStorage.setItem(
+    "chat_links",
+    JSON.stringify(links)
+  );
+}, [links]);
 
   const {
     fetchProjects,
@@ -155,11 +178,16 @@ const MainChatScreen = () => {
 
       navigate(`/project/${tempId}`, {
         state: {
-          initialPrompt: text
+          initialPrompt: text,
+              links: links
         }
       });
 
       setPrompt("");
+      setLinks([]);
+      localStorage.removeItem("chat_links");
+      localStorage.removeItem("chat_prompt");
+
 
     } catch (err) {
       console.log(err.message);
@@ -294,14 +322,14 @@ const MainChatScreen = () => {
 
 
 
-        <DropdownMenuItem 
-  onClick={() => { 
-    navigate("/support");
-     setSidebarOpen(false);
-  }}
->
-  <HelpCircle className="w-4 h-4 mr-2" /> Support
-</DropdownMenuItem> 
+              <DropdownMenuItem
+                onClick={() => {
+                  navigate("/support");
+                  setSidebarOpen(false);
+                }}
+              >
+                <HelpCircle className="w-4 h-4 mr-2" /> Support
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => {
@@ -373,49 +401,23 @@ const MainChatScreen = () => {
           </div>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{/* 
           <ChatInput
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onSend={handleSend}
-          />
+          /> */}
+
+          <ChatInput
+  value={prompt}
+  links={links}
+  setLinks={setLinks}
+  onChange={(e) => setPrompt(e.target.value)}
+  onSend={handleSend}
+/>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          {/* Cards Section */}
+ {/* Cards Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
             {[
               {

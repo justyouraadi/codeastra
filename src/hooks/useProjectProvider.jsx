@@ -19,6 +19,7 @@ import { AddCustomDomain, DeleteCustomDomain, FetchCustomDomainInfo } from "@/ap
 import { errorToast } from "@/components/atoms/Toast.Atom";
 import { updateProjectMetadataAPI, uploadProjectLogoAPI } from "@/apis/Settings.Api";
 import { createSnippetAPI, deleteSnippetAPI, fetchSnippetsAPI, updateSnippetAPI } from "@/apis/Snippet.Api";
+import { downloadProjectAPI } from "@/apis/CodeDownload.Api";
 
 export const useProjectProvider = () => {
   const [projects, setProjects] = useState([]);
@@ -576,6 +577,32 @@ const uploadProjectLogo =
 };
 
 
+const downloadProject = async (project_id) => {
+  try {
+    const blob = await downloadProjectAPI(project_id);
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `project-${project_id}.zip`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+
+    return true;
+  } catch (error) {
+    console.error("❌ Download Project Error:", error);
+    throw error;
+  }
+};
+
   // ----------------------------------------------------------
   // 🔹 Returned Values for Components
   // ----------------------------------------------------------
@@ -617,5 +644,6 @@ const uploadProjectLogo =
     deleteSnippet,
     updateSnippet,
     uploadProjectLogo,  
+    downloadProject,
   };
 };

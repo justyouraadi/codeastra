@@ -1,3 +1,233 @@
+// import React, { useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import { useAuth } from "../../context/ContextProvider";
+// import { FcGoogle } from "react-icons/fc";
+// import {
+//   signinWithGoogleFirebase,
+//   googleMFASigninAPI,
+// } from "@/apis/Signin.Api";
+// import {
+//   successToast,
+//   errorToast,
+//   loadingToast,
+//   dismissToast,
+// } from "@/components/atoms/Toast.Atom";
+
+// const FormMolecules = () => {
+//   const navigate = useNavigate();
+//   const { signin, signinWithGoogle, loading } = useAuth();
+
+//   const [email, setEmail] = useState("");
+//   const [password, setPassword] = useState("");
+
+//   // -------------------------------------------------
+//   // ✅ Unified Authentication Handler
+//   // -------------------------------------------------
+//   const handleAuth = async (
+//     authFn,
+//     { toastText, mode, redirectTo = "/otppages" } = {}
+//   ) => {
+//     if (loading) return;
+
+//     const toastId = loadingToast(toastText || "Signing in...");
+
+//     try {
+//       if (mode) {
+//         localStorage.setItem("auth_mode", mode);
+//       }
+
+//       const response = await authFn();      
+
+//       dismissToast(toastId);
+
+//       // ✅ Redirect only when backend confirms
+//       if (response?.data) {
+//         navigate(redirectTo);
+//       }
+//     } catch (err) {
+//       dismissToast(toastId);
+
+//       // ✅ If OTP request already exists → OTP page
+//       if (
+//         redirectTo === "/otppages" &&
+//         err?.message?.includes("request already exists")
+//       ) {
+//         navigate("/otppages");
+//       } else {
+//         errorToast(err?.message);
+//       }
+//     }
+//   };
+
+//   // -------------------------------------------------
+//   // ✅ Email + Password Sign-in (OTP flow)
+//   // -------------------------------------------------
+//   const handleSignIn = (e) => {
+//     e.preventDefault();
+
+//     handleAuth(() => signin(email, password), {
+//       toastText: "Signing in...",
+//       mode: "signin",
+//       redirectTo: "/otppages",
+//     });
+//   };
+
+//   // -------------------------------------------------
+//   // ✅ Google Sign-in (Direct Dashboard)
+//   // -------------------------------------------------
+//   const handleGoogleSignIn = async () => {
+//     try {
+//       const user = await signinWithGoogleFirebase();
+
+//       if (!user?.email) {
+//         errorToast("Google email not found");
+//         return;
+//       }
+
+//       const token = await user.getIdToken(true);
+
+//       const response = await googleMFASigninAPI({
+//         email: user.email,
+//         token,
+//       });
+
+//       console.log("Backend response:", response);
+
+//       if (!response?.success) {
+//         const explanation = response?.error?.explanation?.[0];
+
+//         if (explanation === "Email is not associated with any account") {
+//           navigate("/createaccount", { state: { email: user.email } });
+//           return;
+//         }
+
+//         errorToast(explanation || "Login failed");
+//         return;
+//       }
+
+//       // ✅ Save JWT token
+//       localStorage.setItem("signin_token", response.data);
+
+//       successToast("Login successful");
+//       navigate("/mainpagescreen");
+
+//     } catch (error) {
+//       console.error("Google Signin Flow Error:", error);
+//       errorToast(
+//         error?.response?.data?.error?.explanation?.[0] ||
+//         "Something went wrong"
+//       );
+//     }
+//   };
+
+//   return (
+//     <div className="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4">
+//       {/* Header */}
+//       <header className="w-full text-center mb-6">
+//         <h1 className="text-4xl font-bold text-gray-900">
+//           Welcome to CodeAstra
+//         </h1>
+//         <p className="text-gray-600 mt-1 text-sm">
+//           Create, connect, and launch with AI
+//         </p>
+//       </header>
+
+//       {/* Form */}
+//       <form
+//         onSubmit={handleSignIn}
+//         className="w-full max-w-md bg-white shadow-sm p-8 rounded-2xl border border-gray-100"
+//       >
+//         {/* Google Sign In */}
+//         <button
+//           type="button"
+//           onClick={handleGoogleSignIn}
+//           disabled={loading}
+//           className="flex items-center gap-3 justify-center w-full bg-black text-white py-2.5 rounded-lg mb-5 hover:bg-gray-900 transition disabled:opacity-50"
+//         >
+//           <FcGoogle className="w-5 h-5" />
+//           Continue with Google
+//         </button>
+
+//         {/* Divider */}
+//         <div className="flex items-center mb-5">
+//           <hr className="flex-grow border-gray-300" />
+//           <span className="mx-3 text-gray-500 text-sm">or</span>
+//           <hr className="flex-grow border-gray-300" />
+//         </div>
+
+//         {/* Email Input */}
+//         <div className="mb-4">
+//           <label className="block text-gray-700 text-sm font-medium mb-1">
+//             Email Address
+//           </label>
+//           <input
+//             type="email"
+//             placeholder="Enter your email"
+//             value={email}
+//             onChange={(e) => setEmail(e.target.value)}
+//             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+//             required
+//           />
+//         </div>
+
+//         {/* Password Input */}
+//         <div className="mb-2">
+//           <label className="block text-gray-700 text-sm font-medium mb-1">
+//             Password
+//           </label>
+//           <input
+//             type="password"
+//             placeholder="Enter your password"
+//             value={password}
+//             onChange={(e) => setPassword(e.target.value)}
+//             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+//             required
+//           />
+//         </div>
+
+//         {/* Forgot Password */}
+//         <div className="flex justify-end mb-4">
+//           <button
+//             type="button"
+//             onClick={(e) => {
+//               e.preventDefault();   // form submit rokega
+//               localStorage.setItem("auth_mode", "forgot_password");
+//               navigate("/forgotpassword");
+//             }}
+//             className="text-sm text-blue-600 hover:underline"
+//           >
+//             Forgot Password ?
+//           </button>
+//         </div>
+
+//         {/* Sign In Button */}
+//         <button
+//           type="submit"
+//           disabled={loading}
+//           className="w-full bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50"
+//         >
+//           {loading ? "Signing In..." : "Sign In"}
+//         </button>
+
+//         {/* Footer */}
+//         <p className="text-center text-gray-600 mt-6 text-sm">
+//           Don't have an account?{" "}
+//           <button
+//             type="button"
+//             onClick={() => navigate("/createaccount")}
+//             className="text-blue-600 font-medium hover:underline"
+//           >
+//             Sign Up
+//           </button>
+//         </p>
+//       </form>
+//     </div>
+//   );
+// };
+
+// export default FormMolecules;
+
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/ContextProvider";
@@ -15,10 +245,13 @@ import {
 
 const FormMolecules = () => {
   const navigate = useNavigate();
-  const { signin, signinWithGoogle, loading } = useAuth();
+  const { signin, loading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // 🔥 Google Button Loading State
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // -------------------------------------------------
   // ✅ Unified Authentication Handler
@@ -40,14 +273,12 @@ const FormMolecules = () => {
 
       dismissToast(toastId);
 
-      // ✅ Redirect only when backend confirms
       if (response?.data) {
         navigate(redirectTo);
       }
     } catch (err) {
       dismissToast(toastId);
 
-      // ✅ If OTP request already exists → OTP page
       if (
         redirectTo === "/otppages" &&
         err?.message?.includes("request already exists")
@@ -60,7 +291,7 @@ const FormMolecules = () => {
   };
 
   // -------------------------------------------------
-  // ✅ Email + Password Sign-in (OTP flow)
+  // ✅ Email + Password Sign-in
   // -------------------------------------------------
   const handleSignIn = (e) => {
     e.preventDefault();
@@ -73,9 +304,13 @@ const FormMolecules = () => {
   };
 
   // -------------------------------------------------
-  // ✅ Google Sign-in (Direct Dashboard)
+  // ✅ Google Sign-in (Optimized with fast cancel handling)
   // -------------------------------------------------
   const handleGoogleSignIn = async () => {
+    if (isGoogleLoading) return;
+
+    setIsGoogleLoading(true);
+
     try {
       const user = await signinWithGoogleFirebase();
 
@@ -105,18 +340,35 @@ const FormMolecules = () => {
         return;
       }
 
-      // ✅ Save JWT token
+      // ✅ Success
       localStorage.setItem("signin_token", response.data);
-
       successToast("Login successful");
       navigate("/mainpagescreen");
 
     } catch (error) {
       console.error("Google Signin Flow Error:", error);
-      errorToast(
-        error?.response?.data?.error?.explanation?.[0] ||
-        "Something went wrong"
-      );
+
+      // Fast Popup Cancel Detection
+      const isPopupCancelled =
+        error?.code === "auth/popup-closed-by-user" ||
+        error?.message?.toLowerCase().includes("popup") ||
+        error?.message?.toLowerCase().includes("closed") ||
+        error?.message?.toLowerCase().includes("cancel") ||
+        error?.message?.toLowerCase().includes("user closed");
+
+      if (isPopupCancelled) {
+        console.log("User cancelled Google popup");
+        // No error toast for cancel
+      } else {
+        errorToast(
+          error?.response?.data?.error?.explanation?.[0] ||
+          error?.message ||
+          "Something went wrong"
+        );
+      }
+    } finally {
+      // Button ko turant enable karne ke liye
+      setIsGoogleLoading(false);
     }
   };
 
@@ -137,15 +389,16 @@ const FormMolecules = () => {
         onSubmit={handleSignIn}
         className="w-full max-w-md bg-white shadow-sm p-8 rounded-2xl border border-gray-100"
       >
-        {/* Google Sign In */}
+        {/* Google Sign In Button */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
-          disabled={loading}
-          className="flex items-center gap-3 justify-center w-full bg-black text-white py-2.5 rounded-lg mb-5 hover:bg-gray-900 transition disabled:opacity-50"
+          disabled={isGoogleLoading || loading}
+          className="flex items-center gap-3 justify-center w-full bg-black text-white py-2.5 rounded-lg mb-5 
+                     hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-wait"
         >
           <FcGoogle className="w-5 h-5" />
-          Continue with Google
+          {isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}
         </button>
 
         {/* Divider */}
@@ -190,7 +443,7 @@ const FormMolecules = () => {
           <button
             type="button"
             onClick={(e) => {
-              e.preventDefault();   // form submit rokega
+              e.preventDefault();
               localStorage.setItem("auth_mode", "forgot_password");
               navigate("/forgotpassword");
             }}
