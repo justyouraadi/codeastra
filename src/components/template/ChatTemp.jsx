@@ -2111,17 +2111,15 @@ const CodeWorkspace = ({
   selectedFile,
   onSelectFile,
   fileContent,
+  downloadProject,
 }) => {
-   const handleDownload = async () => {
-    try {
-      window.open(
-        `${import.meta.env.VITE_API_URL}/projects/${id}/download`,
-        "_blank"
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const handleDownload = async () => {
+  try {
+    await downloadProject(id);
+  } catch (error) {
+    console.log(error);
+  }
+};
   return (
     
  <div className="flex h-full w-full flex-col">  
@@ -2203,7 +2201,7 @@ const PreviewPanel = ({
   updateProjectMetadata,
   fetchProjectById,
   uploadProjectLogo,
-
+  downloadProject,
 
 }) => {
   const previewUrl = selectedProject?.data?.assigned_domain || null;
@@ -2529,6 +2527,7 @@ const PreviewPanel = ({
             selectedFile={selectedFile}
             onSelectFile={onSelectFile}
             fileContent={fileContent}
+              downloadProject={downloadProject}
           />
         ) : null}
 
@@ -2595,6 +2594,7 @@ const ChatTemp = () => {
     projectFiles,
     updateProjectMetadata,
     uploadProjectLogo,
+      downloadProject,
   } = useProjectProvider();
 
   const [selectedFile, setSelectedFile] = useState("");
@@ -3002,8 +3002,8 @@ const handleKeyDown = (event) => {
       current_domain={currentDomain}
       updateProjectMetadata={updateProjectMetadata}
       fetchProjectById={fetchProjectById}
-        uploadProjectLogo={uploadProjectLogo} // ✅ ADD THIS
-
+      uploadProjectLogo={uploadProjectLogo} 
+      downloadProject={downloadProject}
 
 
     />
