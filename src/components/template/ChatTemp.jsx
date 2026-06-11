@@ -261,7 +261,7 @@ const CodeViewer = ({ filePath, fileContent }) => {
         scrollBeyondLastLine: false,
         minimap: { enabled: false },
         wordWrap: "on",
-        padding: { top: 16, bottom: 16 },
+        padding: { top: 16, bottom: 16,  },
       }}
     />
   );
@@ -837,7 +837,7 @@ const PreviewPanel = ({
 
 
         <div className="flex items-center gap-3">
-          {!isMobile ? (
+          {/* {!isMobile ? (
             <>
               <Monitor
                 className={`h-5 w-5 cursor-pointer ${deviceView === "desktop"
@@ -854,7 +854,29 @@ const PreviewPanel = ({
                 onClick={() => setDeviceView("mobile")}
               />
             </>
-          ) : null}
+          ) : null} */}
+
+            {viewMode === "output" && !isMobile ? (
+    <>
+      <Monitor
+        className={`h-5 w-5 cursor-pointer ${
+          deviceView === "desktop"
+            ? "text-black"
+            : "text-gray-600 hover:text-black"
+        }`}
+        onClick={() => setDeviceView("desktop")}
+      />
+
+      <Smartphone
+        className={`h-5 w-5 cursor-pointer ${
+          deviceView === "mobile"
+            ? "text-black"
+            : "text-gray-600 hover:text-black"
+        }`}
+        onClick={() => setDeviceView("mobile")}
+      />
+    </>
+  ) : null}
 
           {previewUrl ? (
             <a href={previewUrl} target="_blank" rel="noopener noreferrer">
