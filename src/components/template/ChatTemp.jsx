@@ -219,13 +219,61 @@ const isImageFile = (path = "") => {
   return /\.(png|jpe?g|gif|webp|ico|svg)$/i.test(path);
 };
 
+// const CodeViewer = ({ filePath, fileContent }) => {
+//   if (isImageFile(filePath)) {
+//     return (
+//       <div className="flex h-full w-full items-center justify-center bg-[#1e1e1e] p-6">
+//         {fileContent ? (
+//           <img
+//             src={fileContent} 
+//             alt={filePath}
+//             className="max-h-full max-w-full rounded-md object-contain shadow-lg"
+//           />
+//         ) : (
+//           <span className="text-gray-400">Loading image...</span>
+//         )}
+//       </div>
+//     );
+//   }
+
+ 
+//   return (
+//     <Editor
+//       height="100%"
+//       theme="vs-dark"
+//       language={getLanguageFromFile(filePath)}
+//       value={decodeEscapedContent(fileContent)}
+//       options={{
+//         readOnly: true,
+//         fontSize: 14,
+//         fontFamily: "'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace",
+//         lineHeight: 24,
+//         lineNumbers: "on",
+//         lineNumbersMinChars: 3,
+//         renderLineHighlight: "all",
+//         guides: {
+//           indentation: true,
+//           bracketPairs: true,
+//           bracketPairsHorizontal: true,
+//         },
+//         renderIndentGuides: true, 
+//         renderWhitespace: "selection",
+//         scrollBeyondLastLine: false,
+//         minimap: { enabled: false },
+//         wordWrap: "on",
+//         padding: { top: 16, bottom: 16,  },
+//       }}
+//     />
+//   );
+// };
+
 const CodeViewer = ({ filePath, fileContent }) => {
   if (isImageFile(filePath)) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-[#1e1e1e] p-6">
         {fileContent ? (
           <img
-            src={fileContent} 
+            src={fileContent}
             alt={filePath}
             className="max-h-full max-w-full rounded-md object-contain shadow-lg"
           />
@@ -236,37 +284,64 @@ const CodeViewer = ({ filePath, fileContent }) => {
     );
   }
 
- 
+  const formattedContent = decodeEscapedContent(fileContent)
+    .split("\n")
+    .map((line) => {
+      const leadingSpaces = line.match(/^ */)?.[0].length || 0;
+
+      // Har 2 spaces ko 8 spaces bana do
+      const newIndent = " ".repeat((leadingSpaces / 2) * 8);
+
+      return newIndent + line.trimStart();
+    })
+    .join("\n");
+
   return (
     <Editor
       height="100%"
       theme="vs-dark"
       language={getLanguageFromFile(filePath)}
-      value={decodeEscapedContent(fileContent)}
+      value={formattedContent}
       options={{
         readOnly: true,
+
         fontSize: 14,
-        fontFamily: "'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace",
+        fontFamily:
+          "'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace",
+
         lineHeight: 24,
+
         lineNumbers: "on",
         lineNumbersMinChars: 3,
+
         renderLineHighlight: "all",
+
         guides: {
           indentation: true,
           bracketPairs: true,
-          bracketPairsHorizontal: true,
+          bracketPairsHorizontal: false,
         },
-        renderIndentGuides: true, 
+
+        renderIndentGuides: true,
+
         renderWhitespace: "selection",
+
         scrollBeyondLastLine: false,
-        minimap: { enabled: false },
+
+        minimap: {
+          enabled: false,
+        },
+
         wordWrap: "on",
-        padding: { top: 16, bottom: 16,  },
+
+        padding: {
+          top: 16,
+          bottom: 16,
+        },
       }}
     />
   );
 };
-
 const ChatMessages = ({
   finalMessage,
   selectedProject,
